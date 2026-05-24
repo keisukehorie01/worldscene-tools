@@ -13,6 +13,8 @@ from typing import Any, Dict, Optional
 import requests
 from flask import jsonify, request, send_file
 
+from billing_sqlite import consume_credit, normalize_email, refund_credit
+
 
 BASE_DIR = Path(__file__).resolve().parent
 RUNTIME_DIR = Path(os.getenv("PPT_RUNTIME_DIR", BASE_DIR / "runtime" / "ppt_jobs"))
@@ -36,6 +38,10 @@ def register_ppt_routes(app):
 
     @app.route("/api/ppt/jobs", methods=["POST"])
     def create_ppt_job():
+      email = normalize_email(request.form.get("email", ""))
+      if not email:
+          return jsonify({"ok": False, "error": "email is required"}), 400
+
       if "image" not in request.files:
           return jsonify({"ok": False, "error": "image file is required"}), 400
 
@@ -54,6 +60,11 @@ def register_ppt_routes(app):
           return jsonify({"ok": False, "error": "PNG, JPG, and WebP are supported"}), 400
 
       job_id = uuid.uuid4().hex
+      try:
+          consume_credit(email, job_id, amount=1)
+      except ValueError:
+          return jsonify({"ok": False, "error": "insufficient_credits"}), 402
+
       suffix = safe_suffix(image.filename, mime_type)
       upload_path = UPLOAD_DIR / f"{job_id}{suffix}"
       output_path = OUTPUT_DIR / f"{job_id}.pptx"
@@ -70,6 +81,9 @@ def register_ppt_routes(app):
           "input_mime_type": mime_type,
           "input_path": str(upload_path),
           "output_path": str(output_path),
+          "email": email,
+          "credits_used": 1,
+          "credit_refunded": False,
           "download_url": None,
           "error": None,
       }
@@ -179,6 +193,10 @@ def process_job(job_id: str) -> None:
         write_pptx(output_path, analysis)
         update_job(job_id, status="completed", progress=100, message="Ready to download")
     except Exception as exc:
+        job = load_job(job_id)
+        if job and job.get("email") and not job.get("credit_refunded"):
+            refund_credit(job["email"], job_id, amount=int(job.get("credits_used") or 1))
+            update_job(job_id, credit_refunded=True)
         update_job(job_id, status="failed", progress=100, message="Conversion failed", error=str(exc))
 
 

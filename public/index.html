@@ -123,6 +123,15 @@
             Convert AI-generated images, screenshots, diagrams, and mockups into editable PPTX slides.
           </p>
 
+          <div class="account-panel" aria-label="Credit balance">
+            <label>
+              <span data-i18n="emailLabel">Email for credits</span>
+              <input id="email-input" type="email" autocomplete="email" placeholder="you@example.com">
+            </label>
+            <button class="small-button" type="button" id="check-balance" data-i18n="checkBalance">Check credits</button>
+            <strong id="credit-balance" data-i18n="creditsUnknown">Credits: unknown</strong>
+          </div>
+
           <label class="drop-zone" id="drop-zone">
             <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
             <span class="drop-icon" aria-hidden="true">PPTX</span>
@@ -139,6 +148,24 @@
           <div class="hero-actions">
             <button class="button button-primary" type="button" id="select-file" data-i18n="chooseImage">Choose image</button>
             <a class="button button-secondary" href="#example" data-i18n="viewExample">View example flow</a>
+          </div>
+
+          <div class="pricing-grid" aria-label="Pricing">
+            <button class="price-card" type="button" data-product="starter">
+              <span data-i18n="starterTitle">Starter</span>
+              <strong>$4.99</strong>
+              <small data-i18n="starterCopy">5 conversions</small>
+            </button>
+            <button class="price-card" type="button" data-product="pro">
+              <span data-i18n="proTitle">Pro</span>
+              <strong>$14.99</strong>
+              <small data-i18n="proCopy">25 conversions</small>
+            </button>
+            <button class="price-card" type="button" data-product="high_quality">
+              <span data-i18n="hqTitle">High Quality</span>
+              <strong>$4.99</strong>
+              <small data-i18n="hqCopy">1 complex slide</small>
+            </button>
           </div>
         </section>
 
@@ -314,7 +341,20 @@
         statusProcessing: "Converting to editable PowerPoint...",
         statusCompleted: "PPTX is ready.",
         statusFailed: "Conversion failed. Please try another image.",
+        statusNeedCredits: "Please enter your email and buy credits before converting.",
+        statusBalance: "Credits loaded.",
+        statusCheckout: "Opening secure checkout...",
         downloadPpt: "Download PPTX",
+        emailLabel: "Email for credits",
+        checkBalance: "Check credits",
+        creditsUnknown: "Credits: unknown",
+        creditsLabel: "Credits",
+        starterTitle: "Starter",
+        starterCopy: "5 conversions",
+        proTitle: "Pro",
+        proCopy: "25 conversions",
+        hqTitle: "High Quality",
+        hqCopy: "1 complex slide",
         chooseImage: "Choose image",
         viewExample: "View example flow",
         appsEyebrow: "Android app",
@@ -379,7 +419,20 @@
         statusProcessing: "編集可能なPowerPointへ変換中...",
         statusCompleted: "PPTXをダウンロードできます。",
         statusFailed: "変換に失敗しました。別の画像でお試しください。",
+        statusNeedCredits: "変換前にメールを入力し、クレジットを購入してください。",
+        statusBalance: "クレジット残高を確認しました。",
+        statusCheckout: "安全な決済ページを開いています...",
         downloadPpt: "PPTXをダウンロード",
+        emailLabel: "クレジット用メール",
+        checkBalance: "残高確認",
+        creditsUnknown: "クレジット: 未確認",
+        creditsLabel: "クレジット",
+        starterTitle: "Starter",
+        starterCopy: "5回変換",
+        proTitle: "Pro",
+        proCopy: "25回変換",
+        hqTitle: "High Quality",
+        hqCopy: "複雑な1枚",
         chooseImage: "画像を選ぶ",
         viewExample: "変換の流れを見る",
         appsEyebrow: "Androidアプリ",
@@ -439,6 +492,9 @@
     const selectFile = document.getElementById("select-file");
     const languageToggle = document.getElementById("language-toggle");
     const downloadLink = document.getElementById("download-link");
+    const emailInput = document.getElementById("email-input");
+    const checkBalance = document.getElementById("check-balance");
+    const creditBalance = document.getElementById("credit-balance");
 
     function applyLanguage(language) {
       currentLanguage = language;
@@ -460,6 +516,10 @@
     async function markSelected() {
       const file = fileInput.files && fileInput.files[0];
       if (!file) return;
+      if (!emailInput.value.trim()) {
+        setStatus("statusNeedCredits", "Please enter your email and buy credits before converting.");
+        return;
+      }
       setStatus("statusSelected", "Image selected.");
       dropZone.classList.add("drop-zone-selected");
       downloadLink.hidden = true;
@@ -473,12 +533,19 @@
         selectFile.disabled = true;
         const formData = new FormData();
         formData.append("image", file);
+        formData.append("email", emailInput.value.trim());
         const response = await fetch("/api/ppt/jobs", {
           method: "POST",
           body: formData
         });
         const data = await response.json();
         if (!response.ok || !data.ok) {
+          if (data.error === "insufficient_credits") {
+            setStatus("statusNeedCredits", "Please buy credits before converting.");
+            await loadBalance();
+            selectFile.disabled = false;
+            return;
+          }
           throw new Error(data.error || "Upload failed");
         }
         setStatus("statusQueued", "Queued.");
@@ -502,6 +569,7 @@
           downloadLink.href = data.job.download_url;
           downloadLink.hidden = false;
           selectFile.disabled = false;
+          await loadBalance();
           return;
         }
 
@@ -519,7 +587,46 @@
       }
     }
 
+    async function loadBalance() {
+      const email = emailInput.value.trim();
+      if (!email) {
+        setStatus("statusNeedCredits", "Please enter your email.");
+        return;
+      }
+      const response = await fetch(`/api/billing/balance?email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+      if (response.ok && data.ok) {
+        creditBalance.textContent = `${messages[currentLanguage].creditsLabel}: ${data.credits}`;
+        localStorage.setItem("worldscene-email", email);
+        setStatus("statusBalance", "Credits loaded.");
+      }
+    }
+
+    async function createCheckout(product) {
+      const email = emailInput.value.trim();
+      if (!email) {
+        setStatus("statusNeedCredits", "Please enter your email.");
+        return;
+      }
+      setStatus("statusCheckout", "Opening checkout...");
+      const response = await fetch("/api/checkout/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, product })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        setStatus("statusFailed", data.error || "Checkout failed.");
+        return;
+      }
+      window.location.href = data.url;
+    }
+
     selectFile.addEventListener("click", () => fileInput.click());
+    checkBalance.addEventListener("click", loadBalance);
+    document.querySelectorAll("[data-product]").forEach((button) => {
+      button.addEventListener("click", () => createCheckout(button.getAttribute("data-product")));
+    });
     fileInput.addEventListener("change", markSelected);
     dropZone.addEventListener("dragover", (event) => {
       event.preventDefault();
@@ -537,6 +644,11 @@
     languageToggle.addEventListener("click", () => applyLanguage(currentLanguage === "ja" ? "en" : "ja"));
 
     applyLanguage(currentLanguage);
+    const savedEmail = localStorage.getItem("worldscene-email");
+    if (savedEmail) {
+      emailInput.value = savedEmail;
+      loadBalance();
+    }
   </script>
 </body>
 </html>

@@ -26,11 +26,13 @@ from billing_config import (
     ANALYZE_POINT_COST,
 )
 from ppt_service import register_ppt_routes
+from stripe_service import register_stripe_routes
 
 load_dotenv()
 
 app = Flask(__name__)
 register_ppt_routes(app)
+register_stripe_routes(app)
 
 GOOGLE_PLAY_PACKAGE_NAME = os.getenv("GOOGLE_PLAY_PACKAGE_NAME", "").strip()
 GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "").strip()
