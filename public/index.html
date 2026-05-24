@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drop2PPT - Image to Editable PowerPoint Converter | WorldScene</title>
+  <meta name="description" content="Drop an AI-generated image, screenshot, diagram, or mockup and prepare it for conversion into an editable PowerPoint PPTX slide.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta property="og:title" content="Drop2PPT - Image to Editable PowerPoint Converter">
+  <meta property="og:description" content="Drop an AI-generated image, screenshot, diagram, or mockup and prepare it for conversion into an editable PowerPoint PPTX slide.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://worldscene.net/">
+  <meta property="og:image" content="https://worldscene.net/worldscene-icon.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#12324a">
+  <link rel="canonical" href="https://worldscene.net/">
+  <link rel="alternate" href="https://worldscene.net/" hreflang="x-default">
+  <link rel="alternate" href="https://worldscene.net/" hreflang="en">
+  <link rel="alternate" href="https://worldscene.net/" hreflang="ja">
+  <link rel="icon" href="worldscene-icon.png">
+  <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+    "@type": "WebApplication",
+        "@id": "https://worldscene.net/#drop2ppt",
+    "name": "Drop2PPT",
+    "url": "https://worldscene.net/",
+    "applicationCategory": "ProductivityApplication",
+    "operatingSystem": "Web",
+        "description": "Convert AI-generated images, screenshots, diagrams, and mockups into editable PowerPoint PPTX slides.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "creator": {
+          "@type": "Organization",
+          "name": "WorldScene",
+          "url": "https://worldscene.net/"
+        }
+      },
+      {
+        "@type": "HowTo",
+        "@id": "https://worldscene.net/#how-to-convert-image-to-ppt",
+        "name": "How to convert an image into an editable PowerPoint",
+        "description": "Drop an image, rebuild the slide as editable PowerPoint elements, then download a PPTX file.",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "name": "Upload an image",
+            "text": "Upload an AI-generated image, screenshot, diagram, or mockup."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Rebuild the slide",
+            "text": "Analyze the layout and reconstruct text, panels, arrows, and visual structure as editable slide objects."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Download PPTX",
+            "text": "Download an editable PowerPoint PPTX file for revision, presentation, or delivery."
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://worldscene.net/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What does Drop2PPT do?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Drop2PPT converts AI-generated images, screenshots, diagrams, and mockups into editable PowerPoint PPTX slides."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is the output just an image pasted into PowerPoint?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The goal is to rebuild text, shapes, panels, arrows, and layout as editable PowerPoint elements instead of placing a single flat image on a slide."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Who is this tool for?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "It is for marketers, consultants, planners, creators, educators, and teams that need to turn visual drafts into editable presentation files."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="WorldScene home">
+      <img src="worldscene-icon.png" alt="" class="brand-icon">
+      <span>WorldScene</span>
+    </a>
+    <nav class="nav" aria-label="Main navigation">
+      <a href="#converter" data-i18n="navConvert">Convert</a>
+      <a href="#apps" data-i18n="navApps">Apps</a>
+      <a href="#tools" data-i18n="navTools">Tools</a>
+      <button class="language-button" type="button" id="language-toggle" aria-label="Switch language">日本語</button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="tool-hero" aria-labelledby="hero-title">
+      <div class="hero-grid">
+        <section class="converter-panel" id="converter" aria-labelledby="hero-title">
+          <p class="eyebrow" data-i18n="heroEyebrow">Free beta tool</p>
+          <h1 id="hero-title" data-i18n="heroTitle">Drop an image. Get an editable PowerPoint.</h1>
+          <p class="hero-copy" data-i18n="heroCopy">
+            Convert AI-generated images, screenshots, diagrams, and mockups into editable PPTX slides.
+          </p>
+
+          <label class="drop-zone" id="drop-zone">
+            <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+            <span class="drop-icon" aria-hidden="true">PPTX</span>
+            <strong data-i18n="dropTitle">Drop image here</strong>
+            <small data-i18n="dropHint">PNG, JPG, and WebP supported</small>
+          </label>
+
+          <div class="conversion-status" id="conversion-status" aria-live="polite">
+            <span class="status-dot"></span>
+            <span data-i18n="statusReady">Ready for beta testing. Upload processing will be connected next.</span>
+          </div>
+          <a class="download-link" id="download-link" href="#" hidden data-i18n="downloadPpt">Download PPTX</a>
+
+          <div class="hero-actions">
+            <button class="button button-primary" type="button" id="select-file" data-i18n="chooseImage">Choose image</button>
+            <a class="button button-secondary" href="#example" data-i18n="viewExample">View example flow</a>
+          </div>
+        </section>
+
+        <aside class="app-promo" id="apps" aria-labelledby="apps-title">
+          <p class="eyebrow" data-i18n="appsEyebrow">Android app</p>
+          <h2 id="apps-title" data-i18n="appsTitle">Create, capture, and explore on mobile.</h2>
+          <img src="assets/apps/WorldScene/feature.png" alt="" class="app-promo-image" onerror="this.src='assets/apps/LuckyJapanGacha/feature.png'">
+          <p data-i18n="appsCopy">WorldScene apps help with photo insight, simple tools, quizzes, and daily creative workflows.</p>
+          <a class="text-link" href="https://play.google.com/store/apps/dev?id=4842045891375937389" target="_blank" rel="noopener" data-i18n="openGooglePlay">Open Google Play</a>
+        </aside>
+
+        <aside class="affiliate-panel" id="tools" aria-labelledby="tools-title">
+          <p class="eyebrow" data-i18n="toolsEyebrow">Recommended tools</p>
+          <h2 id="tools-title" data-i18n="toolsTitle">AI image books</h2>
+          <div class="tool-list">
+            <a class="tool-card" href="https://amzn.to/4e01tm2" target="_blank" rel="sponsored noopener">
+              <span data-i18n="bookOneTitle">ChatGPT & image AI guide</span>
+              <small data-i18n="bookOneCopy">Learn the basics of prompt-based creation.</small>
+            </a>
+            <a class="tool-card" href="https://amzn.to/4ux0dwO" target="_blank" rel="sponsored noopener">
+              <span data-i18n="bookTwoTitle">Image generation AI guide</span>
+              <small data-i18n="bookTwoCopy">Start making better AI visuals.</small>
+            </a>
+            <a class="tool-card" href="https://amzn.to/4e1c1kY" target="_blank" rel="sponsored noopener">
+              <span data-i18n="bookThreeTitle">AI design workflow</span>
+              <small data-i18n="bookThreeCopy">Use AI in design and production work.</small>
+            </a>
+            <a class="tool-card" href="https://amzn.to/4dM72Dx" target="_blank" rel="sponsored noopener">
+              <span data-i18n="bookFourTitle">AI image copyright</span>
+              <small data-i18n="bookFourCopy">Understand risks before commercial use.</small>
+            </a>
+          </div>
+          <p class="affiliate-note" data-i18n="affiliateNote">As an Amazon Associate, we earn from qualifying purchases.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="answer-strip" aria-labelledby="answer-title">
+      <div>
+        <p class="eyebrow" data-i18n="answerEyebrow">Direct answer</p>
+        <h2 id="answer-title" data-i18n="answerTitle">What is Drop2PPT?</h2>
+      </div>
+      <p data-i18n="answerCopy">
+        Drop2PPT is a free beta web tool that turns AI-generated images, screenshots, diagrams, and mockups into editable PowerPoint PPTX slides. It is designed for people who need a presentation file, not just a flat image.
+      </p>
+    </section>
+
+    <section class="section example-section" id="example">
+      <div class="section-heading">
+        <p class="eyebrow" data-i18n="exampleEyebrow">How it works</p>
+        <h2 data-i18n="exampleTitle">Not just an image pasted into a slide.</h2>
+        <p data-i18n="exampleCopy">
+          The goal is to rebuild text, panels, arrows, and layout as PowerPoint elements you can edit.
+        </p>
+      </div>
+      <div class="process-grid">
+        <article>
+          <span>1</span>
+          <h3 data-i18n="stepOneTitle">Upload</h3>
+          <p data-i18n="stepOneCopy">Drop an AI image, screenshot, diagram, or mockup.</p>
+        </article>
+        <article>
+          <span>2</span>
+          <h3 data-i18n="stepTwoTitle">Rebuild</h3>
+          <p data-i18n="stepTwoCopy">Analyze the layout and reconstruct it as editable slide objects.</p>
+        </article>
+        <article>
+          <span>3</span>
+          <h3 data-i18n="stepThreeTitle">Download</h3>
+          <p data-i18n="stepThreeCopy">Get a PPTX file you can revise, present, and deliver.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section app-section">
+      <div class="section-heading section-heading-wide">
+        <p class="eyebrow" data-i18n="lineupEyebrow">WorldScene apps</p>
+        <h2 data-i18n="lineupTitle">More lightweight Android tools.</h2>
+      </div>
+      <div class="app-grid compact-app-grid">
+        <article class="app-card">
+          <img class="app-icon" src="worldscene-icon.png" alt="WorldScene app icon">
+          <div>
+            <span class="tag">Photo</span>
+            <h3>WorldScene</h3>
+            <p data-i18n="worldsceneCopy">Discover places and travel-style insights from your photos.</p>
+            <a href="https://play.google.com/store/apps/details?id=com.worldscene.app" target="_blank" rel="noopener" data-i18n="openOnGooglePlay">Open on Google Play</a>
+          </div>
+        </article>
+        <article class="app-card">
+          <img class="app-icon" src="assets/apps/SharePrintHelper/icon.png" alt="Easy Document Print app icon">
+          <div>
+            <span class="tag">Utility</span>
+            <h3>Easy Document Print</h3>
+            <p data-i18n="printCopy">Receive shared images or PDFs and send them into Android print flow.</p>
+            <a href="https://play.google.com/store/apps/details?id=net.worldscene.kantanshareprint" target="_blank" rel="noopener" data-i18n="openOnGooglePlay">Open on Google Play</a>
+          </div>
+        </article>
+        <article class="app-card">
+          <img class="app-icon" src="assets/apps/IQBrainTestLogicPuzzle/icon.png" alt="IQ Brain Test app icon">
+          <div>
+            <span class="tag">Puzzle</span>
+            <h3>IQ Brain Test</h3>
+            <p data-i18n="iqCopy">Play casual logic, pattern, memory, and spatial puzzles.</p>
+            <a href="https://play.google.com/store/apps/details?id=net.worldscene.iqbraintestlogicpuzzle" target="_blank" rel="noopener" data-i18n="openOnGooglePlay">Open on Google Play</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section faq-section" id="faq" aria-labelledby="faq-title">
+      <div class="section-heading">
+        <p class="eyebrow" data-i18n="faqEyebrow">FAQ</p>
+        <h2 id="faq-title" data-i18n="faqTitle">Image to editable PowerPoint questions.</h2>
+      </div>
+      <div class="faq-list">
+        <article>
+          <h3 data-i18n="faqOneQuestion">What does Drop2PPT do?</h3>
+          <p data-i18n="faqOneAnswer">Drop2PPT converts AI-generated images, screenshots, diagrams, and mockups into editable PowerPoint PPTX slides.</p>
+        </article>
+        <article>
+          <h3 data-i18n="faqTwoQuestion">Is the output just an image pasted into PowerPoint?</h3>
+          <p data-i18n="faqTwoAnswer">No. The goal is to rebuild text, shapes, panels, arrows, and layout as editable PowerPoint elements instead of placing a single flat image on a slide.</p>
+        </article>
+        <article>
+          <h3 data-i18n="faqThreeQuestion">Who is this tool for?</h3>
+          <p data-i18n="faqThreeAnswer">It is for marketers, consultants, planners, creators, educators, and teams that need to turn visual drafts into editable presentation files.</p>
+        </article>
+        <article>
+          <h3 data-i18n="faqFourQuestion">Which image formats are supported?</h3>
+          <p data-i18n="faqFourAnswer">The beta interface is prepared for PNG, JPG, and WebP images.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section contact-section" id="contact">
+      <div>
+        <p class="eyebrow" data-i18n="policyEyebrow">Policy and support</p>
+        <h2 data-i18n="policyTitle">Information for users and reviewers.</h2>
+      </div>
+      <div class="link-list">
+        <a href="https://worldscene.net/privacy_policy_en.html">Privacy Policy</a>
+        <a href="https://worldscene.net/terms.html">Terms</a>
+        <a href="https://worldscene.net/account-delete.html">Account Deletion</a>
+        <a href="https://worldscene.net/app-ads.txt">app-ads.txt</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>(c) 2026 WorldScene. Android is a trademark of Google LLC.</p>
+    <a href="https://play.google.com/store/apps/dev?id=4842045891375937389" target="_blank" rel="noopener">WorldScene on Google Play</a>
+  </footer>
+
+  <script>
+    const messages = {
+      en: {
+        navConvert: "Convert",
+        navApps: "Apps",
+        navTools: "Tools",
+        answerEyebrow: "Direct answer",
+        answerTitle: "What is Drop2PPT?",
+        answerCopy: "Drop2PPT is a free beta web tool that turns AI-generated images, screenshots, diagrams, and mockups into editable PowerPoint PPTX slides. It is designed for people who need a presentation file, not just a flat image.",
+        heroEyebrow: "Free beta tool",
+        heroTitle: "Drop an image. Get an editable PowerPoint.",
+        heroCopy: "Convert AI-generated images, screenshots, diagrams, and mockups into editable PPTX slides.",
+        dropTitle: "Drop image here",
+        dropHint: "PNG, JPG, and WebP supported",
+        statusReady: "Ready for beta testing. Drop an image to start.",
+        statusSelected: "Image selected. Uploading...",
+        statusUploading: "Uploading image...",
+        statusQueued: "Queued. Waiting for conversion...",
+        statusProcessing: "Converting to editable PowerPoint...",
+        statusCompleted: "PPTX is ready.",
+        statusFailed: "Conversion failed. Please try another image.",
+        downloadPpt: "Download PPTX",
+        chooseImage: "Choose image",
+        viewExample: "View example flow",
+        appsEyebrow: "Android app",
+        appsTitle: "Create, capture, and explore on mobile.",
+        appsCopy: "WorldScene apps help with photo insight, simple tools, quizzes, and daily creative workflows.",
+        openGooglePlay: "Open Google Play",
+        toolsEyebrow: "Recommended tools",
+        toolsTitle: "AI image books",
+        bookOneTitle: "ChatGPT & image AI guide",
+        bookOneCopy: "Learn the basics of prompt-based creation.",
+        bookTwoTitle: "Image generation AI guide",
+        bookTwoCopy: "Start making better AI visuals.",
+        bookThreeTitle: "AI design workflow",
+        bookThreeCopy: "Use AI in design and production work.",
+        bookFourTitle: "AI image copyright",
+        bookFourCopy: "Understand risks before commercial use.",
+        affiliateNote: "As an Amazon Associate, we earn from qualifying purchases.",
+        exampleEyebrow: "How it works",
+        exampleTitle: "Not just an image pasted into a slide.",
+        exampleCopy: "The goal is to rebuild text, panels, arrows, and layout as PowerPoint elements you can edit.",
+        stepOneTitle: "Upload",
+        stepOneCopy: "Drop an AI image, screenshot, diagram, or mockup.",
+        stepTwoTitle: "Rebuild",
+        stepTwoCopy: "Analyze the layout and reconstruct it as editable slide objects.",
+        stepThreeTitle: "Download",
+        stepThreeCopy: "Get a PPTX file you can revise, present, and deliver.",
+        faqEyebrow: "FAQ",
+        faqTitle: "Image to editable PowerPoint questions.",
+        faqOneQuestion: "What does Drop2PPT do?",
+        faqOneAnswer: "Drop2PPT converts AI-generated images, screenshots, diagrams, and mockups into editable PowerPoint PPTX slides.",
+        faqTwoQuestion: "Is the output just an image pasted into PowerPoint?",
+        faqTwoAnswer: "No. The goal is to rebuild text, shapes, panels, arrows, and layout as editable PowerPoint elements instead of placing a single flat image on a slide.",
+        faqThreeQuestion: "Who is this tool for?",
+        faqThreeAnswer: "It is for marketers, consultants, planners, creators, educators, and teams that need to turn visual drafts into editable presentation files.",
+        faqFourQuestion: "Which image formats are supported?",
+        faqFourAnswer: "The beta interface is prepared for PNG, JPG, and WebP images.",
+        lineupEyebrow: "WorldScene apps",
+        lineupTitle: "More lightweight Android tools.",
+        worldsceneCopy: "Discover places and travel-style insights from your photos.",
+        printCopy: "Receive shared images or PDFs and send them into Android print flow.",
+        iqCopy: "Play casual logic, pattern, memory, and spatial puzzles.",
+        openOnGooglePlay: "Open on Google Play",
+        policyEyebrow: "Policy and support",
+        policyTitle: "Information for users and reviewers."
+      },
+      ja: {
+        navConvert: "変換",
+        navApps: "アプリ",
+        navTools: "おすすめ",
+        answerEyebrow: "直接回答",
+        answerTitle: "Drop2PPTとは？",
+        answerCopy: "Drop2PPTは、AI生成画像、スクリーンショット、図解、カンプを、編集可能なPowerPoint PPTXスライドへ変換する無料ベータWebツールです。単なる画像ではなく、プレゼン資料として直せるファイルが必要な人向けです。",
+        heroEyebrow: "無料ベータツール",
+        heroTitle: "画像をドロップするだけ。編集できるPowerPointに。",
+        heroCopy: "AI生成画像、スクショ、図解、LPカンプを、編集可能なPPTXスライドへ変換します。",
+        dropTitle: "ここに画像をドロップ",
+        dropHint: "PNG、JPG、WebPに対応",
+        statusReady: "ベータ版として利用できます。画像をドロップしてください。",
+        statusSelected: "画像を選択しました。アップロード中です...",
+        statusUploading: "画像をアップロード中...",
+        statusQueued: "待機中です。変換順を待っています...",
+        statusProcessing: "編集可能なPowerPointへ変換中...",
+        statusCompleted: "PPTXをダウンロードできます。",
+        statusFailed: "変換に失敗しました。別の画像でお試しください。",
+        downloadPpt: "PPTXをダウンロード",
+        chooseImage: "画像を選ぶ",
+        viewExample: "変換の流れを見る",
+        appsEyebrow: "Androidアプリ",
+        appsTitle: "スマホでも作る、撮る、試す。",
+        appsCopy: "WorldSceneは写真解析、便利ツール、クイズ、日常の創作ワークフローに役立つAndroidアプリを提供しています。",
+        openGooglePlay: "Google Playを見る",
+        toolsEyebrow: "おすすめツール",
+        toolsTitle: "AI画像関連の本",
+        bookOneTitle: "ChatGPT＆画像生成AI入門",
+        bookOneCopy: "プロンプトで作る基本を学ぶ",
+        bookTwoTitle: "画像生成AIガイド",
+        bookTwoCopy: "AI画像づくりを本格的に始める",
+        bookThreeTitle: "AIデザイン制作",
+        bookThreeCopy: "仕事のデザイン制作にAIを使う",
+        bookFourTitle: "AI画像と著作権",
+        bookFourCopy: "商用利用前のリスクを知る",
+        affiliateNote: "当サイトはAmazonアソシエイト・プログラムの参加者です。適格販売により収入を得ています。",
+        exampleEyebrow: "変換の流れ",
+        exampleTitle: "画像を貼るだけのPPTではありません。",
+        exampleCopy: "文字、パネル、矢印、レイアウトをPowerPointで編集できる要素として再構成することを目指しています。",
+        stepOneTitle: "アップロード",
+        stepOneCopy: "AI画像、スクショ、図解、カンプをドロップします。",
+        stepTwoTitle: "再構成",
+        stepTwoCopy: "レイアウトを解析し、編集可能なスライド要素として組み直します。",
+        stepThreeTitle: "ダウンロード",
+        stepThreeCopy: "修正、発表、納品に使えるPPTXを受け取ります。",
+        faqEyebrow: "FAQ",
+        faqTitle: "画像を編集可能PowerPointに変換する質問。",
+        faqOneQuestion: "Drop2PPTは何をするツールですか？",
+        faqOneAnswer: "Drop2PPTは、AI生成画像、スクリーンショット、図解、カンプを編集可能なPowerPoint PPTXスライドへ変換します。",
+        faqTwoQuestion: "出力はPowerPointに画像を貼っただけですか？",
+        faqTwoAnswer: "いいえ。単一の平面画像を貼るのではなく、文字、図形、パネル、矢印、レイアウトをPowerPointで編集できる要素として再構成することを目指しています。",
+        faqThreeQuestion: "誰向けのツールですか？",
+        faqThreeAnswer: "マーケター、コンサルタント、企画担当、クリエイター、教育者、画像案を編集可能なプレゼン資料にしたいチーム向けです。",
+        faqFourQuestion: "対応画像形式は何ですか？",
+        faqFourAnswer: "ベータ版の画面ではPNG、JPG、WebP画像に対応する想定です。",
+        lineupEyebrow: "WorldSceneアプリ",
+        lineupTitle: "軽量なAndroidツールも展開中。",
+        worldsceneCopy: "写真から場所や旅のヒントを発見します。",
+        printCopy: "共有された画像やPDFをAndroidの印刷フローへ送ります。",
+        iqCopy: "論理、パターン、記憶、空間認識のカジュアルパズルです。",
+        openOnGooglePlay: "Google Playで開く",
+        policyEyebrow: "ポリシーとサポート",
+        policyTitle: "ユーザーと審査担当者向けの情報です。"
+      }
+    };
+
+    const supportedLanguages = ["en", "ja"];
+    const savedLanguage = localStorage.getItem("worldscene-language");
+    let currentLanguage = supportedLanguages.includes(savedLanguage)
+      ? savedLanguage
+      : (navigator.language || "en").toLowerCase().startsWith("ja") ? "ja" : "en";
+
+    const statusText = document.querySelector("#conversion-status span:last-child");
+    const fileInput = document.getElementById("file-input");
+    const dropZone = document.getElementById("drop-zone");
+    const selectFile = document.getElementById("select-file");
+    const languageToggle = document.getElementById("language-toggle");
+    const downloadLink = document.getElementById("download-link");
+
+    function applyLanguage(language) {
+      currentLanguage = language;
+      document.documentElement.lang = language;
+      document.querySelectorAll("[data-i18n]").forEach((node) => {
+        const key = node.getAttribute("data-i18n");
+        if (messages[language][key]) {
+          node.textContent = messages[language][key];
+        }
+      });
+      languageToggle.textContent = language === "ja" ? "English" : "日本語";
+      localStorage.setItem("worldscene-language", language);
+    }
+
+    function setStatus(key, fallback) {
+      statusText.textContent = messages[currentLanguage][key] || fallback;
+    }
+
+    async function markSelected() {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      setStatus("statusSelected", "Image selected.");
+      dropZone.classList.add("drop-zone-selected");
+      downloadLink.hidden = true;
+      downloadLink.removeAttribute("href");
+      await uploadImage(file);
+    }
+
+    async function uploadImage(file) {
+      try {
+        setStatus("statusUploading", "Uploading image...");
+        selectFile.disabled = true;
+        const formData = new FormData();
+        formData.append("image", file);
+        const response = await fetch("/api/ppt/jobs", {
+          method: "POST",
+          body: formData
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "Upload failed");
+        }
+        setStatus("statusQueued", "Queued.");
+        pollJob(data.job.id);
+      } catch (error) {
+        setStatus("statusFailed", "Conversion failed.");
+        selectFile.disabled = false;
+      }
+    }
+
+    async function pollJob(jobId) {
+      try {
+        const response = await fetch(`/api/ppt/jobs/${jobId}`);
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "Status failed");
+        }
+
+        if (data.job.status === "completed") {
+          setStatus("statusCompleted", "PPTX is ready.");
+          downloadLink.href = data.job.download_url;
+          downloadLink.hidden = false;
+          selectFile.disabled = false;
+          return;
+        }
+
+        if (data.job.status === "failed") {
+          setStatus("statusFailed", "Conversion failed.");
+          selectFile.disabled = false;
+          return;
+        }
+
+        setStatus(data.job.status === "queued" ? "statusQueued" : "statusProcessing", data.job.message);
+        window.setTimeout(() => pollJob(jobId), 1800);
+      } catch (error) {
+        setStatus("statusFailed", "Conversion failed.");
+        selectFile.disabled = false;
+      }
+    }
+
+    selectFile.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", markSelected);
+    dropZone.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      dropZone.classList.add("drop-zone-active");
+    });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drop-zone-active"));
+    dropZone.addEventListener("drop", (event) => {
+      event.preventDefault();
+      dropZone.classList.remove("drop-zone-active");
+      if (event.dataTransfer.files.length) {
+        fileInput.files = event.dataTransfer.files;
+        markSelected();
+      }
+    });
+    languageToggle.addEventListener("click", () => applyLanguage(currentLanguage === "ja" ? "en" : "ja"));
+
+    applyLanguage(currentLanguage);
+  </script>
+</body>
+</html>
