@@ -25,7 +25,13 @@ from billing_config import (
     FREE_REGISTRATION_POINTS,
     ANALYZE_POINT_COST,
 )
-from ppt_service import register_ppt_routes
+from billing_sqlite import DB_PATH, get_conn, init_billing_db
+from ppt_service import (
+    MALWARE_SCAN_ENABLED,
+    MALWARE_SCAN_REQUIRED,
+    malware_scan_command,
+    register_ppt_routes,
+)
 from stripe_service import register_stripe_routes
 
 load_dotenv()
@@ -724,19 +730,37 @@ def consume_points(
 @app.route("/api/health", methods=["GET"])
 def health():
     try:
-        conn = get_db_connection()
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1 AS ok, DATABASE() AS db_name, NOW() AS server_time")
-                row = cur.fetchone()
+        init_billing_db()
+        with get_conn() as conn:
+            row = conn.execute(
+                """
+                SELECT
+                    1 AS ok,
+                    COUNT(*) AS customer_count,
+                    strftime('%Y-%m-%dT%H:%M:%SZ', 'now') AS server_time
+                FROM customers
+                """
+            ).fetchone()
 
-            return jsonify({
-                "success": True,
-                "message": "API and DB connection OK",
-                "data": row
-            }), 200
-        finally:
-            conn.close()
+        scan_command = malware_scan_command(DB_PATH)
+        scanner_available = (not MALWARE_SCAN_ENABLED) or bool(scan_command)
+        healthy = scanner_available or not MALWARE_SCAN_REQUIRED
+
+        return jsonify({
+            "success": healthy,
+            "message": "Drop2PPT API health OK" if healthy else "Malware scanner is required but unavailable",
+            "data": {
+                "ok": bool(row["ok"]),
+                "storage": "sqlite",
+                "db_path": str(DB_PATH),
+                "customer_count": row["customer_count"],
+                "server_time": row["server_time"],
+                "malware_scan_enabled": MALWARE_SCAN_ENABLED,
+                "malware_scan_required": MALWARE_SCAN_REQUIRED,
+                "malware_scanner_available": bool(scan_command),
+                "malware_scanner_command": scan_command[0] if scan_command else None,
+            }
+        }), 200 if healthy else 503
 
     except Exception as e:
         return jsonify({
