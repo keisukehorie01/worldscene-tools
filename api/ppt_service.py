@@ -344,21 +344,120 @@ def clamp_float(value: Any, minimum: float, maximum: float) -> float:
 
 
 def write_pptx(path: Path, analysis: Dict[str, Any]) -> None:
-    slide_xml = build_slide_xml(analysis)
-    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as pptx:
-        pptx.writestr("[Content_Types].xml", content_types_xml())
-        pptx.writestr("_rels/.rels", package_rels_xml())
-        pptx.writestr("docProps/core.xml", core_props_xml())
-        pptx.writestr("docProps/app.xml", app_props_xml())
-        pptx.writestr("ppt/presentation.xml", presentation_xml())
-        pptx.writestr("ppt/_rels/presentation.xml.rels", presentation_rels_xml())
-        pptx.writestr("ppt/slides/slide1.xml", slide_xml)
-        pptx.writestr("ppt/slides/_rels/slide1.xml.rels", empty_rels_xml())
-        pptx.writestr("ppt/slideMasters/slideMaster1.xml", slide_master_xml())
-        pptx.writestr("ppt/slideMasters/_rels/slideMaster1.xml.rels", slide_master_rels_xml())
-        pptx.writestr("ppt/slideLayouts/slideLayout1.xml", slide_layout_xml())
-        pptx.writestr("ppt/slideLayouts/_rels/slideLayout1.xml.rels", empty_rels_xml())
-        pptx.writestr("ppt/theme/theme1.xml", theme_xml())
+    try:
+        from pptx import Presentation
+        from pptx.dml.color import RGBColor
+        from pptx.enum.shapes import MSO_SHAPE
+        from pptx.enum.text import PP_ALIGN
+        from pptx.util import Pt
+    except ModuleNotFoundError as exc:
+        raise RuntimeError("python-pptx is not installed. Run pip install -r api/requirements.txt") from exc
+
+    prs = Presentation()
+    prs.slide_width = SLIDE_W
+    prs.slide_height = SLIDE_H
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+
+    bg = slide.background.fill
+    bg.solid()
+    bg.fore_color.rgb = RGBColor(16, 35, 63)
+
+    add_textbox(slide, 420000, 260000, 8300000, 700000, analysis["title"], "FFFFFF", 34, bold=True)
+    add_textbox(slide, 470000, 940000, 8000000, 360000, analysis["subtitle"], "D9F3FF", 15)
+    add_textbox(slide, 500000, 4480000, 8100000, 360000, analysis["summary"], "EAF7FF", 12)
+
+    for section in analysis["sections"]:
+        x = int(section["x"] * SLIDE_W)
+        y = int(section["y"] * SLIDE_H)
+        w = int(section["w"] * SLIDE_W)
+        h = int(section["h"] * SLIDE_H)
+        add_block(slide, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h, section["title"], section["body"])
+
+    step_w = int(SLIDE_W * 0.20)
+    gap = int(SLIDE_W * 0.02)
+    start_x = int(SLIDE_W * 0.08)
+    y = int(SLIDE_H * 0.76)
+    for index, step in enumerate(analysis["steps"][:4]):
+        x = start_x + index * (step_w + gap)
+        add_block(
+            slide,
+            MSO_SHAPE.ROUNDED_RECTANGLE,
+            x,
+            y,
+            step_w,
+            int(SLIDE_H * 0.14),
+            f"{step['label']}  {step['title']}",
+            step["body"],
+            fill="E9F7F7",
+            line="1AA6D9",
+            font="12324A",
+        )
+
+    prs.save(path)
+
+
+def add_textbox(slide, x: int, y: int, w: int, h: int, text: str, font: str, font_size: int, bold: bool = False) -> None:
+    from pptx.dml.color import RGBColor
+    from pptx.util import Pt
+
+    box = slide.shapes.add_textbox(x, y, w, h)
+    frame = box.text_frame
+    frame.clear()
+    frame.margin_left = 0
+    frame.margin_right = 0
+    frame.margin_top = 0
+    frame.margin_bottom = 0
+    paragraph = frame.paragraphs[0]
+    run = paragraph.add_run()
+    run.text = text
+    run.font.bold = bold
+    run.font.size = Pt(font_size)
+    run.font.color.rgb = RGBColor.from_string(font)
+
+
+def add_block(
+    slide,
+    shape_type,
+    x: int,
+    y: int,
+    w: int,
+    h: int,
+    title: str,
+    body: str,
+    fill: str = "123B59",
+    line: str = "1AA6D9",
+    font: str = "FFFFFF",
+) -> None:
+    from pptx.dml.color import RGBColor
+    from pptx.util import Pt
+
+    shape = slide.shapes.add_shape(shape_type, x, y, w, h)
+    shape.fill.solid()
+    shape.fill.fore_color.rgb = RGBColor.from_string(fill)
+    shape.line.color.rgb = RGBColor.from_string(line)
+    shape.line.width = 18000
+
+    frame = shape.text_frame
+    frame.clear()
+    frame.margin_left = 120000
+    frame.margin_right = 120000
+    frame.margin_top = 90000
+    frame.margin_bottom = 90000
+    frame.word_wrap = True
+
+    title_p = frame.paragraphs[0]
+    title_run = title_p.add_run()
+    title_run.text = title
+    title_run.font.bold = True
+    title_run.font.size = Pt(14)
+    title_run.font.color.rgb = RGBColor.from_string(font)
+
+    if body:
+        body_p = frame.add_paragraph()
+        body_run = body_p.add_run()
+        body_run.text = body
+        body_run.font.size = Pt(11)
+        body_run.font.color.rgb = RGBColor.from_string(font)
 
 
 def build_slide_xml(analysis: Dict[str, Any]) -> str:
