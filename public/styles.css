@@ -109,7 +109,7 @@ a {
   min-height: calc(100vh - 140px);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr) minmax(260px, 1fr);
+  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr) minmax(240px, 1fr);
   gap: 18px;
   align-items: stretch;
 }
@@ -160,7 +160,7 @@ a {
   display: grid;
   place-items: center;
   gap: 10px;
-  min-height: 250px;
+  min-height: 300px;
   margin-top: 34px;
   border: 2px dashed rgba(15, 141, 128, 0.55);
   border-radius: 8px;
@@ -170,6 +170,71 @@ a {
   cursor: pointer;
   text-align: center;
   transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.drop-demo {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  width: min(520px, calc(100% - 28px));
+  margin-top: 8px;
+}
+
+.demo-slide {
+  display: grid;
+  gap: 8px;
+  min-height: 92px;
+  border: 1px solid rgba(18, 50, 74, 0.16);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.demo-slide span {
+  display: block;
+  min-height: 12px;
+  border-radius: 8px;
+  background: #cdd8e2;
+}
+
+.demo-source span:nth-child(1) {
+  width: 70%;
+  background: #74b7d5;
+}
+
+.demo-source span:nth-child(2) {
+  width: 92%;
+}
+
+.demo-source span:nth-child(3) {
+  width: 54%;
+  background: #e4b44d;
+}
+
+.demo-ppt {
+  border-color: rgba(15, 141, 128, 0.34);
+  background: #f4fbf9;
+}
+
+.demo-ppt span:nth-child(1) {
+  width: 74%;
+  background: var(--teal);
+}
+
+.demo-ppt span:nth-child(2) {
+  width: 88%;
+}
+
+.demo-ppt span:nth-child(3) {
+  width: 46%;
+  background: var(--gold);
+}
+
+.demo-arrow {
+  color: var(--teal);
+  font-size: 26px;
+  font-weight: 900;
 }
 
 .account-panel {
@@ -392,10 +457,29 @@ a {
 .app-promo-image {
   width: 100%;
   aspect-ratio: 4 / 3;
-  margin: 22px 0 18px;
+  margin: 22px 0 14px;
   object-fit: cover;
   border: 1px solid var(--line);
   border-radius: 8px;
+}
+
+.app-metrics {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.app-metrics span {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  border: 1px solid rgba(15, 141, 128, 0.2);
+  border-radius: 8px;
+  background: #f2fbf9;
+  color: var(--navy);
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .text-link,
@@ -427,6 +511,17 @@ a {
   border-radius: 8px;
   background: #fbfcfd;
   text-decoration: none;
+}
+
+.tool-card em {
+  width: fit-content;
+  border-radius: 8px;
+  background: #fff3d7;
+  color: #8a5d00;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
 }
 
 .tool-card:hover {
@@ -697,6 +792,14 @@ a {
 
   .drop-zone {
     min-height: 210px;
+  }
+
+  .drop-demo {
+    grid-template-columns: 1fr;
+  }
+
+  .demo-arrow {
+    transform: rotate(90deg);
   }
 
   .account-panel,

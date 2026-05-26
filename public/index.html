@@ -9,14 +9,14 @@
   <meta property="og:title" content="Drop2PPT - Image to Editable PowerPoint Converter">
   <meta property="og:description" content="Drop an AI-generated image, screenshot, diagram, or mockup and prepare it for conversion into an editable PowerPoint PPTX slide.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://worldscene.net/">
+  <meta property="og:url" content="https://worldscene.net/drop2ppt/">
   <meta property="og:image" content="https://worldscene.net/worldscene-icon.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#12324a">
-  <link rel="canonical" href="https://worldscene.net/">
-  <link rel="alternate" href="https://worldscene.net/" hreflang="x-default">
-  <link rel="alternate" href="https://worldscene.net/" hreflang="en">
-  <link rel="alternate" href="https://worldscene.net/" hreflang="ja">
+  <link rel="canonical" href="https://worldscene.net/drop2ppt/">
+  <link rel="alternate" href="https://worldscene.net/drop2ppt/" hreflang="x-default">
+  <link rel="alternate" href="https://worldscene.net/drop2ppt/" hreflang="en">
+  <link rel="alternate" href="https://worldscene.net/drop2ppt/" hreflang="ja">
   <link rel="icon" href="worldscene-icon.png">
   <link rel="stylesheet" href="styles.css">
   <script type="application/ld+json">
@@ -25,9 +25,9 @@
     "@graph": [
       {
     "@type": "WebApplication",
-        "@id": "https://worldscene.net/#drop2ppt",
+        "@id": "https://worldscene.net/drop2ppt/#drop2ppt",
     "name": "Drop2PPT",
-    "url": "https://worldscene.net/",
+    "url": "https://worldscene.net/drop2ppt/",
     "applicationCategory": "ProductivityApplication",
     "operatingSystem": "Web",
         "description": "Convert AI-generated images, screenshots, diagrams, and mockups into editable PowerPoint PPTX slides.",
@@ -44,7 +44,7 @@
       },
       {
         "@type": "HowTo",
-        "@id": "https://worldscene.net/#how-to-convert-image-to-ppt",
+        "@id": "https://worldscene.net/drop2ppt/#how-to-convert-image-to-ppt",
         "name": "How to convert an image into an editable PowerPoint",
         "description": "Drop an image, rebuild the slide as editable PowerPoint elements, then download a PPTX file.",
         "step": [
@@ -67,7 +67,7 @@
       },
       {
         "@type": "FAQPage",
-        "@id": "https://worldscene.net/#faq",
+        "@id": "https://worldscene.net/drop2ppt/#faq",
         "mainEntity": [
           {
             "@type": "Question",
@@ -137,6 +137,15 @@
             <span class="drop-icon" aria-hidden="true">PPTX</span>
             <strong data-i18n="dropTitle">Drop image here</strong>
             <small data-i18n="dropHint">PNG, JPG, and WebP supported</small>
+            <span class="drop-demo" aria-hidden="true">
+              <span class="demo-slide demo-source">
+                <span></span><span></span><span></span>
+              </span>
+              <span class="demo-arrow">→</span>
+              <span class="demo-slide demo-ppt">
+                <span></span><span></span><span></span>
+              </span>
+            </span>
           </label>
 
           <div class="conversion-status" id="conversion-status" aria-live="polite">
@@ -173,6 +182,11 @@
           <p class="eyebrow" data-i18n="appsEyebrow">Android app</p>
           <h2 id="apps-title" data-i18n="appsTitle">Create, capture, and explore on mobile.</h2>
           <img src="assets/apps/WorldScene/feature.png" alt="" class="app-promo-image" onerror="this.src='assets/apps/LuckyJapanGacha/feature.png'">
+          <div class="app-metrics" aria-label="Android app highlights">
+            <span data-i18n="appMetricOne">Photo insight</span>
+            <span data-i18n="appMetricTwo">Utility apps</span>
+            <span data-i18n="appMetricThree">Mobile workflows</span>
+          </div>
           <p data-i18n="appsCopy">WorldScene apps help with photo insight, simple tools, quizzes, and daily creative workflows.</p>
           <a class="text-link" href="https://play.google.com/store/apps/dev?id=4842045891375937389" target="_blank" rel="noopener" data-i18n="openGooglePlay">Open Google Play</a>
         </aside>
@@ -184,18 +198,22 @@
             <a class="tool-card" href="https://amzn.to/4e01tm2" target="_blank" rel="sponsored noopener">
               <span data-i18n="bookOneTitle">ChatGPT & image AI guide</span>
               <small data-i18n="bookOneCopy">Learn the basics of prompt-based creation.</small>
+              <em>Amazon.co.jp</em>
             </a>
             <a class="tool-card" href="https://amzn.to/4ux0dwO" target="_blank" rel="sponsored noopener">
               <span data-i18n="bookTwoTitle">Image generation AI guide</span>
               <small data-i18n="bookTwoCopy">Start making better AI visuals.</small>
+              <em>Amazon.co.jp</em>
             </a>
             <a class="tool-card" href="https://amzn.to/4e1c1kY" target="_blank" rel="sponsored noopener">
               <span data-i18n="bookThreeTitle">AI design workflow</span>
               <small data-i18n="bookThreeCopy">Use AI in design and production work.</small>
+              <em>Amazon.co.jp</em>
             </a>
             <a class="tool-card" href="https://amzn.to/4dM72Dx" target="_blank" rel="sponsored noopener">
               <span data-i18n="bookFourTitle">AI image copyright</span>
               <small data-i18n="bookFourCopy">Understand risks before commercial use.</small>
+              <em>Amazon.co.jp</em>
             </a>
           </div>
           <p class="affiliate-note" data-i18n="affiliateNote">As an Amazon Associate, we earn from qualifying purchases.</p>
@@ -360,6 +378,9 @@
         appsEyebrow: "Android app",
         appsTitle: "Create, capture, and explore on mobile.",
         appsCopy: "WorldScene apps help with photo insight, simple tools, quizzes, and daily creative workflows.",
+        appMetricOne: "Photo insight",
+        appMetricTwo: "Utility apps",
+        appMetricThree: "Mobile workflows",
         openGooglePlay: "Open Google Play",
         toolsEyebrow: "Recommended tools",
         toolsTitle: "AI image books",
@@ -479,6 +500,88 @@
         policyTitle: "ユーザーと審査担当者向けの情報です。"
       }
     };
+
+    Object.assign(messages.ja, {
+      navConvert: "変換",
+      navApps: "アプリ",
+      navTools: "おすすめ",
+      answerEyebrow: "直接回答",
+      answerTitle: "Drop2PPTとは？",
+      answerCopy: "Drop2PPTは、AI生成画像、スクリーンショット、図解、カンプを編集可能なPowerPoint PPTXスライドに変換するWebサービスです。単なる画像貼り付けではなく、あとから直せるプレゼン資料を必要とする人のために作っています。",
+      heroEyebrow: "画像からPPTへ",
+      heroTitle: "画像をドロップ。編集できるPowerPointへ。",
+      heroCopy: "AI生成画像、スクリーンショット、図解、LPカンプを、編集可能なPPTXスライドとして再構築します。",
+      dropTitle: "ここに画像をドロップ",
+      dropHint: "PNG、JPG、WebPに対応。クリックして選択もできます。",
+      statusReady: "画像をドロップ、または選択して開始できます。",
+      statusSelected: "画像を選択しました。アップロードします...",
+      statusUploading: "画像をアップロード中...",
+      statusQueued: "待機中です。変換順を待っています...",
+      statusProcessing: "編集可能なPowerPointへ変換中...",
+      statusCompleted: "PPTXをダウンロードできます。",
+      statusFailed: "変換に失敗しました。別の画像でお試しください。",
+      statusNeedCredits: "変換前にメールを入力し、クレジットを購入してください。",
+      statusBalance: "クレジット残高を確認しました。",
+      statusCheckout: "安全な決済ページを開いています...",
+      downloadPpt: "PPTXをダウンロード",
+      emailLabel: "クレジット用メール",
+      checkBalance: "残高確認",
+      creditsUnknown: "クレジット: 未確認",
+      creditsLabel: "クレジット",
+      starterTitle: "Starter",
+      starterCopy: "5回変換",
+      proTitle: "Pro",
+      proCopy: "25回変換",
+      hqTitle: "High Quality",
+      hqCopy: "複雑な1枚",
+      chooseImage: "画像を選ぶ",
+      viewExample: "変換の流れを見る",
+      appsEyebrow: "Androidアプリ",
+      appsTitle: "スマホでも、作る・調べる・試す。",
+      appsCopy: "WorldSceneでは、写真解析、便利ツール、クイズなど、日常の作業や発想を助けるAndroidアプリを展開しています。",
+      appMetricOne: "写真から発見",
+      appMetricTwo: "便利ツール群",
+      appMetricThree: "スマホ作業を支援",
+      openGooglePlay: "Google Playを見る",
+      toolsEyebrow: "Recommended Tools",
+      toolsTitle: "AI画像制作に役立つ本",
+      bookOneTitle: "ChatGPT・画像AI入門",
+      bookOneCopy: "プロンプトで作る基本を学ぶ。",
+      bookTwoTitle: "画像生成AIガイド",
+      bookTwoCopy: "AI画像づくりを基礎から始める。",
+      bookThreeTitle: "AIデザイン活用",
+      bookThreeCopy: "企画・制作の現場でAIを使う。",
+      bookFourTitle: "AI画像と著作権",
+      bookFourCopy: "商用利用前にリスクを理解する。",
+      affiliateNote: "Amazonアソシエイトとして、適格販売により収入を得る場合があります。",
+      exampleEyebrow: "変換の流れ",
+      exampleTitle: "画像を貼るだけのPPTではありません。",
+      exampleCopy: "文字、パネル、矢印、レイアウトをPowerPointで編集できる要素として再構築することを目指します。",
+      stepOneTitle: "アップロード",
+      stepOneCopy: "AI画像、スクリーンショット、図解、カンプをドロップします。",
+      stepTwoTitle: "再構築",
+      stepTwoCopy: "レイアウトを解析し、編集可能なスライド要素として組み直します。",
+      stepThreeTitle: "ダウンロード",
+      stepThreeCopy: "修正、発表、納品に使えるPPTXを受け取ります。",
+      faqEyebrow: "FAQ",
+      faqTitle: "画像から編集可能PowerPointへの変換について。",
+      faqOneQuestion: "Drop2PPTは何をするツールですか？",
+      faqOneAnswer: "AI生成画像、スクリーンショット、図解、カンプを編集可能なPowerPoint PPTXスライドへ変換します。",
+      faqTwoQuestion: "出力はPowerPointに画像を貼っただけですか？",
+      faqTwoAnswer: "いいえ。単一の平面画像を貼るのではなく、文字、図形、パネル、矢印、レイアウトを編集可能な要素として再構築することを目指します。",
+      faqThreeQuestion: "誰向けのサービスですか？",
+      faqThreeAnswer: "企画、マーケティング、コンサル、教育、制作など、画像案を編集可能な資料にしたい人向けです。",
+      faqFourQuestion: "対応画像形式は？",
+      faqFourAnswer: "PNG、JPG、WebP画像に対応しています。",
+      lineupEyebrow: "WorldSceneアプリ",
+      lineupTitle: "軽量なAndroidツールも展開中。",
+      worldsceneCopy: "写真から場所や旅のヒントを発見します。",
+      printCopy: "共有された画像やPDFをAndroidの印刷フローへ送ります。",
+      iqCopy: "論理、パターン、記憶、空間認識のカジュアルパズルです。",
+      openOnGooglePlay: "Google Playで開く",
+      policyEyebrow: "ポリシーとサポート",
+      policyTitle: "ユーザーと審査担当者向けの情報です。"
+    });
 
     const supportedLanguages = ["en", "ja"];
     const savedLanguage = localStorage.getItem("worldscene-language");
