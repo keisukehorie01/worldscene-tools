@@ -72,30 +72,6 @@ def register_ppt_routes(app):
       output_path = OUTPUT_DIR / f"{job_id}.pptx"
       upload_path.write_bytes(raw)
 
-      scan = scan_upload_for_malware(upload_path)
-      if not scan["ok"]:
-          try:
-              upload_path.unlink(missing_ok=True)
-          except OSError:
-              pass
-          return jsonify({"ok": False, "error": scan["error"], "message": scan["message"]}), scan["status_code"]
-
-      if scan["status"] == "skipped" and MALWARE_SCAN_REQUIRED:
-          try:
-              upload_path.unlink(missing_ok=True)
-          except OSError:
-              pass
-          return jsonify({"ok": False, "error": "malware_scanner_unavailable"}), 503
-
-      try:
-          consume_credit(email, job_id, amount=1)
-      except ValueError:
-          try:
-              upload_path.unlink(missing_ok=True)
-          except OSError:
-              pass
-          return jsonify({"ok": False, "error": "insufficient_credits"}), 402
-
       job = {
           "id": job_id,
           "status": "queued",
@@ -108,7 +84,7 @@ def register_ppt_routes(app):
           "input_path": str(upload_path),
           "output_path": str(output_path),
           "email": email,
-          "credits_used": 1,
+          "credits_used": 0,
           "credit_refunded": False,
           "download_url": None,
           "error": None,
@@ -283,8 +259,35 @@ def update_job(job_id: str, **changes) -> Dict[str, Any]:
 
 def process_job(job_id: str) -> None:
     try:
-        job = update_job(job_id, status="processing", progress=20, message="Analyzing image")
+        job = update_job(job_id, status="processing", progress=10, message="Scanning uploaded image")
         image_path = Path(job["input_path"])
+
+        scan = scan_upload_for_malware(image_path)
+        if not scan["ok"]:
+            try:
+                image_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+            raise RuntimeError(scan.get("message") or scan.get("error") or "Malware scan failed")
+
+        if scan["status"] == "skipped" and MALWARE_SCAN_REQUIRED:
+            try:
+                image_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+            raise RuntimeError("Malware scanner is required but unavailable.")
+
+        try:
+            consume_credit(job["email"], job_id, amount=1)
+            job = update_job(job_id, credits_used=1)
+        except ValueError:
+            try:
+                image_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+            raise ValueError("Insufficient credits. Please buy credits before converting.")
+
+        job = update_job(job_id, status="processing", progress=20, message="Analyzing image")
         image_bytes = image_path.read_bytes()
         mime_type = job["input_mime_type"]
 
@@ -296,7 +299,8 @@ def process_job(job_id: str) -> None:
         update_job(job_id, status="completed", progress=100, message="Ready to download")
     except Exception as exc:
         job = load_job(job_id)
-        if job and job.get("email") and not job.get("credit_refunded"):
+        credits_used = int(job.get("credits_used") or 0) if job else 0
+        if job and credits_used > 0 and job.get("email") and not job.get("credit_refunded"):
             refund_credit(job["email"], job_id, amount=int(job.get("credits_used") or 1))
             update_job(job_id, credit_refunded=True)
         error_message = safe_error_message(exc)
