@@ -888,6 +888,66 @@ a {
   text-decoration: none;
 }
 
+.legal-page {
+  min-height: calc(100vh - 72px);
+  padding: clamp(22px, 4vw, 56px);
+  background:
+    linear-gradient(140deg, rgba(18, 50, 74, 0.92), rgba(15, 141, 128, 0.74)),
+    var(--navy);
+}
+
+.legal-panel {
+  width: min(980px, 100%);
+  margin: 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 22px 70px rgba(7, 22, 36, 0.24);
+  padding: clamp(24px, 5vw, 56px);
+}
+
+.legal-panel h1 {
+  margin: 0 0 14px;
+  color: var(--navy);
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.12;
+}
+
+.legal-lead {
+  margin: 0 0 28px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  background: white;
+}
+
+.legal-table th,
+.legal-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 16px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.8;
+}
+
+.legal-table th {
+  width: 28%;
+  background: #f4f8fa;
+  color: var(--navy);
+  font-weight: 900;
+}
+
+.legal-updated {
+  margin: 24px 0 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
 @media (max-width: 1120px) {
   .hero-grid {
     grid-template-columns: 1fr 1fr;
