@@ -190,7 +190,7 @@ def process_job(job_id: str) -> None:
         update_job(job_id, progress=70, message="Rebuilding editable slide")
 
         output_path = Path(job["output_path"])
-        write_pptx(output_path, analysis)
+        write_pptx(output_path, analysis, image_path)
         update_job(job_id, status="completed", progress=100, message="Ready to download")
     except Exception as exc:
         job = load_job(job_id)
@@ -343,7 +343,7 @@ def clamp_float(value: Any, minimum: float, maximum: float) -> float:
     return max(minimum, min(maximum, number))
 
 
-def write_pptx(path: Path, analysis: Dict[str, Any]) -> None:
+def write_pptx(path: Path, analysis: Dict[str, Any], source_image_path: Optional[Path] = None) -> None:
     try:
         from pptx import Presentation
         from pptx.dml.color import RGBColor
@@ -356,6 +356,10 @@ def write_pptx(path: Path, analysis: Dict[str, Any]) -> None:
     prs = Presentation()
     prs.slide_width = SLIDE_W
     prs.slide_height = SLIDE_H
+    if source_image_path:
+        visual_slide = prs.slides.add_slide(prs.slide_layouts[6])
+        add_full_slide_image(visual_slide, source_image_path)
+
     slide = prs.slides.add_slide(prs.slide_layouts[6])
 
     bg = slide.background.fill
@@ -394,6 +398,10 @@ def write_pptx(path: Path, analysis: Dict[str, Any]) -> None:
         )
 
     prs.save(path)
+
+
+def add_full_slide_image(slide, image_path: Path) -> None:
+    slide.shapes.add_picture(str(image_path), 0, 0, width=SLIDE_W, height=SLIDE_H)
 
 
 def add_textbox(slide, x: int, y: int, w: int, h: int, text: str, font: str, font_size: int, bold: bool = False) -> None:
