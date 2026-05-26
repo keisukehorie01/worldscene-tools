@@ -20,6 +20,7 @@ except ModuleNotFoundError:
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "").strip()
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "").strip()
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "https://worldscene.net").rstrip("/")
+PUBLIC_APP_URL = os.getenv("PUBLIC_APP_URL", f"{PUBLIC_BASE_URL}/drop2ppt").rstrip("/")
 
 
 def register_stripe_routes(app):
@@ -57,8 +58,8 @@ def register_stripe_routes(app):
             mode="payment",
             customer_email=email,
             line_items=[{"price": price_id, "quantity": 1}],
-            success_url=f"{PUBLIC_BASE_URL}/?checkout=success&email={email}",
-            cancel_url=f"{PUBLIC_BASE_URL}/?checkout=cancel",
+            success_url=f"{PUBLIC_APP_URL}/?checkout=success&email={email}",
+            cancel_url=f"{PUBLIC_APP_URL}/?checkout=cancel",
             metadata={
                 "email": email,
                 "product_key": product_key,

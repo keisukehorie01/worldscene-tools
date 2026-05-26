@@ -513,6 +513,17 @@
       statusText.textContent = messages[currentLanguage][key] || fallback;
     }
 
+    const apiBase = window.location.pathname.startsWith("/drop2ppt") ? "/drop2ppt/api" : "/api";
+
+    function apiPath(path) {
+      return `${apiBase}${path}`;
+    }
+
+    function normalizeDownloadPath(url) {
+      if (!url) return "#";
+      return url.startsWith("/api/") ? `${apiBase}${url.slice(4)}` : url;
+    }
+
     async function markSelected() {
       const file = fileInput.files && fileInput.files[0];
       if (!file) return;
@@ -534,7 +545,7 @@
         const formData = new FormData();
         formData.append("image", file);
         formData.append("email", emailInput.value.trim());
-        const response = await fetch("/api/ppt/jobs", {
+        const response = await fetch(apiPath("/ppt/jobs"), {
           method: "POST",
           body: formData
         });
@@ -558,7 +569,7 @@
 
     async function pollJob(jobId) {
       try {
-        const response = await fetch(`/api/ppt/jobs/${jobId}`);
+        const response = await fetch(apiPath(`/ppt/jobs/${jobId}`));
         const data = await response.json();
         if (!response.ok || !data.ok) {
           throw new Error(data.error || "Status failed");
@@ -566,7 +577,7 @@
 
         if (data.job.status === "completed") {
           setStatus("statusCompleted", "PPTX is ready.");
-          downloadLink.href = data.job.download_url;
+          downloadLink.href = normalizeDownloadPath(data.job.download_url);
           downloadLink.hidden = false;
           selectFile.disabled = false;
           await loadBalance();
@@ -593,7 +604,7 @@
         setStatus("statusNeedCredits", "Please enter your email.");
         return;
       }
-      const response = await fetch(`/api/billing/balance?email=${encodeURIComponent(email)}`);
+      const response = await fetch(apiPath(`/billing/balance?email=${encodeURIComponent(email)}`));
       const data = await response.json();
       if (response.ok && data.ok) {
         creditBalance.textContent = `${messages[currentLanguage].creditsLabel}: ${data.credits}`;
@@ -609,7 +620,7 @@
         return;
       }
       setStatus("statusCheckout", "Opening checkout...");
-      const response = await fetch("/api/checkout/create", {
+      const response = await fetch(apiPath("/checkout/create"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, product })
