@@ -26,8 +26,8 @@ MAX_UPLOAD_BYTES = int(os.getenv("PPT_MAX_UPLOAD_BYTES", str(12 * 1024 * 1024)))
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.getenv("PPT_GEMINI_MODEL", os.getenv("GEMINI_MODEL", "gemini-2.5-flash")).strip()
 
-SLIDE_W = 9144000
-SLIDE_H = 5143500
+SLIDE_W = 12192000
+SLIDE_H = 6858000
 
 JOBS: Dict[str, Dict[str, Any]] = {}
 JOBS_LOCK = threading.Lock()
@@ -427,6 +427,288 @@ def fallback_elements():
     return elements
 
 
+def build_dense_reconstruction(analysis: Dict[str, Any]):
+    cards = extract_step_cards(analysis)
+    logs = extract_log_lines(analysis)
+    title = clean_text(analysis.get("title")) or "AEO処理シーケンス"
+    subtitle = clean_text(analysis.get("subtitle")) or "公式HP・入力情報・デザインカンプを解析し、個別設計のLPへ分解・構築"
+    summary = clean_text(analysis.get("summary")) or "意味を理解し、編集可能なPowerPointとして再構築します。"
+
+    elements = []
+    add_bg_grid(elements)
+    add_text(elements, title, 0.23, 0.028, 0.54, 0.075, 34, bold=True)
+    add_text(elements, subtitle, 0.25, 0.112, 0.54, 0.035, 13, font="EAF7FF", bold=True)
+
+    add_left_log_panel(elements, logs)
+    add_center_core(elements)
+    add_process_cards(elements, cards)
+    add_status_panel(elements)
+    add_bottom_flow(elements)
+    add_text(elements, summary, 0.10, 0.916, 0.80, 0.045, 14, font="FFFFFF", bold=True)
+    return elements
+
+
+def extract_step_cards(analysis: Dict[str, Any]):
+    defaults = default_step_cards()
+    cards = {}
+    for step in analysis.get("steps") or []:
+        if not isinstance(step, dict):
+            continue
+        label = clean_text(step.get("label")) or str(len(cards) + 1)
+        title = clean_text(step.get("title")) or defaults.get(label, {}).get("title", "Step")
+        body = clean_text(step.get("body")) or defaults.get(label, {}).get("body", "")
+        if label.isdigit():
+            cards[label] = {"label": label, "title": title, "body": body}
+
+    for element in analysis.get("elements") or []:
+        text = clean_text(element.get("text") if isinstance(element, dict) else "")
+        if not text:
+            continue
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        if not lines:
+            continue
+        match = re.match(r"^(\d{1,2})\s*[.:\-)]?\s*(.+)$", lines[0])
+        if not match:
+            continue
+        label, heading = match.groups()
+        number = int(label)
+        if not 1 <= number <= 12:
+            continue
+        body = "\n".join(lines[1:3])
+        if not body:
+            body = defaults.get(label, {}).get("body", "")
+        cards[label] = {"label": label, "title": heading[:28], "body": body[:90]}
+
+    for label, data in defaults.items():
+        cards.setdefault(label, data)
+    return [cards[str(index)] for index in range(1, 13)]
+
+
+def default_step_cards():
+    rows = [
+        ("1", "制作受付", "会社情報・公式HP・問い合わせ導線を受け付ける"),
+        ("2", "公式HP読込", "サイト情報・電話番号・問い合わせ先を取得"),
+        ("3", "下層ページ調査", "サービス・FAQ・お知らせなどを収集"),
+        ("4", "FAQ設計", "疑問を整理し、AI検索に伝わるFAQ構造を作る"),
+        ("5", "強み抽出", "特徴・差別化・信頼材料を抽出"),
+        ("6", "問い合わせ導線設計", "電話・フォーム・予約・資料請求などを設計"),
+        ("7", "AEO・LLMO構造化", "検索AIに伝わりやすい構造へ整理"),
+        ("8", "画像候補整理", "必要な画像と役割を決める"),
+        ("9", "デザインカンプ生成", "複数のデザイン案を生成"),
+        ("10", "カンプ解析", "画像からセクション構造を読み取る"),
+        ("11", "HTML分解", "文章・リンク・ボタンとして再構築"),
+        ("12", "LP仕上げ", "スマホ表示や導線を確認して仕上げる"),
+    ]
+    return {label: {"label": label, "title": title, "body": body} for label, title, body in rows}
+
+
+def extract_log_lines(analysis: Dict[str, Any]):
+    defaults = [
+        "12 > クライアント情報を受信しました",
+        "12 > 公式HPを読み込んでいます...",
+        "12 > 下層ページを調査中...",
+        "13 > FAQ構造を設計中...",
+        "13 > 強み・差別化を抽出中...",
+        "18 > 問い合わせ導線を設計中...",
+        "19 > AEO・LLMO構造化中...",
+        "19 > 画像候補を整理中...",
+        "18 > デザインカンプを生成中...",
+        "18 > カンプを解析中...",
+        "13 > HTMLを分解・再構築中...",
+        "10 > Complete!",
+    ]
+    found = []
+    for element in analysis.get("elements") or []:
+        if not isinstance(element, dict):
+            continue
+        for line in clean_text(element.get("text")).splitlines():
+            line = line.strip()
+            if ">" in line and len(line) >= 5:
+                found.append(line[:42])
+    merged = []
+    for line in found + defaults:
+        if line not in merged:
+            merged.append(line)
+    return merged[:12]
+
+
+def add_bg_grid(elements):
+    elements.append({"type": "rect", "x": 0, "y": 0, "w": 1, "h": 1, "fill": "06162A", "line": "06162A"})
+    for index in range(18):
+        y = 0.05 + index * 0.048
+        add_line(elements, 0.01, y, 0.97, 0, line="082D52")
+    for index in range(28):
+        x = 0.02 + index * 0.035
+        add_line(elements, x, 0.02, 0, 0.88, line="071F3D")
+    for index in range(32):
+        x = (index * 37 % 96) / 100
+        y = (index * 53 % 88) / 100 + 0.02
+        color = "21D7FF" if index % 3 else "FFB23E"
+        elements.append({"type": "circle", "x": x, "y": y, "w": 0.0035, "h": 0.006, "fill": color, "line": color})
+    for index in range(22):
+        x = 0.01 + (index % 11) * 0.085
+        y = 0.02 + (index // 11) * 0.89
+        add_line(elements, x, y, 0.045, 0, line="19B9FF")
+        add_line(elements, x + 0.045, y, 0.018, 0.025, line="19B9FF")
+
+
+def add_left_log_panel(elements, logs):
+    add_panel(elements, 0.01, 0.09, 0.16, 0.56, "リアルタイム処理ログ", line="0CE879", fill="021A24")
+    for index, line in enumerate(logs):
+        y = 0.145 + index * 0.0375
+        add_text(elements, line, 0.012, y, 0.145, 0.021, 7, font="33F28A", bold=True)
+        add_line(elements, 0.012, y + 0.026, 0.135, 0, line="0D7C55")
+    for index in range(16):
+        height = 0.012 + (index % 5) * 0.006
+        elements.append({"type": "rect", "x": 0.018 + index * 0.0084, "y": 0.625 - height, "w": 0.005, "h": height, "fill": "25F075", "line": "25F075"})
+
+
+def add_center_core(elements):
+    for size, color in [(0.30, "0B3D70"), (0.24, "116FB2"), (0.18, "21D7FF"), (0.12, "FFB23E")]:
+        x = 0.50 - size / 2
+        y = 0.39 - size / 3.2
+        elements.append({"type": "circle", "x": x, "y": y, "w": size, "h": size * 0.56, "fill": "06162A", "line": color})
+    elements.append({"type": "roundRect", "x": 0.44, "y": 0.315, "w": 0.12, "h": 0.16, "fill": "0A5FA8", "line": "7FE6FF"})
+    add_text(elements, "AI", 0.462, 0.354, 0.076, 0.075, 36, bold=True)
+    for index in range(18):
+        x = 0.37 + (index % 6) * 0.046
+        y = 0.255 + (index // 6) * 0.065
+        elements.append({"type": "rect", "x": x, "y": y, "w": 0.018, "h": 0.010, "fill": "103B64", "line": "21D7FF"})
+    for x, y, w, h in [(0.18, 0.19, 0.18, 0.16), (0.64, 0.18, -0.08, 0.12), (0.19, 0.58, 0.20, -0.12), (0.62, 0.58, -0.12, -0.10)]:
+        add_line(elements, x, y, w, h, line="38D5FF")
+
+
+def add_process_cards(elements, cards):
+    positions = {
+        1: (0.19, 0.15), 2: (0.32, 0.15), 3: (0.48, 0.15), 4: (0.64, 0.15),
+        5: (0.65, 0.29), 6: (0.65, 0.43), 7: (0.61, 0.57), 8: (0.45, 0.57),
+        9: (0.31, 0.57), 10: (0.17, 0.57), 11: (0.17, 0.43), 12: (0.17, 0.29),
+    }
+    for card in cards:
+        label = int(card["label"])
+        x, y = positions.get(label, (0.2, 0.2))
+        w, h = 0.145, 0.105
+        add_infographic_card(elements, x, y, w, h, card["label"], card["title"], card["body"])
+    for x, y, w, h in [
+        (0.292, 0.196, 0.028, 0), (0.455, 0.196, 0.025, 0), (0.615, 0.196, 0.025, 0),
+        (0.720, 0.255, 0.030, 0.045), (0.720, 0.395, 0.030, 0.045),
+        (0.588, 0.615, -0.032, 0), (0.435, 0.615, -0.030, 0), (0.293, 0.615, -0.030, 0),
+        (0.170, 0.535, 0, -0.035), (0.170, 0.395, 0, -0.035),
+    ]:
+        add_line(elements, x, y, w, h, line="38D5FF")
+
+
+def add_infographic_card(elements, x, y, w, h, label, title, body):
+    elements.append({"type": "roundRect", "x": x, "y": y, "w": w, "h": h, "fill": "08233E", "line": "38D5FF"})
+    elements.append({"type": "rect", "x": x + 0.006, "y": y + 0.010, "w": 0.035, "h": h - 0.020, "fill": "0B2D50", "line": "176EA8"})
+    elements.append({"type": "circle", "text": label, "x": x - 0.010, "y": y - 0.007, "w": 0.030, "h": 0.040, "fill": "0B6EEA", "line": "7FE6FF", "font_size": 13, "bold": True})
+    add_icon_placeholder(elements, x + 0.014, y + 0.032, label)
+    add_text(elements, title, x + 0.048, y + 0.018, w - 0.055, 0.030, 13, bold=True)
+    for index, line in enumerate(wrap_short(body, 16)[:3]):
+        add_text(elements, line, x + 0.050, y + 0.050 + index * 0.020, w - 0.057, 0.018, 7, font="EAF7FF")
+    add_line(elements, x + 0.012, y + h - 0.012, w - 0.024, 0, line="1BB8FF")
+
+
+def add_icon_placeholder(elements, x, y, seed):
+    elements.append({"type": "circle", "x": x, "y": y, "w": 0.020, "h": 0.030, "fill": "073A65", "line": "7FE6FF"})
+    add_line(elements, x + 0.004, y + 0.015, 0.012, -0.010, line="7FE6FF")
+    add_line(elements, x + 0.004, y + 0.015, 0.012, 0.010, line="7FE6FF")
+    if int(seed) % 2 == 0:
+        elements.append({"type": "rect", "x": x + 0.024, "y": y + 0.006, "w": 0.014, "h": 0.018, "fill": "093A62", "line": "7FE6FF"})
+    else:
+        elements.append({"type": "circle", "x": x + 0.024, "y": y + 0.006, "w": 0.014, "h": 0.018, "fill": "093A62", "line": "7FE6FF"})
+
+
+def add_status_panel(elements):
+    add_panel(elements, 0.82, 0.03, 0.165, 0.67, "処理ステータス", fill="071A33", line="1AA6D9")
+    add_text(elements, "Stage", 0.845, 0.095, 0.050, 0.035, 14, bold=True)
+    add_text(elements, "10", 0.895, 0.084, 0.040, 0.050, 24, font="66F0E8", bold=True)
+    add_text(elements, "/ 12", 0.933, 0.100, 0.036, 0.030, 13, bold=True)
+    add_text(elements, "カンプ解析中", 0.852, 0.145, 0.105, 0.035, 15, font="00E7FF", bold=True)
+    for size, color in [(0.110, "10507E"), (0.088, "22D7FF"), (0.066, "66E95E")]:
+        elements.append({"type": "circle", "x": 0.855 + (0.110 - size) / 2, "y": 0.205 + (0.110 - size) / 2, "w": size, "h": size, "fill": "071A33", "line": color})
+    add_text(elements, "87%", 0.884, 0.245, 0.060, 0.045, 24, bold=True)
+    add_text(elements, "進行状況", 0.828, 0.345, 0.060, 0.020, 8, bold=True)
+    for index in range(12):
+        color = "37EB78" if index < 10 else "0D3557"
+        elements.append({"type": "roundRect", "x": 0.829 + index * 0.0118, "y": 0.374, "w": 0.009, "h": 0.012, "fill": color, "line": color})
+    elements.append({"type": "rect", "x": 0.828, "y": 0.405, "w": 0.145, "h": 0.105, "fill": "061D35", "line": "1AA6D9"})
+    add_text(elements, "現在の処理", 0.835, 0.414, 0.070, 0.020, 9, font="FFFFFF", bold=True)
+    for index, text in enumerate(["・カンプ画像を解析中...", "・サービスカードを抽出", "・FAQを認識", "・CTAを構造化しています..."]):
+        add_text(elements, text, 0.838, 0.441 + index * 0.017, 0.126, 0.017, 7, font="EAF7FF")
+    elements.append({"type": "rect", "x": 0.828, "y": 0.530, "w": 0.145, "h": 0.145, "fill": "061D35", "line": "1AA6D9"})
+    add_text(elements, "最近のログ", 0.835, 0.538, 0.080, 0.020, 9, bold=True)
+    for index in range(6):
+        add_text(elements, f"12:3{index}:1{index}  処理ステップを完了しました", 0.837, 0.565 + index * 0.017, 0.126, 0.016, 6, font="CFEFFF")
+        elements.append({"type": "circle", "x": 0.962, "y": 0.568 + index * 0.017, "w": 0.006, "h": 0.008, "fill": "39EF78", "line": "39EF78"})
+
+
+def add_bottom_flow(elements):
+    add_panel(elements, 0.01, 0.70, 0.16, 0.20, "重要キーワード", fill="062646", line="25BFFF")
+    keywords = ["個別設計", "テンプレ禁止", "カンプ解析", "HTML分解", "AEO対策", "LLMO対策", "問い合わせ導線", "スマホ最適化"]
+    for index, text in enumerate(keywords):
+        x = 0.020 + (index % 2) * 0.072
+        y = 0.745 + (index // 2) * 0.035
+        elements.append({"type": "roundRect", "x": x, "y": y, "w": 0.064, "h": 0.024, "fill": "073A65", "line": "25BFFF"})
+        add_text(elements, text, x + 0.006, y + 0.005, 0.052, 0.014, 6, bold=True)
+
+    panels = [
+        ("1 デザインカンプ生成", 0.19, 0.70, 0.27),
+        ("2 カンプ解析", 0.48, 0.70, 0.16),
+        ("3 HTML分解", 0.66, 0.70, 0.15),
+        ("4 個別LP完成", 0.83, 0.70, 0.15),
+    ]
+    for title, x, y, w in panels:
+        add_panel(elements, x, y, w, 0.20, title, fill="062646", line="25BFFF")
+    for index, color in enumerate(["0E56A0", "47A953", "42AEEB", "E49A20"]):
+        x = 0.205 + index * 0.065
+        elements.append({"type": "rect", "x": x, "y": 0.748, "w": 0.050, "h": 0.102, "fill": color, "line": "D8F6FF"})
+        add_text(elements, f"{chr(65 + index)}案", x + 0.012, 0.756, 0.028, 0.020, 9, bold=True)
+        for line_index in range(4):
+            elements.append({"type": "rect", "x": x + 0.007, "y": 0.785 + line_index * 0.014, "w": 0.036, "h": 0.006, "fill": "EAF7FF", "line": "EAF7FF"})
+    for index, text in enumerate(["ヒーロー領域", "サービスカード", "導入フロー", "FAQセクション", "CTAボタン"]):
+        add_text(elements, text, 0.555, 0.747 + index * 0.026, 0.070, 0.016, 7, font="FFFFFF")
+        elements.append({"type": "circle", "x": 0.542, "y": 0.750 + index * 0.026, "w": 0.007, "h": 0.009, "fill": "FFD54D", "line": "FFD54D"})
+    code_lines = ["<header class=\"hero\">", "<section class=\"cards\">", "<section class=\"flow\">", "<section class=\"faq\">", "<footer class=\"contact\">"]
+    for index, text in enumerate(code_lines):
+        add_text(elements, text, 0.680, 0.748 + index * 0.026, 0.115, 0.018, 7, font="DDF6FF")
+    elements.append({"type": "rect", "x": 0.845, "y": 0.758, "w": 0.075, "h": 0.080, "fill": "EAF7FF", "line": "25BFFF"})
+    elements.append({"type": "rect", "x": 0.925, "y": 0.765, "w": 0.035, "h": 0.080, "fill": "EAF7FF", "line": "25BFFF"})
+    for index in range(4):
+        elements.append({"type": "rect", "x": 0.852, "y": 0.775 + index * 0.014, "w": 0.060, "h": 0.006, "fill": "0E56A0", "line": "0E56A0"})
+        elements.append({"type": "rect", "x": 0.931, "y": 0.782 + index * 0.013, "w": 0.022, "h": 0.005, "fill": "0E56A0", "line": "0E56A0"})
+    elements.append({"type": "circle", "text": "✓", "x": 0.950, "y": 0.828, "w": 0.035, "h": 0.050, "fill": "42C946", "line": "D5FFD8", "font_size": 20, "bold": True})
+    for x in [0.455, 0.640, 0.810]:
+        add_line(elements, x, 0.800, 0.020, 0, line="7FE6FF")
+        add_line(elements, x + 0.020, 0.800, -0.008, -0.010, line="7FE6FF")
+        add_line(elements, x + 0.020, 0.800, -0.008, 0.010, line="7FE6FF")
+
+
+def add_panel(elements, x, y, w, h, title, fill="071F3D", line="1AA6D9"):
+    elements.append({"type": "roundRect", "x": x, "y": y, "w": w, "h": h, "fill": fill, "line": line})
+    add_line(elements, x + 0.010, y + 0.036, w - 0.020, 0, line=line)
+    add_text(elements, title, x + 0.016, y + 0.013, w - 0.030, 0.022, 10, font="FFFFFF", bold=True)
+    for dx, dy in [(0.004, 0.004), (w - 0.018, 0.004), (0.004, h - 0.018), (w - 0.018, h - 0.018)]:
+        elements.append({"type": "rect", "x": x + dx, "y": y + dy, "w": 0.014, "h": 0.004, "fill": line, "line": line})
+
+
+def add_text(elements, text, x, y, w, h, size, font="FFFFFF", bold=False):
+    elements.append({"type": "text", "text": text, "x": x, "y": y, "w": w, "h": h, "font": font, "font_size": size, "bold": bold})
+
+
+def add_line(elements, x, y, w, h, line="1AA6D9"):
+    elements.append({"type": "line", "x": x, "y": y, "w": w, "h": h, "line": line})
+
+
+def wrap_short(text: str, size: int):
+    text = clean_text(text)
+    if not text:
+        return []
+    if "\n" in text:
+        return [line for line in text.splitlines() if line]
+    return [text[index:index + size] for index in range(0, len(text), size)]
+
+
 def clean_text(value: Any) -> str:
     if value is None:
         return ""
@@ -470,7 +752,8 @@ def write_pptx(path: Path, analysis: Dict[str, Any], source_image_path: Optional
     editable_slide = prs.slides.add_slide(prs.slide_layouts[6])
     render_editable_slide(editable_slide, analysis)
 
-    if source_image_path:
+    include_source = os.getenv("PPT_INCLUDE_SOURCE_SLIDE", "0").strip().lower() in {"1", "true", "yes"}
+    if source_image_path and include_source:
         visual_slide = prs.slides.add_slide(prs.slide_layouts[6])
         add_full_slide_image(visual_slide, source_image_path)
 
@@ -487,7 +770,7 @@ def render_editable_slide(slide, analysis: Dict[str, Any]) -> None:
     bg.solid()
     bg.fore_color.rgb = RGBColor.from_string(background)
 
-    elements = analysis.get("elements") or fallback_elements()
+    elements = build_dense_reconstruction(analysis)
     for element in elements:
         render_element(slide, element, accent)
 
