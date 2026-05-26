@@ -153,6 +153,15 @@
             <span class="status-dot"></span>
             <span data-i18n="statusReady">Ready for beta testing. Upload processing will be connected next.</span>
           </div>
+          <div class="progress-panel" id="progress-panel" hidden aria-label="Conversion progress">
+            <div class="progress-meta">
+              <span id="progress-label" data-i18n="progressIdle">Waiting</span>
+              <strong id="progress-percent">0%</strong>
+            </div>
+            <div class="progress-track">
+              <span id="progress-bar"></span>
+            </div>
+          </div>
           <a class="download-link" id="download-link" href="#" hidden data-i18n="downloadPpt">Download PPTX</a>
 
           <div class="hero-actions">
@@ -380,6 +389,7 @@
         statusNeedCredits: "Please enter your email and buy credits before converting.",
         statusBalance: "Credits loaded.",
         statusCheckout: "Opening secure checkout...",
+        progressIdle: "Waiting",
         downloadPpt: "Download PPTX",
         emailLabel: "Email for credits",
         checkBalance: "Check credits",
@@ -542,6 +552,7 @@
       statusNeedCredits: "変換前にメールを入力し、クレジットを購入してください。",
       statusBalance: "クレジット残高を確認しました。",
       statusCheckout: "安全な決済ページを開いています...",
+      progressIdle: "待機中",
       downloadPpt: "PPTXをダウンロード",
       emailLabel: "クレジット用メール",
       checkBalance: "残高確認",
@@ -617,6 +628,10 @@
     const emailInput = document.getElementById("email-input");
     const checkBalance = document.getElementById("check-balance");
     const creditBalance = document.getElementById("credit-balance");
+    const progressPanel = document.getElementById("progress-panel");
+    const progressLabel = document.getElementById("progress-label");
+    const progressPercent = document.getElementById("progress-percent");
+    const progressBar = document.getElementById("progress-bar");
 
     function applyLanguage(language) {
       currentLanguage = language;
@@ -633,6 +648,19 @@
 
     function setStatus(key, fallback) {
       statusText.textContent = messages[currentLanguage][key] || fallback;
+    }
+
+    function setProgress(progress, label, visible = true) {
+      const value = Math.max(0, Math.min(100, Number(progress) || 0));
+      progressPanel.hidden = !visible;
+      progressLabel.textContent = label || messages[currentLanguage].progressIdle || "Waiting";
+      progressPercent.textContent = `${Math.round(value)}%`;
+      progressBar.style.width = `${value}%`;
+    }
+
+    function hideDownload() {
+      downloadLink.hidden = true;
+      downloadLink.removeAttribute("href");
     }
 
     const apiBase = window.location.pathname.startsWith("/drop2ppt") ? "/drop2ppt/api" : "/api";
@@ -655,14 +683,16 @@
       }
       setStatus("statusSelected", "Image selected.");
       dropZone.classList.add("drop-zone-selected");
-      downloadLink.hidden = true;
-      downloadLink.removeAttribute("href");
+      hideDownload();
+      setProgress(3, messages[currentLanguage].statusSelected || "Image selected.");
       await uploadImage(file);
     }
 
     async function uploadImage(file) {
       try {
         setStatus("statusUploading", "Uploading image...");
+        hideDownload();
+        setProgress(8, messages[currentLanguage].statusUploading || "Uploading image...");
         selectFile.disabled = true;
         const formData = new FormData();
         formData.append("image", file);
@@ -682,9 +712,11 @@
           throw new Error(data.error || "Upload failed");
         }
         setStatus("statusQueued", "Queued.");
+        setProgress(data.job.progress || 10, data.job.message || messages[currentLanguage].statusQueued);
         pollJob(data.job.id);
       } catch (error) {
         setStatus("statusFailed", "Conversion failed.");
+        setProgress(100, messages[currentLanguage].statusFailed || "Conversion failed.");
         selectFile.disabled = false;
       }
     }
@@ -697,8 +729,11 @@
           throw new Error(data.error || "Status failed");
         }
 
+        setProgress(data.job.progress, data.job.message || data.job.status);
+
         if (data.job.status === "completed") {
           setStatus("statusCompleted", "PPTX is ready.");
+          setProgress(100, messages[currentLanguage].statusCompleted || "PPTX is ready.");
           downloadLink.href = normalizeDownloadPath(data.job.download_url);
           downloadLink.hidden = false;
           selectFile.disabled = false;
@@ -708,6 +743,8 @@
 
         if (data.job.status === "failed") {
           setStatus("statusFailed", "Conversion failed.");
+          setProgress(100, data.job.error || messages[currentLanguage].statusFailed || "Conversion failed.");
+          hideDownload();
           selectFile.disabled = false;
           return;
         }
@@ -716,6 +753,8 @@
         window.setTimeout(() => pollJob(jobId), 1800);
       } catch (error) {
         setStatus("statusFailed", "Conversion failed.");
+        setProgress(100, messages[currentLanguage].statusFailed || "Conversion failed.");
+        hideDownload();
         selectFile.disabled = false;
       }
     }
