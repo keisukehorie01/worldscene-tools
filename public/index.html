@@ -738,7 +738,7 @@
             selectFile.disabled = false;
             return;
           }
-          throw new Error(data.error || "Upload failed");
+          throw new Error(data.message || data.error || "Upload failed");
         }
         setStatus("statusQueued", "Queued.");
         setProgress(data.job.progress || 10, data.job.message || messages[currentLanguage].statusQueued);
@@ -756,7 +756,7 @@
         const response = await fetch(apiPath(`/ppt/jobs/${jobId}`));
         const data = await response.json();
         if (!response.ok || !data.ok) {
-          throw new Error(data.error || "Status failed");
+          throw new Error(data.message || data.error || "Status failed");
         }
 
         setProgress(data.job.progress, data.job.message || data.job.status);
@@ -825,7 +825,7 @@
       });
       const data = await response.json();
       if (!response.ok || !data.ok) {
-        setStatus("statusFailed", data.error || "Checkout failed.");
+        setStatus("statusFailed", data.message || data.error || "Checkout failed.");
         return;
       }
       window.location.href = data.url;
