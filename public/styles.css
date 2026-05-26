@@ -19,6 +19,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 96px;
 }
 
 body {
@@ -330,12 +331,13 @@ a {
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-top: 18px;
+  scroll-margin-top: 112px;
 }
 
 .price-card {
   display: grid;
   gap: 4px;
-  min-height: 96px;
+  min-height: 148px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: white;
@@ -362,6 +364,14 @@ a {
 .price-card small {
   color: var(--muted);
   font-weight: 800;
+}
+
+.price-card em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .drop-zone:hover,
