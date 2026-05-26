@@ -205,12 +205,19 @@ def scan_upload_for_malware(path: Path) -> Dict[str, Any]:
             "error": "malware_detected",
             "message": "The uploaded file did not pass malware scanning.",
         }
+    message = "Malware scanner failed to complete."
+    if output:
+        message = f"{message} {redact_secret_text(output[:500])}"
+    print(
+        f"Drop2PPT malware scan failed path={path} returncode={result.returncode} output={redact_secret_text(output[:1000])}",
+        flush=True,
+    )
     return {
         "ok": False,
         "status": "error",
         "status_code": 503,
         "error": "malware_scan_failed",
-        "message": "Malware scanner failed to complete.",
+        "message": message,
     }
 
 
