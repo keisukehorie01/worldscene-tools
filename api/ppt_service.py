@@ -292,7 +292,38 @@ def process_job(job_id: str) -> None:
         if job and job.get("email") and not job.get("credit_refunded"):
             refund_credit(job["email"], job_id, amount=int(job.get("credits_used") or 1))
             update_job(job_id, credit_refunded=True)
-        update_job(job_id, status="failed", progress=100, message="Conversion failed", error=str(exc))
+        error_message = safe_error_message(exc)
+        print(f"Drop2PPT job failed job_id={job_id} error={error_message}", flush=True)
+        update_job(job_id, status="failed", progress=100, message="Conversion failed", error=error_message)
+
+
+def safe_error_message(exc: Exception) -> str:
+    if isinstance(exc, requests.HTTPError):
+        response = exc.response
+        status_code = response.status_code if response is not None else "unknown"
+        message = ""
+        if response is not None:
+            try:
+                payload = response.json()
+                error = payload.get("error") if isinstance(payload, dict) else None
+                if isinstance(error, dict):
+                    message = clean_text(error.get("message"))
+            except ValueError:
+                message = clean_text(response.text[:400])
+        return redact_secret_text(f"Gemini API error ({status_code}): {message or 'request failed'}")
+
+    if isinstance(exc, json.JSONDecodeError):
+        return "AI response was not valid JSON. Please retry the conversion."
+
+    message = redact_secret_text(str(exc))
+    return message or f"{type(exc).__name__}: conversion failed"
+
+
+def redact_secret_text(text: str) -> str:
+    text = re.sub(r"([?&]key=)[^&\s]+", r"\1[redacted]", text or "")
+    text = re.sub(r"(AIza)[A-Za-z0-9_\-]+", r"\1[redacted]", text)
+    text = re.sub(r"(sk|pk|rk)_(live|test)_[A-Za-z0-9_\-]+", r"\1_\2_[redacted]", text)
+    return text
 
 
 def analyze_image_for_ppt(image_bytes: bytes, mime_type: str) -> Dict[str, Any]:

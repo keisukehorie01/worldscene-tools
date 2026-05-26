@@ -669,6 +669,10 @@
       statusText.textContent = messages[currentLanguage][key] || fallback;
     }
 
+    function setStatusText(text, fallbackKey) {
+      statusText.textContent = text || messages[currentLanguage][fallbackKey] || messages[currentLanguage].statusFailed || "Conversion failed.";
+    }
+
     function setProgress(progress, label, visible = true) {
       const value = Math.max(0, Math.min(100, Number(progress) || 0));
       progressPanel.hidden = !visible;
@@ -740,8 +744,9 @@
         setProgress(data.job.progress || 10, data.job.message || messages[currentLanguage].statusQueued);
         pollJob(data.job.id);
       } catch (error) {
-        setStatus("statusFailed", "Conversion failed.");
-        setProgress(100, messages[currentLanguage].statusFailed || "Conversion failed.");
+        const message = error.message || messages[currentLanguage].statusFailed || "Conversion failed.";
+        setStatusText(message, "statusFailed");
+        setProgress(100, message);
         selectFile.disabled = false;
       }
     }
@@ -767,8 +772,9 @@
         }
 
         if (data.job.status === "failed") {
-          setStatus("statusFailed", "Conversion failed.");
-          setProgress(100, data.job.error || messages[currentLanguage].statusFailed || "Conversion failed.");
+          const message = data.job.error || messages[currentLanguage].statusFailed || "Conversion failed.";
+          setStatusText(message, "statusFailed");
+          setProgress(100, message);
           hideDownload();
           selectFile.disabled = false;
           return;
@@ -777,8 +783,9 @@
         setStatus(data.job.status === "queued" ? "statusQueued" : "statusProcessing", data.job.message);
         window.setTimeout(() => pollJob(jobId), 1800);
       } catch (error) {
-        setStatus("statusFailed", "Conversion failed.");
-        setProgress(100, messages[currentLanguage].statusFailed || "Conversion failed.");
+        const message = error.message || messages[currentLanguage].statusFailed || "Conversion failed.";
+        setStatusText(message, "statusFailed");
+        setProgress(100, message);
         hideDownload();
         selectFile.disabled = false;
       }
