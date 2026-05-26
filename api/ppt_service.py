@@ -840,7 +840,24 @@ def element_box(element: Dict[str, Any]):
 
 
 def add_full_slide_image(slide, image_path: Path) -> None:
-    slide.shapes.add_picture(str(image_path), 0, 0, width=SLIDE_W, height=SLIDE_H)
+    try:
+        from PIL import Image
+
+        with Image.open(image_path) as image:
+            image_w, image_h = image.size
+        image_ratio = image_w / image_h
+        slide_ratio = SLIDE_W / SLIDE_H
+        if image_ratio >= slide_ratio:
+            width = SLIDE_W
+            height = int(SLIDE_W / image_ratio)
+        else:
+            height = SLIDE_H
+            width = int(SLIDE_H * image_ratio)
+        left = int((SLIDE_W - width) / 2)
+        top = int((SLIDE_H - height) / 2)
+        slide.shapes.add_picture(str(image_path), left, top, width=width, height=height)
+    except Exception:
+        slide.shapes.add_picture(str(image_path), 0, 0, width=SLIDE_W, height=SLIDE_H)
 
 
 def add_textbox(slide, x: int, y: int, w: int, h: int, text: str, font: str, font_size: int, bold: bool = False) -> None:

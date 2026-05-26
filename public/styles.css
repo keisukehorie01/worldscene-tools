@@ -289,6 +289,22 @@ a {
   white-space: nowrap;
 }
 
+.sandbox-badge {
+  grid-column: 1 / -1;
+  width: fit-content;
+  border: 1px solid #f4b740;
+  border-radius: 999px;
+  background: #fff7df;
+  color: #7a4d00;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.sandbox-badge[hidden] {
+  display: none;
+}
+
 .pricing-grid {
   order: 5;
   display: grid;

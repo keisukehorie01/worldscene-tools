@@ -131,6 +131,7 @@
             </label>
             <button class="small-button" type="button" id="check-balance" data-i18n="checkBalance">Check credits</button>
             <strong id="credit-balance" data-i18n="creditsUnknown">Credits: unknown</strong>
+            <span class="sandbox-badge" id="sandbox-badge" hidden>Sandbox checkout</span>
           </div>
 
           <label class="drop-zone" id="drop-zone">
@@ -632,6 +633,21 @@
     const progressLabel = document.getElementById("progress-label");
     const progressPercent = document.getElementById("progress-percent");
     const progressBar = document.getElementById("progress-bar");
+    const sandboxBadge = document.getElementById("sandbox-badge");
+    const initialParams = new URLSearchParams(window.location.search);
+    const sandboxParam = (initialParams.get("sandbox") || "").toLowerCase();
+    if (["1", "true", "test", "sandbox"].includes(sandboxParam)) {
+      localStorage.setItem("drop2ppt-sandbox-mode", "1");
+    } else if (["0", "false", "live", "off"].includes(sandboxParam)) {
+      localStorage.removeItem("drop2ppt-sandbox-mode");
+      localStorage.removeItem("drop2ppt-sandbox-token");
+    }
+    const sandboxTokenFromUrl = initialParams.get("sandbox_token") || initialParams.get("token") || "";
+    if (sandboxTokenFromUrl) {
+      localStorage.setItem("drop2ppt-sandbox-token", sandboxTokenFromUrl);
+    }
+    let sandboxMode = localStorage.getItem("drop2ppt-sandbox-mode") === "1";
+    let sandboxToken = localStorage.getItem("drop2ppt-sandbox-token") || "";
 
     function applyLanguage(language) {
       currentLanguage = language;
@@ -656,6 +672,12 @@
       progressLabel.textContent = label || messages[currentLanguage].progressIdle || "Waiting";
       progressPercent.textContent = `${Math.round(value)}%`;
       progressBar.style.width = `${value}%`;
+    }
+
+    function updateSandboxBadge() {
+      if (sandboxBadge) {
+        sandboxBadge.hidden = !sandboxMode;
+      }
     }
 
     function hideDownload() {
@@ -781,10 +803,15 @@
         return;
       }
       setStatus("statusCheckout", "Opening checkout...");
+      const checkoutPayload = { email, product };
+      if (sandboxMode) {
+        checkoutPayload.stripe_mode = "test";
+        checkoutPayload.sandbox_token = sandboxToken;
+      }
       const response = await fetch(apiPath("/checkout/create"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, product })
+        body: JSON.stringify(checkoutPayload)
       });
       const data = await response.json();
       if (!response.ok || !data.ok) {
@@ -797,6 +824,11 @@
     async function confirmCheckoutFromUrl() {
       const params = new URLSearchParams(window.location.search);
       if (params.get("checkout") !== "success") return;
+      if (params.get("stripe_mode") === "test") {
+        sandboxMode = true;
+        localStorage.setItem("drop2ppt-sandbox-mode", "1");
+        updateSandboxBadge();
+      }
 
       const email = params.get("email");
       if (email) {
@@ -810,7 +842,7 @@
         const response = await fetch(apiPath("/checkout/confirm"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session_id: sessionId })
+          body: JSON.stringify({ session_id: sessionId, stripe_mode: params.get("stripe_mode") || undefined })
         });
         const data = await response.json();
         if (response.ok && data.ok) {
@@ -845,6 +877,7 @@
     languageToggle.addEventListener("click", () => applyLanguage(currentLanguage === "ja" ? "en" : "ja"));
 
     applyLanguage(currentLanguage);
+    updateSandboxBadge();
     const savedEmail = localStorage.getItem("worldscene-email");
     if (savedEmail) {
       emailInput.value = savedEmail;

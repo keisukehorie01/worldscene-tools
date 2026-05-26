@@ -1,4 +1,6 @@
+import hmac
 import os
+import re
 
 from flask import jsonify, request
 
@@ -17,17 +19,74 @@ except ModuleNotFoundError:
     stripe = None
 
 
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "").strip()
-STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "").strip()
-PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "https://worldscene.net").rstrip("/")
-PUBLIC_APP_URL = os.getenv("PUBLIC_APP_URL", f"{PUBLIC_BASE_URL}/drop2ppt").rstrip("/")
+def env_value(name, default=""):
+    return os.getenv(name, default).strip()
+
+
+def public_app_url():
+    base_url = env_value("PUBLIC_BASE_URL", "https://worldscene.net").rstrip("/")
+    return env_value("PUBLIC_APP_URL", f"{base_url}/drop2ppt").rstrip("/")
+
+
+def is_test_key(key):
+    return key.startswith("sk_test_") or key.startswith("rk_test_")
+
+
+def requested_stripe_mode(payload):
+    mode = str(payload.get("stripe_mode") or payload.get("mode") or "").strip().lower()
+    if mode in {"test", "sandbox"} or payload.get("sandbox") is True:
+        return "test"
+    if mode in {"live", "production"}:
+        return "live"
+
+    secret_key = env_value("STRIPE_SECRET_KEY")
+    return "test" if is_test_key(secret_key) else "live"
+
+
+def stripe_secret_for_mode(mode):
+    if mode == "test":
+        return env_value("STRIPE_TEST_SECRET_KEY") or (
+            env_value("STRIPE_SECRET_KEY") if is_test_key(env_value("STRIPE_SECRET_KEY")) else ""
+        )
+    return env_value("STRIPE_SECRET_KEY")
+
+
+def webhook_secret_for_mode(mode):
+    if mode == "test":
+        return env_value("STRIPE_TEST_WEBHOOK_SECRET") or (
+            env_value("STRIPE_WEBHOOK_SECRET") if is_test_key(stripe_secret_for_mode("test")) else ""
+        )
+    return env_value("STRIPE_WEBHOOK_SECRET")
+
+
+def price_id_for_product(product, mode):
+    if mode == "test":
+        test_env = product["env"].replace("STRIPE_PRICE_", "STRIPE_TEST_PRICE_")
+        return env_value(test_env) or (
+            env_value(product["env"]) if is_test_key(stripe_secret_for_mode("test")) else ""
+        )
+    return env_value(product["env"])
+
+
+def sandbox_checkout_allowed(email, token):
+    configured_token = env_value("SANDBOX_CHECKOUT_TOKEN")
+    if configured_token and token and hmac.compare_digest(str(token), configured_token):
+        return True
+
+    emails = {
+        normalize_email(item)
+        for item in re.split(r"[,;\s]+", env_value("SANDBOX_CHECKOUT_EMAILS"))
+        if item.strip()
+    }
+    return bool(email and email in emails)
 
 
 def grant_checkout_session_credits(session):
     metadata = session.get("metadata") or {}
+    customer_details = session.get("customer_details") or {}
     email = normalize_email(
         metadata.get("email")
-        or session.get("customer_details", {}).get("email")
+        or customer_details.get("email")
         or session.get("customer_email")
     )
     if not email:
@@ -61,54 +120,64 @@ def register_stripe_routes(app):
     def checkout_create():
         if stripe is None:
             return jsonify({"ok": False, "error": "stripe package is not installed"}), 500
-        if not STRIPE_SECRET_KEY:
-            return jsonify({"ok": False, "error": "STRIPE_SECRET_KEY is not set"}), 500
 
         payload = request.get_json(silent=True) or {}
         email = normalize_email(payload.get("email", ""))
         product_key = (payload.get("product") or "starter").strip()
         product = PRODUCTS.get(product_key)
+        stripe_mode = requested_stripe_mode(payload)
+        stripe_secret_key = stripe_secret_for_mode(stripe_mode)
         if not email:
             return jsonify({"ok": False, "error": "email is required"}), 400
         if not product:
             return jsonify({"ok": False, "error": "unknown product"}), 400
+        if stripe_mode == "test" and not is_test_key(env_value("STRIPE_SECRET_KEY")):
+            token = str(payload.get("sandbox_token") or "").strip()
+            if not sandbox_checkout_allowed(email, token):
+                return jsonify({"ok": False, "error": "sandbox checkout is not allowed for this email"}), 403
+        if not stripe_secret_key:
+            return jsonify({"ok": False, "error": f"Stripe {stripe_mode} secret key is not set"}), 500
 
-        price_id = os.getenv(product["env"], "").strip()
+        price_id = price_id_for_product(product, stripe_mode)
         if not price_id:
-            return jsonify({"ok": False, "error": f"{product['env']} is not set"}), 500
+            return jsonify({"ok": False, "error": f"Stripe {stripe_mode} price for {product_key} is not set"}), 500
 
-        stripe.api_key = STRIPE_SECRET_KEY
+        stripe.api_key = stripe_secret_key
         try:
             session = stripe.checkout.Session.create(
                 mode="payment",
                 customer_email=email,
                 line_items=[{"price": price_id, "quantity": 1}],
-                success_url=f"{PUBLIC_APP_URL}/?checkout=success&session_id={{CHECKOUT_SESSION_ID}}&email={email}",
-                cancel_url=f"{PUBLIC_APP_URL}/?checkout=cancel",
+                success_url=f"{public_app_url()}/?checkout=success&session_id={{CHECKOUT_SESSION_ID}}&email={email}&stripe_mode={stripe_mode}",
+                cancel_url=f"{public_app_url()}/?checkout=cancel&stripe_mode={stripe_mode}",
                 metadata={
                     "email": email,
                     "product_key": product_key,
                     "credits": str(product["credits"]),
+                    "stripe_mode": stripe_mode,
                 },
                 allow_promotion_codes=True,
             )
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 502
-        return jsonify({"ok": True, "url": session.url})
+        return jsonify({"ok": True, "url": session.url, "stripe_mode": stripe_mode})
 
     @app.route("/api/checkout/confirm", methods=["POST"])
     def checkout_confirm():
         if stripe is None:
             return jsonify({"ok": False, "error": "stripe package is not installed"}), 500
-        if not STRIPE_SECRET_KEY:
-            return jsonify({"ok": False, "error": "STRIPE_SECRET_KEY is not set"}), 500
 
         payload = request.get_json(silent=True) or {}
         session_id = (payload.get("session_id") or "").strip()
         if not session_id:
             return jsonify({"ok": False, "error": "session_id is required"}), 400
 
-        stripe.api_key = STRIPE_SECRET_KEY
+        stripe_mode = "test" if session_id.startswith("cs_test_") else "live"
+        stripe_secret_key = stripe_secret_for_mode(stripe_mode)
+        if not stripe_secret_key:
+            return jsonify({"ok": False, "error": f"Stripe {stripe_mode} secret key is not set"}), 500
+
+        stripe.api_key = stripe_secret_key
         try:
             session = stripe.checkout.Session.retrieve(session_id)
         except Exception as exc:
@@ -128,16 +197,23 @@ def register_stripe_routes(app):
     def stripe_webhook():
         if stripe is None:
             return jsonify({"ok": False, "error": "stripe package is not installed"}), 500
-        if not STRIPE_SECRET_KEY:
-            return jsonify({"ok": False, "error": "STRIPE_SECRET_KEY is not set"}), 500
 
-        stripe.api_key = STRIPE_SECRET_KEY
         payload = request.get_data()
         sig_header = request.headers.get("Stripe-Signature", "")
 
         try:
-            if STRIPE_WEBHOOK_SECRET:
-                event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
+            webhook_secrets = [secret for secret in (webhook_secret_for_mode("live"), webhook_secret_for_mode("test")) if secret]
+            if webhook_secrets and sig_header:
+                last_error = None
+                event = None
+                for secret in webhook_secrets:
+                    try:
+                        event = stripe.Webhook.construct_event(payload, sig_header, secret)
+                        break
+                    except Exception as exc:
+                        last_error = exc
+                if event is None:
+                    raise last_error or ValueError("webhook verification failed")
             else:
                 event = request.get_json(force=True)
         except Exception as exc:
