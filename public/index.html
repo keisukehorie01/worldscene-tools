@@ -397,6 +397,10 @@
         statusBalance: "Credits loaded.",
         statusCheckout: "Opening secure checkout...",
         progressIdle: "Waiting",
+        progressQueued: "Waiting in queue",
+        progressScanning: "Scanning uploaded image for malware",
+        progressAnalyzing: "Analyzing image",
+        progressRebuilding: "Rebuilding editable PowerPoint",
         downloadPpt: "Download PPTX",
         emailLabel: "Email for credits",
         checkBalance: "Check credits",
@@ -617,6 +621,13 @@
       policyTitle: "ユーザーと審査担当者向けの情報です。"
     });
 
+    Object.assign(messages.ja, {
+      progressQueued: "待機中",
+      progressScanning: "ウイルススキャン中",
+      progressAnalyzing: "画像を解析中",
+      progressRebuilding: "PowerPointを再構築中"
+    });
+
     const supportedLanguages = ["en", "ja"];
     const savedLanguage = localStorage.getItem("worldscene-language");
     let currentLanguage = supportedLanguages.includes(savedLanguage)
@@ -637,6 +648,7 @@
     const progressPercent = document.getElementById("progress-percent");
     const progressBar = document.getElementById("progress-bar");
     const sandboxBadge = document.getElementById("sandbox-badge");
+    let lastProgressValue = 0;
     const initialParams = new URLSearchParams(window.location.search);
     const sandboxParam = (initialParams.get("sandbox") || "").toLowerCase();
     if (["1", "true", "test", "sandbox"].includes(sandboxParam)) {
@@ -673,8 +685,39 @@
       statusText.textContent = text || messages[currentLanguage][fallbackKey] || messages[currentLanguage].statusFailed || "Conversion failed.";
     }
 
-    function setProgress(progress, label, visible = true) {
-      const value = Math.max(0, Math.min(100, Number(progress) || 0));
+    function localizeJobMessage(message, status) {
+      const source = String(message || status || "");
+      const normalized = source.toLowerCase();
+      if (normalized.includes("scan")) {
+        return messages[currentLanguage].progressScanning || "Scanning uploaded image";
+      }
+      if (normalized.includes("analyz")) {
+        return messages[currentLanguage].progressAnalyzing || "Analyzing image";
+      }
+      if (normalized.includes("rebuild")) {
+        return messages[currentLanguage].progressRebuilding || "Rebuilding editable PowerPoint";
+      }
+      if (normalized.includes("queued") || status === "queued") {
+        return messages[currentLanguage].progressQueued || "Waiting in queue";
+      }
+      if (normalized.includes("ready")) {
+        return messages[currentLanguage].statusCompleted || "PPTX is ready.";
+      }
+      return source || messages[currentLanguage].progressIdle || "Waiting";
+    }
+
+    function resetProgress() {
+      lastProgressValue = 0;
+    }
+
+    function setProgress(progress, label, visible = true, options = {}) {
+      const nextValue = Math.max(0, Math.min(100, Number(progress) || 0));
+      const value = options.allowDecrease ? nextValue : Math.max(lastProgressValue, nextValue);
+      if (visible) {
+        lastProgressValue = value;
+      } else {
+        lastProgressValue = 0;
+      }
       progressPanel.hidden = !visible;
       progressLabel.textContent = label || messages[currentLanguage].progressIdle || "Waiting";
       progressPercent.textContent = `${Math.round(value)}%`;
@@ -733,6 +776,7 @@
       setStatus("statusSelected", "Image selected.");
       dropZone.classList.add("drop-zone-selected");
       hideDownload();
+      resetProgress();
       setProgress(3, messages[currentLanguage].statusSelected || "Image selected.");
       await uploadImage(file);
     }
@@ -761,7 +805,7 @@
           throw new Error(data.message || data.error || "Upload failed");
         }
         setStatus("statusQueued", "Queued.");
-        setProgress(data.job.progress || 10, data.job.message || messages[currentLanguage].statusQueued);
+        setProgress(Math.max(data.job.progress || 10, 10), localizeJobMessage(data.job.message, data.job.status));
         pollJob(data.job.id);
       } catch (error) {
         const message = error.message || messages[currentLanguage].statusFailed || "Conversion failed.";
@@ -779,7 +823,8 @@
           throw new Error(data.message || data.error || "Status failed");
         }
 
-        setProgress(data.job.progress, data.job.message || data.job.status);
+        const jobMessage = localizeJobMessage(data.job.message, data.job.status);
+        setProgress(data.job.progress, jobMessage);
 
         if (data.job.status === "completed") {
           setStatus("statusCompleted", "PPTX is ready.");
@@ -800,7 +845,7 @@
           return;
         }
 
-        setStatus(data.job.status === "queued" ? "statusQueued" : "statusProcessing", data.job.message);
+        setStatusText(jobMessage, data.job.status === "queued" ? "statusQueued" : "statusProcessing");
         window.setTimeout(() => pollJob(jobId), 1800);
       } catch (error) {
         const message = error.message || messages[currentLanguage].statusFailed || "Conversion failed.";
