@@ -2,6 +2,9 @@ import base64
 import json
 import os
 import re
+import shlex
+import shutil
+import subprocess
 import threading
 import time
 import uuid
@@ -23,6 +26,10 @@ OUTPUT_DIR = RUNTIME_DIR / "outputs"
 JOB_DIR = RUNTIME_DIR / "jobs"
 
 MAX_UPLOAD_BYTES = int(os.getenv("PPT_MAX_UPLOAD_BYTES", str(12 * 1024 * 1024)))
+MALWARE_SCAN_ENABLED = os.getenv("PPT_MALWARE_SCAN_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}
+MALWARE_SCAN_REQUIRED = os.getenv("PPT_REQUIRE_MALWARE_SCAN", "true").strip().lower() not in {"0", "false", "no", "off"}
+MALWARE_SCAN_COMMAND = os.getenv("PPT_MALWARE_SCAN_COMMAND", "").strip()
+MALWARE_SCAN_TIMEOUT = int(os.getenv("PPT_MALWARE_SCAN_TIMEOUT", "60"))
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.getenv("PPT_GEMINI_MODEL", os.getenv("GEMINI_MODEL", "gemini-2.5-flash")).strip()
 
@@ -60,15 +67,34 @@ def register_ppt_routes(app):
           return jsonify({"ok": False, "error": "PNG, JPG, and WebP are supported"}), 400
 
       job_id = uuid.uuid4().hex
-      try:
-          consume_credit(email, job_id, amount=1)
-      except ValueError:
-          return jsonify({"ok": False, "error": "insufficient_credits"}), 402
-
       suffix = safe_suffix(image.filename, mime_type)
       upload_path = UPLOAD_DIR / f"{job_id}{suffix}"
       output_path = OUTPUT_DIR / f"{job_id}.pptx"
       upload_path.write_bytes(raw)
+
+      scan = scan_upload_for_malware(upload_path)
+      if not scan["ok"]:
+          try:
+              upload_path.unlink(missing_ok=True)
+          except OSError:
+              pass
+          return jsonify({"ok": False, "error": scan["error"], "message": scan["message"]}), scan["status_code"]
+
+      if scan["status"] == "skipped" and MALWARE_SCAN_REQUIRED:
+          try:
+              upload_path.unlink(missing_ok=True)
+          except OSError:
+              pass
+          return jsonify({"ok": False, "error": "malware_scanner_unavailable"}), 503
+
+      try:
+          consume_credit(email, job_id, amount=1)
+      except ValueError:
+          try:
+              upload_path.unlink(missing_ok=True)
+          except OSError:
+              pass
+          return jsonify({"ok": False, "error": "insufficient_credits"}), 402
 
       job = {
           "id": job_id,
@@ -133,6 +159,75 @@ def safe_suffix(filename: str, mime_type: str) -> str:
         "image/jpeg": ".jpg",
         "image/webp": ".webp",
     }.get(mime_type, ".img")
+
+
+def scan_upload_for_malware(path: Path) -> Dict[str, Any]:
+    if not MALWARE_SCAN_ENABLED:
+        return {"ok": True, "status": "skipped"}
+
+    command = malware_scan_command(path)
+    if not command:
+        if MALWARE_SCAN_REQUIRED:
+            return {
+                "ok": False,
+                "status": "error",
+                "status_code": 503,
+                "error": "malware_scanner_unavailable",
+                "message": "Malware scanner is not available on the server.",
+            }
+        return {"ok": True, "status": "skipped"}
+
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=MALWARE_SCAN_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "ok": False,
+            "status": "error",
+            "status_code": 503,
+            "error": "malware_scan_timeout",
+            "message": "Malware scan timed out.",
+        }
+
+    output = "\n".join(part for part in [result.stdout, result.stderr] if part).strip()
+    if result.returncode == 0:
+        return {"ok": True, "status": "clean", "output": output}
+    if result.returncode == 1:
+        return {
+            "ok": False,
+            "status": "infected",
+            "status_code": 400,
+            "error": "malware_detected",
+            "message": "The uploaded file did not pass malware scanning.",
+        }
+    return {
+        "ok": False,
+        "status": "error",
+        "status_code": 503,
+        "error": "malware_scan_failed",
+        "message": "Malware scanner failed to complete.",
+    }
+
+
+def malware_scan_command(path: Path) -> Optional[list]:
+    if MALWARE_SCAN_COMMAND:
+        command = shlex.split(MALWARE_SCAN_COMMAND)
+        return [part.format(path=str(path)) for part in command]
+
+    clamdscan = shutil.which("clamdscan")
+    if clamdscan:
+        return [clamdscan, "--no-summary", "--fdpass", str(path)]
+
+    clamscan = shutil.which("clamscan")
+    if clamscan:
+        return [clamscan, "--no-summary", str(path)]
+
+    return None
 
 
 def save_job(job: Dict[str, Any]) -> None:
