@@ -703,6 +703,26 @@
       return url.startsWith("/api/") ? `${apiBase}${url.slice(4)}` : url;
     }
 
+    async function readApiJson(response) {
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        return response.json();
+      }
+
+      const text = await response.text();
+      const plain = text
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      return {
+        ok: false,
+        error: "non_json_response",
+        message: plain ? `Server returned HTML instead of JSON: ${plain.slice(0, 220)}` : "Server returned a non-JSON response."
+      };
+    }
+
     async function markSelected() {
       const file = fileInput.files && fileInput.files[0];
       if (!file) return;
@@ -730,7 +750,7 @@
           method: "POST",
           body: formData
         });
-        const data = await response.json();
+        const data = await readApiJson(response);
         if (!response.ok || !data.ok) {
           if (data.error === "insufficient_credits") {
             setStatus("statusNeedCredits", "Please buy credits before converting.");
@@ -754,7 +774,7 @@
     async function pollJob(jobId) {
       try {
         const response = await fetch(apiPath(`/ppt/jobs/${jobId}`));
-        const data = await response.json();
+        const data = await readApiJson(response);
         if (!response.ok || !data.ok) {
           throw new Error(data.message || data.error || "Status failed");
         }
@@ -798,7 +818,7 @@
         return;
       }
       const response = await fetch(apiPath(`/billing/balance?email=${encodeURIComponent(email)}`));
-      const data = await response.json();
+      const data = await readApiJson(response);
       if (response.ok && data.ok) {
         creditBalance.textContent = `${messages[currentLanguage].creditsLabel}: ${data.credits}`;
         localStorage.setItem("worldscene-email", email);
@@ -823,7 +843,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(checkoutPayload)
       });
-      const data = await response.json();
+      const data = await readApiJson(response);
       if (!response.ok || !data.ok) {
         setStatus("statusFailed", data.message || data.error || "Checkout failed.");
         return;
@@ -854,7 +874,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ session_id: sessionId, stripe_mode: params.get("stripe_mode") || undefined })
         });
-        const data = await response.json();
+        const data = await readApiJson(response);
         if (response.ok && data.ok) {
           creditBalance.textContent = `${messages[currentLanguage].creditsLabel}: ${data.credits}`;
           setStatus("statusBalance", "Credits loaded.");
