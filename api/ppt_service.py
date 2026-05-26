@@ -24,6 +24,7 @@ RUNTIME_DIR = Path(os.getenv("PPT_RUNTIME_DIR", BASE_DIR / "runtime" / "ppt_jobs
 UPLOAD_DIR = RUNTIME_DIR / "uploads"
 OUTPUT_DIR = RUNTIME_DIR / "outputs"
 JOB_DIR = RUNTIME_DIR / "jobs"
+CROP_DIR = RUNTIME_DIR / "crops"
 
 MAX_UPLOAD_BYTES = int(os.getenv("PPT_MAX_UPLOAD_BYTES", str(12 * 1024 * 1024)))
 MALWARE_SCAN_ENABLED = os.getenv("PPT_MALWARE_SCAN_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}
@@ -32,6 +33,8 @@ MALWARE_SCAN_COMMAND = os.getenv("PPT_MALWARE_SCAN_COMMAND", "").strip()
 MALWARE_SCAN_TIMEOUT = int(os.getenv("PPT_MALWARE_SCAN_TIMEOUT", "60"))
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.getenv("PPT_GEMINI_MODEL", os.getenv("GEMINI_MODEL", "gemini-2.5-flash")).strip()
+MAX_IMAGE_REGIONS = int(os.getenv("PPT_MAX_IMAGE_REGIONS", "8"))
+IMAGE_REGION_MIN_AREA = float(os.getenv("PPT_IMAGE_REGION_MIN_AREA", "0.006"))
 
 SLIDE_W = 12192000
 SLIDE_H = 6858000
@@ -122,7 +125,7 @@ def register_ppt_routes(app):
 
 
 def ensure_runtime_dirs():
-    for path in (UPLOAD_DIR, OUTPUT_DIR, JOB_DIR):
+    for path in (UPLOAD_DIR, OUTPUT_DIR, JOB_DIR, CROP_DIR):
         path.mkdir(parents=True, exist_ok=True)
 
 
@@ -369,6 +372,17 @@ Use this schema:
       "bold": true
     }
   ],
+  "image_regions": [
+    {
+      "purpose": "logo|photo|chart|screenshot|icon_cluster|texture|complex_visual",
+      "x": 0.05,
+      "y": 0.05,
+      "w": 0.20,
+      "h": 0.12,
+      "layer": "background|foreground",
+      "keep_reason": "why this should stay as bitmap"
+    }
+  ],
   "sections": [
     {
       "title": "section title",
@@ -391,6 +405,13 @@ thin connectors, progress bars, and simple icon placeholders. Use Japanese text 
 Prioritize visual placement and editable PowerPoint objects over a generic summary. Do not simplify
 the slide into only a few blocks.
 Keep each text string concise enough to fit its box.
+
+Use image_regions only for areas that should remain as bitmap because they are difficult or undesirable
+to rebuild as editable objects: photos, realistic illustrations, product screenshots, logos, detailed
+icons, complex charts, dense decorative textures, QR codes, or highly detailed generated art.
+Do not mark ordinary text cards, simple boxes, bullets, arrows, or basic diagrams as image_regions.
+Avoid full-slide image regions unless the area is a mostly non-text photographic or decorative background.
+Prefer 2 to 8 carefully chosen regions. Coordinates must match the original image location.
 """.strip()
 
     url = (
@@ -468,6 +489,36 @@ def normalize_analysis(raw: Dict[str, Any]) -> Dict[str, Any]:
     if elements:
         analysis["elements"] = elements[:80]
 
+    image_regions = []
+    raw_regions = raw.get("image_regions") or raw.get("bitmap_regions") or raw.get("preserve_regions") or []
+    for item in raw_regions:
+        if not isinstance(item, dict):
+            continue
+        x = clamp_float(item.get("x"), 0.0, 0.98)
+        y = clamp_float(item.get("y"), 0.0, 0.98)
+        w = clamp_float(item.get("w"), 0.01, 1.0)
+        h = clamp_float(item.get("h"), 0.01, 1.0)
+        if x + w > 1.0:
+            w = max(0.01, 1.0 - x)
+        if y + h > 1.0:
+            h = max(0.01, 1.0 - y)
+        if w * h < IMAGE_REGION_MIN_AREA:
+            continue
+        layer = clean_text(item.get("layer")).lower()
+        if layer not in {"background", "foreground"}:
+            layer = "foreground"
+        image_regions.append({
+            "purpose": clean_text(item.get("purpose"))[:40] or "complex_visual",
+            "x": x,
+            "y": y,
+            "w": w,
+            "h": h,
+            "layer": layer,
+            "keep_reason": clean_text(item.get("keep_reason"))[:160],
+        })
+    if image_regions:
+        analysis["image_regions"] = image_regions[:MAX_IMAGE_REGIONS]
+
     sections = []
     for item in raw.get("sections") or []:
         if not isinstance(item, dict):
@@ -508,6 +559,7 @@ def fallback_analysis() -> Dict[str, Any]:
             "accent": "1AA6D9",
         },
         "elements": fallback_elements(),
+        "image_regions": [],
         "sections": [
             {"title": "Source image", "body": "Uploaded visual draft", "x": 0.05, "y": 0.22, "w": 0.26, "h": 0.18},
             {"title": "Layout", "body": "Main panels and hierarchy", "x": 0.37, "y": 0.22, "w": 0.26, "h": 0.18},
@@ -573,6 +625,7 @@ def build_dense_reconstruction(analysis: Dict[str, Any]):
 
     elements = []
     add_bg_grid(elements)
+    elements.append({"type": "imageRegions", "layer": "background"})
     add_text(elements, title, 0.23, 0.028, 0.54, 0.075, 34, bold=True)
     add_text(elements, subtitle, 0.25, 0.112, 0.54, 0.035, 13, font="EAF7FF", bold=True)
 
@@ -887,7 +940,7 @@ def write_pptx(path: Path, analysis: Dict[str, Any], source_image_path: Optional
     prs.slide_width = SLIDE_W
     prs.slide_height = SLIDE_H
     editable_slide = prs.slides.add_slide(prs.slide_layouts[6])
-    render_editable_slide(editable_slide, analysis)
+    render_editable_slide(editable_slide, analysis, source_image_path)
 
     include_source = os.getenv("PPT_INCLUDE_SOURCE_SLIDE", "1").strip().lower() in {"1", "true", "yes"}
     if source_image_path and include_source:
@@ -897,7 +950,7 @@ def write_pptx(path: Path, analysis: Dict[str, Any], source_image_path: Optional
     prs.save(path)
 
 
-def render_editable_slide(slide, analysis: Dict[str, Any]) -> None:
+def render_editable_slide(slide, analysis: Dict[str, Any], source_image_path: Optional[Path] = None) -> None:
     from pptx.dml.color import RGBColor
 
     theme = analysis.get("theme") or {}
@@ -909,7 +962,68 @@ def render_editable_slide(slide, analysis: Dict[str, Any]) -> None:
 
     elements = build_dense_reconstruction(analysis)
     for element in elements:
+        if element.get("type") == "imageRegions":
+            render_image_regions(slide, analysis, source_image_path, layer=element.get("layer") or "background")
+            continue
         render_element(slide, element, accent)
+
+    render_image_regions(slide, analysis, source_image_path, layer="foreground")
+
+
+def render_image_regions(slide, analysis: Dict[str, Any], source_image_path: Optional[Path], layer: str) -> None:
+    if not source_image_path or not source_image_path.exists():
+        return
+
+    regions = analysis.get("image_regions") or []
+    for index, region in enumerate(regions[:MAX_IMAGE_REGIONS]):
+        if not isinstance(region, dict):
+            continue
+        region_layer = clean_text(region.get("layer")).lower() or "foreground"
+        if region_layer != layer:
+            continue
+        try:
+            add_cropped_image_region(slide, source_image_path, region, index)
+        except Exception as exc:
+            print(
+                f"Drop2PPT image region skipped index={index} error={redact_secret_text(str(exc))}",
+                flush=True,
+            )
+
+
+def add_cropped_image_region(slide, source_image_path: Path, region: Dict[str, Any], index: int) -> None:
+    from PIL import Image
+
+    x_norm = clamp_float(region.get("x"), 0.0, 0.98)
+    y_norm = clamp_float(region.get("y"), 0.0, 0.98)
+    w_norm = clamp_float(region.get("w"), 0.01, 1.0)
+    h_norm = clamp_float(region.get("h"), 0.01, 1.0)
+    if x_norm + w_norm > 1.0:
+        w_norm = max(0.01, 1.0 - x_norm)
+    if y_norm + h_norm > 1.0:
+        h_norm = max(0.01, 1.0 - y_norm)
+
+    with Image.open(source_image_path) as image:
+        image_w, image_h = image.size
+        left = int(x_norm * image_w)
+        top = int(y_norm * image_h)
+        right = max(left + 2, int((x_norm + w_norm) * image_w))
+        bottom = max(top + 2, int((y_norm + h_norm) * image_h))
+        right = min(image_w, right)
+        bottom = min(image_h, bottom)
+        crop = image.crop((left, top, right, bottom))
+        if crop.mode not in {"RGB", "RGBA"}:
+            crop = crop.convert("RGBA")
+
+        crop_dir = CROP_DIR / source_image_path.stem
+        crop_dir.mkdir(parents=True, exist_ok=True)
+        crop_path = crop_dir / f"region-{index}.png"
+        crop.save(crop_path)
+
+    slide_x = int(x_norm * SLIDE_W)
+    slide_y = int(y_norm * SLIDE_H)
+    slide_w = int(w_norm * SLIDE_W)
+    slide_h = int(h_norm * SLIDE_H)
+    slide.shapes.add_picture(str(crop_path), slide_x, slide_y, width=slide_w, height=slide_h)
 
 
 def render_element(slide, element: Dict[str, Any], accent: str) -> None:
