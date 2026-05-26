@@ -633,6 +633,35 @@
       window.location.href = data.url;
     }
 
+    async function confirmCheckoutFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("checkout") !== "success") return;
+
+      const email = params.get("email");
+      if (email) {
+        emailInput.value = email;
+        localStorage.setItem("worldscene-email", email);
+      }
+
+      const sessionId = params.get("session_id");
+      if (sessionId) {
+        setStatus("statusCheckout", "Confirming checkout...");
+        const response = await fetch(apiPath("/checkout/confirm"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId })
+        });
+        const data = await response.json();
+        if (response.ok && data.ok) {
+          creditBalance.textContent = `${messages[currentLanguage].creditsLabel}: ${data.credits}`;
+          setStatus("statusBalance", "Credits loaded.");
+          return;
+        }
+      }
+
+      await loadBalance();
+    }
+
     selectFile.addEventListener("click", () => fileInput.click());
     checkBalance.addEventListener("click", loadBalance);
     document.querySelectorAll("[data-product]").forEach((button) => {
@@ -660,6 +689,7 @@
       emailInput.value = savedEmail;
       loadBalance();
     }
+    confirmCheckoutFromUrl();
   </script>
 </body>
 </html>
