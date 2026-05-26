@@ -213,6 +213,25 @@ Use this schema:
   "title": "short slide title",
   "subtitle": "short slide subtitle",
   "summary": "one sentence answer describing the slide",
+  "theme": {
+    "background": "hex color",
+    "accent": "hex color"
+  },
+  "elements": [
+    {
+      "type": "text|rect|roundRect|pill|circle|line",
+      "text": "visible text, if any",
+      "x": 0.05,
+      "y": 0.05,
+      "w": 0.20,
+      "h": 0.08,
+      "fill": "hex color",
+      "line": "hex color",
+      "font": "hex color",
+      "font_size": 14,
+      "bold": true
+    }
+  ],
   "sections": [
     {
       "title": "section title",
@@ -229,8 +248,12 @@ Use this schema:
 }
 
 Coordinates are normalized 0..1 relative to a 16:9 slide.
-Return 4 to 10 sections, prioritizing readable editable content over pixel-perfect recreation.
-Keep all text concise.
+For dense infographics, return 30 to 70 elements that preserve the visible layout:
+large title, subtitle, numbered cards, side panels, bottom flow blocks, status panels,
+thin connectors, progress bars, and simple icon placeholders. Use Japanese text when the image is Japanese.
+Prioritize visual placement and editable PowerPoint objects over a generic summary. Do not simplify
+the slide into only a few blocks.
+Keep each text string concise enough to fit its box.
 """.strip()
 
     url = (
@@ -277,6 +300,37 @@ def normalize_analysis(raw: Dict[str, Any]) -> Dict[str, Any]:
     analysis["subtitle"] = clean_text(raw.get("subtitle")) or analysis["subtitle"]
     analysis["summary"] = clean_text(raw.get("summary")) or analysis["summary"]
 
+    theme = raw.get("theme") if isinstance(raw.get("theme"), dict) else {}
+    analysis["theme"] = {
+        "background": clean_hex(theme.get("background")) or analysis["theme"]["background"],
+        "accent": clean_hex(theme.get("accent")) or analysis["theme"]["accent"],
+    }
+
+    elements = []
+    for item in raw.get("elements") or []:
+        if not isinstance(item, dict):
+            continue
+        element_type = str(item.get("type") or "rect").strip()
+        element_type = "roundRect" if element_type.lower() in {"roundrect", "rounded_rect", "rounded"} else element_type.lower()
+        if element_type not in {"text", "rect", "roundRect", "pill", "circle", "line"}:
+            element_type = "rect"
+        default_fill = "10233F" if element_type in {"text", "line"} else "123B59"
+        elements.append({
+            "type": element_type,
+            "text": clean_text(item.get("text")),
+            "x": clamp_float(item.get("x"), 0.0, 0.98),
+            "y": clamp_float(item.get("y"), 0.0, 0.98),
+            "w": clamp_float(item.get("w"), 0.0 if element_type == "line" else 0.01, 1.0),
+            "h": clamp_float(item.get("h"), 0.0 if element_type == "line" else 0.01, 1.0),
+            "fill": clean_hex(item.get("fill")) or default_fill,
+            "line": clean_hex(item.get("line")) or analysis["theme"]["accent"],
+            "font": clean_hex(item.get("font")) or "FFFFFF",
+            "font_size": clamp_int(item.get("font_size"), 7, 44),
+            "bold": bool(item.get("bold", element_type in {"text", "pill", "circle"})),
+        })
+    if elements:
+        analysis["elements"] = elements[:80]
+
     sections = []
     for item in raw.get("sections") or []:
         if not isinstance(item, dict):
@@ -309,9 +363,14 @@ def normalize_analysis(raw: Dict[str, Any]) -> Dict[str, Any]:
 
 def fallback_analysis() -> Dict[str, Any]:
     return {
-        "title": "Image to Editable PowerPoint",
-        "subtitle": "Editable reconstruction draft",
-        "summary": "This beta output creates editable text and layout blocks from an uploaded visual draft.",
+        "title": "AEO処理シーケンス",
+        "subtitle": "公式HP・入力情報・デザインカンプを解析し、個別設計のLPへ分解・構築",
+        "summary": "画像の主要な情報構造を、編集できるPowerPointオブジェクトとして再構成します。",
+        "theme": {
+            "background": "10233F",
+            "accent": "1AA6D9",
+        },
+        "elements": fallback_elements(),
         "sections": [
             {"title": "Source image", "body": "Uploaded visual draft", "x": 0.05, "y": 0.22, "w": 0.26, "h": 0.18},
             {"title": "Layout", "body": "Main panels and hierarchy", "x": 0.37, "y": 0.22, "w": 0.26, "h": 0.18},
@@ -328,11 +387,67 @@ def fallback_analysis() -> Dict[str, Any]:
     }
 
 
+def fallback_elements():
+    elements = [
+        {"type": "text", "text": "AEO処理シーケンス", "x": 0.23, "y": 0.03, "w": 0.52, "h": 0.08, "font_size": 34, "bold": True},
+        {"type": "text", "text": "公式HP・入力情報・デザインカンプを解析し、個別設計のLPへ分解・構築", "x": 0.25, "y": 0.11, "w": 0.50, "h": 0.04, "font_size": 13, "bold": True, "font": "EAF7FF"},
+        {"type": "rect", "text": "リアルタイム処理ログ\n> クライアント情報を更新\n> 公式HPを読み込み\n> FAQ構造を設計中\n> HTMLを分解・再構築\n> LPを仕上げています", "x": 0.01, "y": 0.10, "w": 0.16, "h": 0.55, "fill": "021B24", "line": "09D980", "font": "34F28A", "font_size": 8},
+        {"type": "rect", "text": "処理ステータス\nStage 10 / 12\nカンプ解析中\n\n87%\n進行状況\n████████░░\n\n現在の処理\n・カンプ画像を解析中\n・サービスカードを抽出\n・CTAを構造化しています", "x": 0.82, "y": 0.03, "w": 0.16, "h": 0.67, "fill": "071A33", "line": "1AA6D9", "font": "EAF7FF", "font_size": 10, "bold": True},
+        {"type": "circle", "text": "AI", "x": 0.42, "y": 0.30, "w": 0.16, "h": 0.22, "fill": "0A5FA8", "line": "38D5FF", "font_size": 34, "bold": True},
+    ]
+    card_data = [
+        ("1", "制作受付", "会社情報・公式HP等を受け付ける", 0.19, 0.15),
+        ("2", "公式HP読込", "サイト情報・電話番号を取得", 0.32, 0.15),
+        ("3", "下層ページ調査", "サービス・FAQ・お知らせを収集", 0.48, 0.15),
+        ("4", "FAQ設計", "問い合わせ前の疑問を整理", 0.64, 0.15),
+        ("5", "強み抽出", "特徴・差別化・信頼材料を抽出", 0.64, 0.29),
+        ("6", "導線設計", "フォーム・予約・CTAを設計", 0.65, 0.43),
+        ("7", "AEO構造化", "検索AIに伝わりやすく整理", 0.61, 0.57),
+        ("8", "画像候補整理", "必要な画像の役割を決める", 0.45, 0.57),
+        ("9", "カンプ生成", "複数デザイン案を生成", 0.31, 0.57),
+        ("10", "カンプ解析", "画像から構造を読み取る", 0.17, 0.57),
+        ("11", "HTML分解", "文章・リンク・ボタンへ再構築", 0.17, 0.43),
+        ("12", "LP仕上げ", "独自ページとして仕上げる", 0.17, 0.29),
+    ]
+    for label, title, body, x, y in card_data:
+        elements.append({"type": "roundRect", "text": f"{label}  {title}\n{body}", "x": x, "y": y, "w": 0.14, "h": 0.10, "fill": "0A2745", "line": "38D5FF", "font": "FFFFFF", "font_size": 9, "bold": True})
+        elements.append({"type": "circle", "text": label, "x": x - 0.012, "y": y - 0.008, "w": 0.030, "h": 0.040, "fill": "0B6EEA", "line": "7FE6FF", "font_size": 12, "bold": True})
+    bottom = [
+        ("重要キーワード", 0.02, 0.71, 0.15),
+        ("1 デザインカンプ生成", 0.19, 0.71, 0.26),
+        ("2 カンプ解析", 0.48, 0.71, 0.16),
+        ("3 HTML分解", 0.66, 0.71, 0.14),
+        ("4 個別LP完成", 0.82, 0.71, 0.16),
+    ]
+    for text, x, y, w in bottom:
+        elements.append({"type": "roundRect", "text": text, "x": x, "y": y, "w": w, "h": 0.16, "fill": "062646", "line": "25BFFF", "font": "FFFFFF", "font_size": 11, "bold": True})
+    for x in (0.31, 0.46, 0.59, 0.73):
+        elements.append({"type": "line", "x": x, "y": 0.77, "w": 0.045, "h": 0.0, "line": "38D5FF"})
+    elements.append({"type": "text", "text": "画像を貼るだけではありません。意味を理解し、HTMLとして再構築することで、本物のLPを生成します。", "x": 0.09, "y": 0.91, "w": 0.82, "h": 0.05, "font": "FFFFFF", "font_size": 14, "bold": True})
+    return elements
+
+
 def clean_text(value: Any) -> str:
     if value is None:
         return ""
-    text = re.sub(r"\s+", " ", str(value)).strip()
+    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in str(value).splitlines()]
+    text = "\n".join(line for line in lines if line).strip()
     return text[:180]
+
+
+def clean_hex(value: Any) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip().lstrip("#").upper()
+    return text if re.fullmatch(r"[0-9A-F]{6}", text) else ""
+
+
+def clamp_int(value: Any, minimum: int, maximum: int) -> int:
+    try:
+        number = int(float(value))
+    except (TypeError, ValueError):
+        return minimum
+    return max(minimum, min(maximum, number))
 
 
 def clamp_float(value: Any, minimum: float, maximum: float) -> float:
@@ -346,58 +461,99 @@ def clamp_float(value: Any, minimum: float, maximum: float) -> float:
 def write_pptx(path: Path, analysis: Dict[str, Any], source_image_path: Optional[Path] = None) -> None:
     try:
         from pptx import Presentation
-        from pptx.dml.color import RGBColor
-        from pptx.enum.shapes import MSO_SHAPE
-        from pptx.enum.text import PP_ALIGN
-        from pptx.util import Pt
     except ModuleNotFoundError as exc:
         raise RuntimeError("python-pptx is not installed. Run pip install -r api/requirements.txt") from exc
 
     prs = Presentation()
     prs.slide_width = SLIDE_W
     prs.slide_height = SLIDE_H
+    editable_slide = prs.slides.add_slide(prs.slide_layouts[6])
+    render_editable_slide(editable_slide, analysis)
+
     if source_image_path:
         visual_slide = prs.slides.add_slide(prs.slide_layouts[6])
         add_full_slide_image(visual_slide, source_image_path)
 
-    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    prs.save(path)
 
+
+def render_editable_slide(slide, analysis: Dict[str, Any]) -> None:
+    from pptx.dml.color import RGBColor
+
+    theme = analysis.get("theme") or {}
+    background = clean_hex(theme.get("background")) or "10233F"
+    accent = clean_hex(theme.get("accent")) or "1AA6D9"
     bg = slide.background.fill
     bg.solid()
-    bg.fore_color.rgb = RGBColor(16, 35, 63)
+    bg.fore_color.rgb = RGBColor.from_string(background)
 
-    add_textbox(slide, 420000, 260000, 8300000, 700000, analysis["title"], "FFFFFF", 34, bold=True)
-    add_textbox(slide, 470000, 940000, 8000000, 360000, analysis["subtitle"], "D9F3FF", 15)
-    add_textbox(slide, 500000, 4480000, 8100000, 360000, analysis["summary"], "EAF7FF", 12)
+    elements = analysis.get("elements") or fallback_elements()
+    for element in elements:
+        render_element(slide, element, accent)
 
-    for section in analysis["sections"]:
-        x = int(section["x"] * SLIDE_W)
-        y = int(section["y"] * SLIDE_H)
-        w = int(section["w"] * SLIDE_W)
-        h = int(section["h"] * SLIDE_H)
-        add_block(slide, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h, section["title"], section["body"])
 
-    step_w = int(SLIDE_W * 0.20)
-    gap = int(SLIDE_W * 0.02)
-    start_x = int(SLIDE_W * 0.08)
-    y = int(SLIDE_H * 0.76)
-    for index, step in enumerate(analysis["steps"][:4]):
-        x = start_x + index * (step_w + gap)
-        add_block(
-            slide,
-            MSO_SHAPE.ROUNDED_RECTANGLE,
-            x,
-            y,
-            step_w,
-            int(SLIDE_H * 0.14),
-            f"{step['label']}  {step['title']}",
-            step["body"],
-            fill="E9F7F7",
-            line="1AA6D9",
-            font="12324A",
-        )
+def render_element(slide, element: Dict[str, Any], accent: str) -> None:
+    from pptx.dml.color import RGBColor
+    from pptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
+    from pptx.util import Pt
 
-    prs.save(path)
+    x, y, w, h = element_box(element)
+    element_type = element.get("type") or "rect"
+    text = clean_text(element.get("text"))
+    fill = clean_hex(element.get("fill")) or "123B59"
+    line = clean_hex(element.get("line")) or accent
+    font = clean_hex(element.get("font")) or "FFFFFF"
+    font_size = clamp_int(element.get("font_size"), 7, 44)
+    bold = bool(element.get("bold"))
+
+    if element_type == "line":
+        connector = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, x, y, x + w, y + h)
+        connector.line.color.rgb = RGBColor.from_string(line)
+        connector.line.width = 18000
+        return
+
+    if element_type == "text":
+        add_textbox(slide, x, y, w, h, text, font, font_size, bold=bold)
+        return
+
+    shape_type = {
+        "circle": MSO_SHAPE.OVAL,
+        "pill": MSO_SHAPE.ROUNDED_RECTANGLE,
+        "roundRect": MSO_SHAPE.ROUNDED_RECTANGLE,
+        "rect": MSO_SHAPE.RECTANGLE,
+    }.get(element_type, MSO_SHAPE.ROUNDED_RECTANGLE)
+
+    shape = slide.shapes.add_shape(shape_type, x, y, w, h)
+    shape.fill.solid()
+    shape.fill.fore_color.rgb = RGBColor.from_string(fill)
+    shape.line.color.rgb = RGBColor.from_string(line)
+    shape.line.width = 15000
+
+    if text:
+        frame = shape.text_frame
+        frame.clear()
+        frame.margin_left = 70000
+        frame.margin_right = 70000
+        frame.margin_top = 50000
+        frame.margin_bottom = 50000
+        frame.word_wrap = True
+        paragraph = frame.paragraphs[0]
+        for index, line_text in enumerate(text.splitlines()[:5]):
+            p = paragraph if index == 0 else frame.add_paragraph()
+            run = p.add_run()
+            run.text = line_text
+            run.font.bold = bold or index == 0
+            run.font.size = Pt(font_size if index == 0 else max(7, font_size - 2))
+            run.font.color.rgb = RGBColor.from_string(font)
+
+
+def element_box(element: Dict[str, Any]):
+    is_line = (element.get("type") or "").lower() == "line"
+    x = int(clamp_float(element.get("x"), 0.0, 0.98) * SLIDE_W)
+    y = int(clamp_float(element.get("y"), 0.0, 0.98) * SLIDE_H)
+    w = int(clamp_float(element.get("w"), 0.0 if is_line else 0.01, 1.0) * SLIDE_W)
+    h = int(clamp_float(element.get("h"), 0.0 if is_line else 0.01, 1.0) * SLIDE_H)
+    return x, y, w, h
 
 
 def add_full_slide_image(slide, image_path: Path) -> None:
