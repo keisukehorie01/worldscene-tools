@@ -107,6 +107,7 @@
     </a>
     <nav class="nav" aria-label="Main navigation">
       <a href="#converter" data-i18n="navConvert">Convert</a>
+      <a href="#pricing" data-i18n="navPricing">Pricing</a>
       <a href="#apps" data-i18n="navApps">Apps</a>
       <a href="#tools" data-i18n="navTools">Tools</a>
       <button class="language-button" type="button" id="language-toggle" aria-label="Switch language">日本語</button>
@@ -141,7 +142,7 @@
               <span class="demo-slide demo-source">
                 <span></span><span></span><span></span>
               </span>
-              <span class="demo-arrow">→</span>
+              <span class="demo-arrow">&rarr;</span>
               <span class="demo-slide demo-ppt">
                 <span></span><span></span><span></span>
               </span>
@@ -159,7 +160,7 @@
             <a class="button button-secondary" href="#example" data-i18n="viewExample">View example flow</a>
           </div>
 
-          <div class="pricing-grid" aria-label="Pricing">
+          <div class="pricing-grid" id="pricing" aria-label="Pricing">
             <button class="price-card" type="button" data-product="starter">
               <span data-i18n="starterTitle">Starter</span>
               <strong>$4.99</strong>
@@ -180,15 +181,31 @@
 
         <aside class="app-promo" id="apps" aria-labelledby="apps-title">
           <p class="eyebrow" data-i18n="appsEyebrow">Android app</p>
-          <h2 id="apps-title" data-i18n="appsTitle">Create, capture, and explore on mobile.</h2>
-          <img src="assets/apps/WorldScene/feature.png" alt="" class="app-promo-image" onerror="this.src='assets/apps/LuckyJapanGacha/feature.png'">
-          <div class="app-metrics" aria-label="Android app highlights">
-            <span data-i18n="appMetricOne">Photo insight</span>
-            <span data-i18n="appMetricTwo">Utility apps</span>
-            <span data-i18n="appMetricThree">Mobile workflows</span>
+          <h2 id="apps-title" data-i18n="appsTitle">WorldScene app links</h2>
+          <div class="app-link-list" aria-label="WorldScene app links">
+            <a class="app-link primary" href="https://worldscene.net/" target="_blank" rel="noopener"><img src="worldscene-icon.png" alt=""><span>WorldScene</span><small>worldscene.net</small></a>
+            <a class="app-link" href="https://play.google.com/store/apps/details?id=com.worldscene.app" target="_blank" rel="noopener"><img src="worldscene-icon.png" alt=""><span>WorldScene app</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Animal%20Emotion%20Player&c=apps" target="_blank" rel="noopener"><img src="assets/apps/AnimalEmotionPlayer/icon.png" alt=""><span>Animal Emotion Player</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Coin%20Factory%20Idle&c=apps" target="_blank" rel="noopener"><img src="assets/apps/CoinFactoryIdle/icon.png" alt=""><span>Coin Factory Idle</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Daily%20Crystal%20Fortune&c=apps" target="_blank" rel="noopener"><img src="assets/apps/DailyCrystalFortune/icon.png" alt=""><span>Daily Crystal Fortune</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Dodge%20Rush&c=apps" target="_blank" rel="noopener"><img src="assets/apps/DodgeRush/icon.png" alt=""><span>Dodge Rush</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Global%20Ambient&c=apps" target="_blank" rel="noopener"><img src="assets/apps/GlobalAmbient/icon.png" alt=""><span>Global Ambient</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Guardian%20Animal%20Quiz&c=apps" target="_blank" rel="noopener"><img src="assets/apps/GuardianAnimalQuiz/icon.png" alt=""><span>Guardian Animal Quiz</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=History%20Quiz%20King&c=apps" target="_blank" rel="noopener"><img src="assets/apps/HistoryQuizKing/icon.png" alt=""><span>History Quiz King</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/apps/details?id=net.worldscene.iqbraintestlogicpuzzle" target="_blank" rel="noopener"><img src="assets/apps/IQBrainTestLogicPuzzle/icon.png" alt=""><span>IQ Brain Test</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Japanese%20Quiz%20King&c=apps" target="_blank" rel="noopener"><img src="assets/apps/JapaneseQuizKing/icon.png" alt=""><span>Japanese Quiz King</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Line%20Connect%20Puzzle&c=apps" target="_blank" rel="noopener"><img src="assets/apps/LineConnectPuzzle/icon.png" alt=""><span>Line Connect Puzzle</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Lucky%20Japan%20Gacha&c=apps" target="_blank" rel="noopener"><img src="assets/apps/LuckyJapanGacha/icon.png" alt=""><span>Lucky Japan Gacha</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Perfect%20Tap&c=apps" target="_blank" rel="noopener"><img src="assets/apps/PerfectTap/icon.png" alt=""><span>Perfect Tap</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Prefecture%20Quiz%20King&c=apps" target="_blank" rel="noopener"><img src="assets/apps/PrefectureQuizKing/icon.png" alt=""><span>Prefecture Quiz King</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/apps/details?id=net.worldscene.kantanshareprint" target="_blank" rel="noopener"><img src="assets/apps/SharePrintHelper/icon.png" alt=""><span>Easy Document Print</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Simple%20Golf%20Score&c=apps" target="_blank" rel="noopener"><img src="assets/apps/SimpleGolfScore/icon.png" alt=""><span>Simple Golf Score</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Slot%20Graph%20Analyzer&c=apps" target="_blank" rel="noopener"><img src="assets/apps/SlotGraphAnalyzer/icon.png" alt=""><span>Slot Graph Analyzer</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Small%20Biz%20Ledger&c=apps" target="_blank" rel="noopener"><img src="assets/apps/SmallBizLedger/icon.png" alt=""><span>Small Biz Ledger</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Trick%20Quiz%20King&c=apps" target="_blank" rel="noopener"><img src="assets/apps/TrickQuizKing/icon.png" alt=""><span>Trick Quiz King</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Trick%20Zatsugaku%20King&c=apps" target="_blank" rel="noopener"><img src="assets/apps/TrickZatsugakuKing/icon.png" alt=""><span>Trick Zatsugaku King</span><small>Google Play</small></a>
+            <a class="app-link" href="https://play.google.com/store/search?q=Zatsugaku%20Classic&c=apps" target="_blank" rel="noopener"><img src="assets/apps/ZatsugakuClassic/icon.png" alt=""><span>Zatsugaku Classic</span><small>Google Play</small></a>
           </div>
-          <p data-i18n="appsCopy">WorldScene apps help with photo insight, simple tools, quizzes, and daily creative workflows.</p>
-          <a class="text-link" href="https://play.google.com/store/apps/dev?id=4842045891375937389" target="_blank" rel="noopener" data-i18n="openGooglePlay">Open Google Play</a>
         </aside>
 
         <aside class="affiliate-panel" id="tools" aria-labelledby="tools-title">
@@ -342,6 +359,7 @@
     const messages = {
       en: {
         navConvert: "Convert",
+        navPricing: "Pricing",
         navApps: "Apps",
         navTools: "Tools",
         answerEyebrow: "Direct answer",
@@ -376,7 +394,7 @@
         chooseImage: "Choose image",
         viewExample: "View example flow",
         appsEyebrow: "Android app",
-        appsTitle: "Create, capture, and explore on mobile.",
+        appsTitle: "WorldScene app links",
         appsCopy: "WorldScene apps help with photo insight, simple tools, quizzes, and daily creative workflows.",
         appMetricOne: "Photo insight",
         appMetricTwo: "Utility apps",
@@ -503,6 +521,7 @@
 
     Object.assign(messages.ja, {
       navConvert: "変換",
+      navPricing: "料金",
       navApps: "アプリ",
       navTools: "おすすめ",
       answerEyebrow: "直接回答",
@@ -537,7 +556,7 @@
       chooseImage: "画像を選ぶ",
       viewExample: "変換の流れを見る",
       appsEyebrow: "Androidアプリ",
-      appsTitle: "スマホでも、作る・調べる・試す。",
+      appsTitle: "WorldSceneアプリ一覧",
       appsCopy: "WorldSceneでは、写真解析、便利ツール、クイズなど、日常の作業や発想を助けるAndroidアプリを展開しています。",
       appMetricOne: "写真から発見",
       appMetricTwo: "便利ツール群",

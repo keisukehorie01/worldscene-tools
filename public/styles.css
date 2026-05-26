@@ -126,7 +126,7 @@ a {
 .converter-panel {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   padding: clamp(28px, 5vw, 72px);
 }
 
@@ -157,11 +157,12 @@ a {
 }
 
 .drop-zone {
+  order: 1;
   display: grid;
   place-items: center;
   gap: 10px;
   min-height: 300px;
-  margin-top: 34px;
+  margin-top: 24px;
   border: 2px dashed rgba(15, 141, 128, 0.55);
   border-radius: 8px;
   background:
@@ -238,6 +239,7 @@ a {
 }
 
 .account-panel {
+  order: 2;
   display: grid;
   grid-template-columns: minmax(220px, 1fr) auto auto;
   gap: 10px;
@@ -287,6 +289,7 @@ a {
 }
 
 .pricing-grid {
+  order: 5;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
@@ -361,6 +364,7 @@ a {
 }
 
 .conversion-status {
+  order: 3;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -379,6 +383,7 @@ a {
 }
 
 .hero-actions {
+  order: 4;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -438,6 +443,61 @@ a {
   display: flex;
   flex-direction: column;
   padding: 24px;
+}
+
+.app-link-list {
+  display: grid;
+  gap: 8px;
+  max-height: 68vh;
+  margin-top: 18px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.app-link {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 52px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  padding: 8px;
+  text-decoration: none;
+}
+
+.app-link:hover {
+  border-color: var(--teal);
+  background: #f0faf8;
+}
+
+.app-link.primary {
+  border-color: rgba(15, 141, 128, 0.34);
+  background: #f2fbf9;
+}
+
+.app-link img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.app-link span {
+  overflow: hidden;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-link small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .app-promo h2,
