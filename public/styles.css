@@ -109,9 +109,9 @@ a {
   min-height: calc(100vh - 140px);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr) minmax(240px, 1fr);
+  grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr);
   gap: 18px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .converter-panel,
@@ -124,10 +124,29 @@ a {
 }
 
 .converter-panel {
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  min-width: 0;
   padding: clamp(28px, 5vw, 72px);
+}
+
+.app-promo {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+}
+
+.affiliate-panel {
+  position: sticky;
+  top: 90px;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  max-height: calc(100vh - 108px);
+  overflow: auto;
 }
 
 .eyebrow {
@@ -509,11 +528,9 @@ a {
 
 .app-link-list {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  max-height: 68vh;
   margin-top: 18px;
-  overflow: auto;
-  padding-right: 4px;
 }
 
 .app-link {
@@ -950,11 +967,24 @@ a {
 
 @media (max-width: 1120px) {
   .hero-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
-  .converter-panel {
-    grid-column: 1 / -1;
+  .converter-panel,
+  .app-promo,
+  .affiliate-panel {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .affiliate-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .app-link-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1025,6 +1055,10 @@ a {
   }
 
   .link-list {
+    grid-template-columns: 1fr;
+  }
+
+  .app-link-list {
     grid-template-columns: 1fr;
   }
 
