@@ -752,7 +752,7 @@ def write_pptx(path: Path, analysis: Dict[str, Any], source_image_path: Optional
     editable_slide = prs.slides.add_slide(prs.slide_layouts[6])
     render_editable_slide(editable_slide, analysis)
 
-    include_source = os.getenv("PPT_INCLUDE_SOURCE_SLIDE", "0").strip().lower() in {"1", "true", "yes"}
+    include_source = os.getenv("PPT_INCLUDE_SOURCE_SLIDE", "1").strip().lower() in {"1", "true", "yes"}
     if source_image_path and include_source:
         visual_slide = prs.slides.add_slide(prs.slide_layouts[6])
         add_full_slide_image(visual_slide, source_image_path)
