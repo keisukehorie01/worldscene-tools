@@ -140,6 +140,7 @@ a {
     "drop download"
     "drop actions"
     "pricing pricing"
+    "pricing-note pricing-note"
     "comparison comparison";
   column-gap: 18px;
   row-gap: 12px;
@@ -389,6 +390,16 @@ a {
   line-height: 1.4;
 }
 
+.quality-warning {
+  margin: 2px 0 0;
+  border-left: 3px solid var(--gold);
+  color: #6a4b05;
+  padding: 0 0 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
 .pricing-grid {
   grid-area: pricing;
   order: 5;
@@ -442,6 +453,20 @@ a {
   font-style: normal;
   font-weight: 700;
   line-height: 1.45;
+}
+
+.pricing-note {
+  grid-area: pricing-note;
+  order: 5;
+  margin: 0;
+  border: 1px solid rgba(218, 164, 40, 0.45);
+  border-radius: 8px;
+  background: #fff8e4;
+  color: #6a4b05;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.5;
 }
 
 .quality-comparison {
@@ -1148,6 +1173,7 @@ a {
       "download"
       "actions"
       "pricing"
+      "pricing-note"
       "comparison";
     padding: 28px;
   }
