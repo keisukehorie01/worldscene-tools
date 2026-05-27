@@ -122,7 +122,8 @@ a {
 .auth-nav-link[hidden],
 .auth-nav-button[hidden],
 .auth-nav-logout[hidden],
-.auth-card[hidden] {
+.auth-card[hidden],
+.auth-form-grid[hidden] {
   display: none;
 }
 
@@ -464,7 +465,7 @@ a {
 }
 
 .auth-shell {
-  width: min(760px, 100%);
+  width: min(920px, 100%);
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.97);
@@ -512,6 +513,13 @@ a {
   color: var(--teal);
 }
 
+.auth-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  gap: 14px;
+  align-items: start;
+}
+
 .auth-message {
   min-height: 20px;
   margin: 0 0 8px;
@@ -526,6 +534,7 @@ a {
 .auth-card {
   display: grid;
   gap: 10px;
+  align-content: start;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfcfd;
@@ -1453,6 +1462,10 @@ a {
 
   .quality-comparison table {
     min-width: 620px;
+  }
+
+  .auth-form-grid {
+    grid-template-columns: 1fr;
   }
 }
 
