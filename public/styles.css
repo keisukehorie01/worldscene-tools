@@ -173,14 +173,12 @@ a {
   grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
   grid-template-areas:
     "eyebrow eyebrow"
-    "title title"
-    "copy copy"
+    "title actions"
+    "copy actions"
     "drop account"
     "drop quality"
     "drop status"
-    "drop progress"
     "drop download"
-    "drop actions"
     "pricing pricing"
     "pricing-note pricing-note"
     "comparison comparison";
@@ -222,7 +220,7 @@ a {
   margin: 0;
   width: 100%;
   color: var(--navy);
-  font-size: clamp(30px, 2.9vw, 46px);
+  font-size: clamp(28px, 2.35vw, 38px);
   line-height: 1.06;
   letter-spacing: 0;
   white-space: nowrap;
@@ -242,8 +240,8 @@ a {
   order: 1;
   display: grid;
   place-items: center;
-  gap: 10px;
-  min-height: 236px;
+  gap: 8px;
+  min-height: 214px;
   margin-top: 0;
   border: 2px dashed rgba(15, 141, 128, 0.55);
   border-radius: 8px;
@@ -261,7 +259,7 @@ a {
   gap: 12px;
   align-items: center;
   width: min(460px, calc(100% - 28px));
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .demo-slide {
@@ -328,7 +326,7 @@ a {
   gap: 10px;
   align-items: end;
   margin-top: 0;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfcfd;
@@ -582,7 +580,7 @@ a {
   gap: 10px;
   min-width: 0;
   margin: 0;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f4fbf9;
@@ -642,7 +640,7 @@ a {
 .price-card {
   display: grid;
   gap: 4px;
-  min-height: 132px;
+  min-height: 116px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: white;
@@ -810,8 +808,27 @@ a {
   order: 4;
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  align-self: start;
   gap: 12px;
   margin-top: 0;
+}
+
+.inline-file-button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--teal);
+  color: white;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.inline-file-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
 }
 
 .button {
@@ -1405,7 +1422,6 @@ a {
       "account"
       "quality"
       "status"
-      "progress"
       "download"
       "actions"
       "pricing"
