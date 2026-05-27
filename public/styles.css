@@ -127,11 +127,24 @@ a {
 .converter-panel {
   grid-column: 1;
   grid-row: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  grid-template-areas:
+    "eyebrow eyebrow"
+    "title title"
+    "copy copy"
+    "drop account"
+    "drop status"
+    "drop progress"
+    "drop download"
+    "drop actions"
+    "pricing pricing"
+    "comparison comparison";
+  column-gap: 18px;
+  row-gap: 12px;
+  align-items: start;
   min-width: 0;
-  padding: clamp(28px, 5vw, 72px);
+  padding: clamp(20px, 2.5vw, 34px);
 }
 
 .app-promo {
@@ -151,7 +164,8 @@ a {
 }
 
 .eyebrow {
-  margin: 0 0 14px;
+  grid-area: eyebrow;
+  margin: 0 0 8px;
   color: var(--gold);
   font-size: 13px;
   font-weight: 900;
@@ -160,30 +174,33 @@ a {
 }
 
 .converter-panel h1 {
+  grid-area: title;
   margin: 0;
   width: 100%;
   color: var(--navy);
-  font-size: clamp(34px, 3.3vw, 54px);
-  line-height: 1.02;
+  font-size: clamp(30px, 2.9vw, 46px);
+  line-height: 1.06;
   letter-spacing: 0;
   white-space: nowrap;
 }
 
 .hero-copy {
+  grid-area: copy;
   width: min(760px, 100%);
-  margin: 22px 0 0;
+  margin: 0;
   color: var(--muted);
-  font-size: clamp(18px, 2vw, 23px);
-  line-height: 1.55;
+  font-size: clamp(15px, 1.45vw, 18px);
+  line-height: 1.45;
 }
 
 .drop-zone {
+  grid-area: drop;
   order: 1;
   display: grid;
   place-items: center;
   gap: 10px;
-  min-height: 300px;
-  margin-top: 24px;
+  min-height: 236px;
+  margin-top: 0;
   border: 2px dashed rgba(15, 141, 128, 0.55);
   border-radius: 8px;
   background:
@@ -199,14 +216,14 @@ a {
   grid-template-columns: 1fr auto 1fr;
   gap: 12px;
   align-items: center;
-  width: min(520px, calc(100% - 28px));
+  width: min(460px, calc(100% - 28px));
   margin-top: 8px;
 }
 
 .demo-slide {
   display: grid;
   gap: 8px;
-  min-height: 92px;
+  min-height: 78px;
   border: 1px solid rgba(18, 50, 74, 0.16);
   border-radius: 8px;
   background: #ffffff;
@@ -260,12 +277,13 @@ a {
 }
 
 .account-panel {
+  grid-area: account;
   order: 2;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: end;
-  margin-top: 24px;
+  margin-top: 0;
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -273,6 +291,7 @@ a {
 }
 
 .account-panel label {
+  grid-column: 1 / -1;
   display: grid;
   gap: 6px;
   color: var(--muted);
@@ -326,18 +345,19 @@ a {
 }
 
 .pricing-grid {
+  grid-area: pricing;
   order: 5;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 2px;
   scroll-margin-top: 112px;
 }
 
 .price-card {
   display: grid;
   gap: 4px;
-  min-height: 148px;
+  min-height: 132px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: white;
@@ -380,6 +400,7 @@ a {
 }
 
 .quality-comparison {
+  grid-area: comparison;
   order: 6;
   margin-top: 18px;
   overflow: hidden;
@@ -437,8 +458,8 @@ a {
 .drop-icon {
   display: inline-grid;
   place-items: center;
-  width: 84px;
-  height: 84px;
+  width: 68px;
+  height: 68px;
   border-radius: 8px;
   background: var(--navy);
   color: white;
@@ -448,7 +469,7 @@ a {
 
 .drop-zone strong {
   color: var(--navy);
-  font-size: clamp(24px, 3vw, 34px);
+  font-size: clamp(22px, 2.5vw, 30px);
 }
 
 .drop-zone small {
@@ -458,12 +479,13 @@ a {
 }
 
 .conversion-status {
+  grid-area: status;
   order: 3;
   display: flex;
   align-items: center;
   gap: 10px;
   min-height: 44px;
-  margin-top: 16px;
+  margin-top: 0;
   color: var(--muted);
   font-weight: 800;
 }
@@ -477,11 +499,12 @@ a {
 }
 
 .hero-actions {
+  grid-area: actions;
   order: 4;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 0;
 }
 
 .button {
@@ -514,12 +537,13 @@ a {
 }
 
 .download-link {
+  grid-area: download;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: fit-content;
   min-height: 48px;
-  margin-top: 12px;
+  margin-top: 0;
   border-radius: 8px;
   background: var(--navy);
   color: white;
@@ -540,6 +564,7 @@ a {
 }
 
 .progress-panel {
+  grid-area: progress;
   order: 3;
   display: grid;
   gap: 8px;
@@ -1057,6 +1082,19 @@ a {
   }
 
   .converter-panel {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "eyebrow"
+      "title"
+      "copy"
+      "drop"
+      "account"
+      "status"
+      "progress"
+      "download"
+      "actions"
+      "pricing"
+      "comparison";
     padding: 28px;
   }
 
