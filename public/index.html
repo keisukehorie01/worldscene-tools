@@ -146,6 +146,7 @@
             <span class="drop-icon" aria-hidden="true">PPTX</span>
             <strong data-i18n="dropTitle">Drop image here</strong>
             <small data-i18n="dropHint">PNG, JPG, and WebP supported</small>
+            <small class="drop-note" data-i18n="dropNote">Up to 12 MB. One image per conversion. Convert multiple images one at a time.</small>
             <span class="drop-demo" aria-hidden="true">
               <span class="demo-slide demo-source">
                 <span></span><span></span><span></span>
@@ -380,7 +381,7 @@
         </article>
         <article>
           <h3 data-i18n="faqFourQuestion">Which image formats are supported?</h3>
-          <p data-i18n="faqFourAnswer">The beta interface is prepared for PNG, JPG, and WebP images.</p>
+          <p data-i18n="faqFourAnswer">PNG, JPG, and WebP images up to 12 MB are supported. Convert one image at a time.</p>
         </article>
       </div>
     </section>
@@ -421,8 +422,11 @@
         heroCopy: "Convert AI-generated images, screenshots, diagrams, and mockups into editable PPTX slides.",
         dropTitle: "Drop image here",
         dropHint: "PNG, JPG, and WebP supported",
+        dropNote: "Up to 12 MB. One image per conversion. Convert multiple images one at a time.",
         statusReady: "Ready for beta testing. Drop an image to start.",
         statusSelected: "Image selected. Uploading...",
+        statusFileTooLarge: "Image is too large. Please upload an image up to 12 MB.",
+        statusOneFileOnly: "Only one image can be converted at a time. Please convert multiple images one by one.",
         statusUploading: "Uploading image...",
         statusQueued: "Queued. Waiting for conversion...",
         statusProcessing: "Converting to editable PowerPoint...",
@@ -500,7 +504,7 @@
         faqThreeQuestion: "Who is this tool for?",
         faqThreeAnswer: "It is for marketers, consultants, planners, creators, educators, and teams that need to turn visual drafts into editable presentation files.",
         faqFourQuestion: "Which image formats are supported?",
-        faqFourAnswer: "The beta interface is prepared for PNG, JPG, and WebP images.",
+        faqFourAnswer: "PNG, JPG, and WebP images up to 12 MB are supported. Convert one image at a time.",
         lineupEyebrow: "WorldScene apps",
         lineupTitle: "More lightweight Android tools.",
         worldsceneCopy: "Discover places and travel-style insights from your photos.",
@@ -522,8 +526,11 @@
         heroCopy: "AI生成画像、スクショ、図解、LPカンプを、編集可能なPPTXスライドへ変換します。",
         dropTitle: "ここに画像をドロップ",
         dropHint: "PNG、JPG、WebPに対応",
+        dropNote: "画像サイズは最大12MB。1回につき1枚のみ変換できます。複数枚の画像は1枚ずつ変換してください。",
         statusReady: "ベータ版として利用できます。画像をドロップしてください。",
         statusSelected: "画像を選択しました。アップロード中です...",
+        statusFileTooLarge: "画像サイズが大きすぎます。12MB以下の画像をアップロードしてください。",
+        statusOneFileOnly: "1回に変換できる画像は1枚のみです。複数枚の画像は1枚ずつ変換してください。",
         statusUploading: "画像をアップロード中...",
         statusQueued: "待機中です。変換順を待っています...",
         statusProcessing: "編集可能なPowerPointへ変換中...",
@@ -593,7 +600,7 @@
         faqThreeQuestion: "誰向けのツールですか？",
         faqThreeAnswer: "マーケター、コンサルタント、企画担当、クリエイター、教育者、画像案を編集可能なプレゼン資料にしたいチーム向けです。",
         faqFourQuestion: "対応画像形式は何ですか？",
-        faqFourAnswer: "ベータ版の画面ではPNG、JPG、WebP画像に対応する想定です。",
+        faqFourAnswer: "PNG、JPG、WebP画像に対応しています。画像サイズは最大12MB、変換は1回につき1枚です。",
         lineupEyebrow: "WorldSceneアプリ",
         lineupTitle: "軽量なAndroidツールも展開中。",
         worldsceneCopy: "写真から場所や旅のヒントを発見します。",
@@ -618,8 +625,11 @@
       heroCopy: "AI生成画像、スクリーンショット、図解、LPカンプを、編集可能なPPTXスライドとして再構築します。",
       dropTitle: "ここに画像をドロップ",
       dropHint: "PNG、JPG、WebPに対応。クリックして選択もできます。",
+      dropNote: "画像サイズは最大12MB。1回につき1枚のみ変換できます。複数枚の画像は1枚ずつ変換してください。",
       statusReady: "画像をドロップ、または選択して開始できます。",
       statusSelected: "画像を選択しました。アップロードします...",
+      statusFileTooLarge: "画像サイズが大きすぎます。12MB以下の画像をアップロードしてください。",
+      statusOneFileOnly: "1回に変換できる画像は1枚のみです。複数枚の画像は1枚ずつ変換してください。",
       statusUploading: "画像をアップロード中...",
       statusQueued: "待機中です。変換順を待っています...",
       statusProcessing: "編集可能なPowerPointへ変換中...",
@@ -693,7 +703,7 @@
       faqThreeQuestion: "誰向けのサービスですか？",
       faqThreeAnswer: "企画、マーケティング、コンサル、教育、制作など、画像案を編集可能な資料にしたい人向けです。",
       faqFourQuestion: "対応画像形式は？",
-      faqFourAnswer: "PNG、JPG、WebP画像に対応しています。",
+      faqFourAnswer: "PNG、JPG、WebP画像に対応しています。画像サイズは最大12MB、変換は1回につき1枚です。",
       lineupEyebrow: "WorldSceneアプリ",
       lineupTitle: "軽量なAndroidツールも展開中。",
       worldsceneCopy: "写真から場所や旅のヒントを発見します。",
@@ -718,6 +728,7 @@
       : (navigator.language || "en").toLowerCase().startsWith("ja") ? "ja" : "en";
 
     const statusText = document.querySelector("#conversion-status span:last-child");
+    const maxUploadBytes = 12 * 1024 * 1024;
     const fileInput = document.getElementById("file-input");
     const dropZone = document.getElementById("drop-zone");
     const selectFile = document.getElementById("select-file");
@@ -850,8 +861,18 @@
     }
 
     async function markSelected() {
+      if (fileInput.files && fileInput.files.length > 1) {
+        setStatus("statusOneFileOnly", "Only one image can be converted at a time.");
+        fileInput.value = "";
+        return;
+      }
       const file = fileInput.files && fileInput.files[0];
       if (!file) return;
+      if (file.size > maxUploadBytes) {
+        setStatus("statusFileTooLarge", "Image is too large. Please upload an image up to 12 MB.");
+        fileInput.value = "";
+        return;
+      }
       if (!emailInput.value.trim()) {
         setStatus("statusNeedCredits", "Please enter your email and buy credits before converting.");
         return;
@@ -879,6 +900,11 @@
         });
         const data = await readApiJson(response);
         if (!response.ok || !data.ok) {
+          if (response.status === 413 || String(data.error || "").includes("too large")) {
+            setStatus("statusFileTooLarge", "Image is too large. Please upload an image up to 12 MB.");
+            selectFile.disabled = false;
+            return;
+          }
           if (data.error === "insufficient_credits") {
             setStatus("statusNeedCredits", "Please buy credits before converting.");
             await loadBalance();
@@ -1027,6 +1053,10 @@
     dropZone.addEventListener("drop", (event) => {
       event.preventDefault();
       dropZone.classList.remove("drop-zone-active");
+      if (event.dataTransfer.files.length > 1) {
+        setStatus("statusOneFileOnly", "Only one image can be converted at a time.");
+        return;
+      }
       if (event.dataTransfer.files.length) {
         fileInput.files = event.dataTransfer.files;
         markSelected();

@@ -478,6 +478,14 @@ a {
   font-weight: 800;
 }
 
+.drop-zone .drop-note {
+  display: block;
+  width: min(560px, calc(100% - 24px));
+  color: #687483;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .conversion-status {
   grid-area: status;
   order: 3;
