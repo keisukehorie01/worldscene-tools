@@ -132,13 +132,37 @@
           </p>
 
           <div class="account-panel" aria-label="Credit balance">
+            <div class="auth-summary" id="auth-summary">
+              <span data-i18n="authStatusChecking">Checking login status...</span>
+            </div>
             <label>
-              <span data-i18n="emailLabel">Email for credits (required)</span>
-              <input id="email-input" type="email" autocomplete="email" placeholder="you@example.com" required>
+              <span data-i18n="emailLabel">Login email</span>
+              <input id="email-input" type="email" autocomplete="email" placeholder="you@example.com" readonly required>
             </label>
             <button class="small-button" type="button" id="check-balance" data-i18n="checkBalance">Check credits</button>
+            <button class="small-button ghost-button" type="button" id="logout-button" data-i18n="logoutButton" hidden>Logout</button>
             <strong id="credit-balance" data-i18n="creditsUnknown">Credits: unknown</strong>
             <span class="sandbox-badge" id="sandbox-badge" hidden>Sandbox checkout</span>
+            <div class="auth-forms" id="auth-forms">
+              <form id="login-form" class="auth-mini-form">
+                <strong data-i18n="loginTitle">Login</strong>
+                <input name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+                <input name="password" type="password" autocomplete="current-password" placeholder="Password" required>
+                <button type="submit" data-i18n="loginButton">Login</button>
+              </form>
+              <form id="signup-form" class="auth-mini-form">
+                <strong data-i18n="signupTitle">Create account</strong>
+                <input name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+                <input name="password" type="password" autocomplete="new-password" placeholder="Password, 8+ chars" minlength="8" required>
+                <input name="password_confirm" type="password" autocomplete="new-password" placeholder="Confirm password" minlength="8" required>
+                <button type="submit" data-i18n="signupButton">Create account</button>
+              </form>
+              <form id="forgot-form" class="auth-mini-form compact">
+                <strong data-i18n="forgotTitle">Forgot password?</strong>
+                <input name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+                <button type="submit" data-i18n="forgotButton">Send reset email</button>
+              </form>
+            </div>
           </div>
 
           <fieldset class="quality-selector" aria-label="Conversion quality">
@@ -800,6 +824,13 @@
     const progressPercent = document.getElementById("progress-percent");
     const progressBar = document.getElementById("progress-bar");
     const sandboxBadge = document.getElementById("sandbox-badge");
+    const authSummary = document.getElementById("auth-summary");
+    const authForms = document.getElementById("auth-forms");
+    const loginForm = document.getElementById("login-form");
+    const signupForm = document.getElementById("signup-form");
+    const forgotForm = document.getElementById("forgot-form");
+    const logoutButton = document.getElementById("logout-button");
+    let currentUser = null;
     let lastProgressValue = 0;
     const initialParams = new URLSearchParams(window.location.search);
     const sandboxParam = (initialParams.get("sandbox") || "").toLowerCase();
@@ -910,6 +941,42 @@
       return `${apiBase}${path}`;
     }
 
+    Object.assign(messages.en, {
+      authStatusChecking: "Checking login status...",
+      authLoggedOut: "Create an account or log in before purchasing credits or converting.",
+      authLoggedIn: "Logged in as {email}",
+      authVerifyNeeded: "Please verify your email before purchasing credits or converting.",
+      authVerifySent: "Verification email sent. Open the link in the email to continue.",
+      authVerified: "Email verified. You can now use credits.",
+      authResetSent: "If the account exists, a reset email has been sent.",
+      loginTitle: "Login",
+      loginButton: "Login",
+      signupTitle: "Create account",
+      signupButton: "Create account",
+      forgotTitle: "Forgot password?",
+      forgotButton: "Send reset email",
+      logoutButton: "Logout",
+      emailLabel: "Login email"
+    });
+
+    Object.assign(messages.ja, {
+      authStatusChecking: "ログイン状態を確認しています...",
+      authLoggedOut: "クレジット購入・変換にはアカウント作成またはログインが必要です。",
+      authLoggedIn: "{email} でログイン中",
+      authVerifyNeeded: "クレジット購入・変換の前にメール認証を完了してください。",
+      authVerifySent: "認証メールを送信しました。メール内のリンクを開いてください。",
+      authVerified: "メール認証が完了しました。クレジットを利用できます。",
+      authResetSent: "アカウントが存在する場合、再設定メールを送信しました。",
+      loginTitle: "ログイン",
+      loginButton: "ログイン",
+      signupTitle: "新規登録",
+      signupButton: "アカウント作成",
+      forgotTitle: "パスワードを忘れた場合",
+      forgotButton: "再設定メール送信",
+      logoutButton: "ログアウト",
+      emailLabel: "ログインメール"
+    });
+
     function normalizeDownloadPath(url) {
       if (!url) return "#";
       return url.startsWith("/api/") ? `${apiBase}${url.slice(4)}` : url;
@@ -935,6 +1002,60 @@
       };
     }
 
+    function renderAuth(user) {
+      currentUser = user || null;
+      if (currentUser) {
+        emailInput.value = currentUser.email || "";
+        authForms.hidden = true;
+        logoutButton.hidden = false;
+        renderBalance(currentUser);
+        const template = currentUser.email_verified
+          ? messages[currentLanguage].authLoggedIn
+          : messages[currentLanguage].authVerifyNeeded;
+        authSummary.textContent = (template || "").replace("{email}", currentUser.email || "");
+      } else {
+        emailInput.value = "";
+        authForms.hidden = false;
+        logoutButton.hidden = true;
+        creditBalance.textContent = messages[currentLanguage].creditsUnknown || "Credits: unknown";
+        authSummary.textContent = messages[currentLanguage].authLoggedOut || "Please log in.";
+      }
+    }
+
+    function requireVerifiedAuth() {
+      if (!currentUser) {
+        setStatusText(messages[currentLanguage].authLoggedOut, "statusEmailRequired");
+        authSummary.scrollIntoView({ behavior: "smooth", block: "center" });
+        return false;
+      }
+      if (!currentUser.email_verified) {
+        setStatusText(messages[currentLanguage].authVerifyNeeded, "statusEmailRequired");
+        authSummary.scrollIntoView({ behavior: "smooth", block: "center" });
+        return false;
+      }
+      return true;
+    }
+
+    async function loadAuth() {
+      const response = await fetch(apiPath("/auth/me"));
+      const data = await readApiJson(response);
+      renderAuth(data.ok ? data.user : null);
+      return data.user || null;
+    }
+
+    async function submitJson(path, payload) {
+      const response = await fetch(apiPath(path), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await readApiJson(response);
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || data.error || "Request failed");
+      }
+      return data;
+    }
+
     async function markSelected() {
       if (fileInput.files && fileInput.files.length > 1) {
         setStatus("statusOneFileOnly", "Only one image can be converted at a time.");
@@ -948,9 +1069,7 @@
         fileInput.value = "";
         return;
       }
-      if (!emailInput.value.trim()) {
-        setStatus("statusEmailRequired", "Email address is required. Please enter it.");
-        emailInput.focus();
+      if (!requireVerifiedAuth()) {
         return;
       }
       setStatus("statusSelected", "Image selected.");
@@ -969,7 +1088,6 @@
         selectFile.disabled = true;
         const formData = new FormData();
         formData.append("image", file);
-        formData.append("email", emailInput.value.trim());
         formData.append("quality", selectedQuality());
         const response = await fetch(apiPath("/ppt/jobs"), {
           method: "POST",
@@ -1043,30 +1161,23 @@
     }
 
     async function loadBalance() {
-      const email = emailInput.value.trim();
-      if (!email) {
-        setStatus("statusEmailRequired", "Email address is required. Please enter it.");
-        emailInput.focus();
+      if (!requireVerifiedAuth()) {
         return;
       }
-      const response = await fetch(apiPath(`/billing/balance?email=${encodeURIComponent(email)}`));
+      const response = await fetch(apiPath("/billing/balance"));
       const data = await readApiJson(response);
       if (response.ok && data.ok) {
         renderBalance(data);
-        localStorage.setItem("worldscene-email", email);
         setStatus("statusBalance", "Credits loaded.");
       }
     }
 
     async function createCheckout(product) {
-      const email = emailInput.value.trim();
-      if (!email) {
-        setStatus("statusEmailRequired", "Email address is required. Please enter it.");
-        emailInput.focus();
+      if (!requireVerifiedAuth()) {
         return;
       }
       setStatus("statusCheckout", "Opening checkout...");
-      const checkoutPayload = { email, product };
+      const checkoutPayload = { product };
       if (sandboxMode) {
         checkoutPayload.stripe_mode = "test";
         checkoutPayload.sandbox_token = sandboxToken;
@@ -1093,12 +1204,6 @@
         updateSandboxBadge();
       }
 
-      const email = params.get("email");
-      if (email) {
-        emailInput.value = email;
-        localStorage.setItem("worldscene-email", email);
-      }
-
       const sessionId = params.get("session_id");
       if (sessionId) {
         setStatus("statusCheckout", "Confirming checkout...");
@@ -1120,6 +1225,43 @@
 
     selectFile.addEventListener("click", () => fileInput.click());
     checkBalance.addEventListener("click", loadBalance);
+    logoutButton.addEventListener("click", async () => {
+      await submitJson("/auth/logout", {});
+      renderAuth(null);
+      setStatusText(messages[currentLanguage].authLoggedOut, "statusReady");
+    });
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = new FormData(loginForm);
+      try {
+        const data = await submitJson("/auth/login", Object.fromEntries(form.entries()));
+        renderAuth(data.user);
+        setStatus("statusBalance", "Credits loaded.");
+      } catch (error) {
+        setStatusText(error.message, "statusFailed");
+      }
+    });
+    signupForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = new FormData(signupForm);
+      try {
+        const data = await submitJson("/auth/signup", Object.fromEntries(form.entries()));
+        renderAuth(data.user);
+        setStatusText(data.mail_sent ? messages[currentLanguage].authVerifySent : data.mail_error, "statusReady");
+      } catch (error) {
+        setStatusText(error.message, "statusFailed");
+      }
+    });
+    forgotForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = new FormData(forgotForm);
+      try {
+        await submitJson("/auth/forgot", Object.fromEntries(form.entries()));
+        setStatusText(messages[currentLanguage].authResetSent, "statusReady");
+      } catch (error) {
+        setStatusText(error.message, "statusFailed");
+      }
+    });
     document.querySelectorAll("[data-product]").forEach((button) => {
       button.addEventListener("click", () => createCheckout(button.getAttribute("data-product")));
     });
@@ -1145,12 +1287,35 @@
 
     applyLanguage(currentLanguage);
     updateSandboxBadge();
-    const savedEmail = localStorage.getItem("worldscene-email");
-    if (savedEmail) {
-      emailInput.value = savedEmail;
-      loadBalance();
-    }
-    confirmCheckoutFromUrl();
+    loadAuth().then(async () => {
+      const verifyToken = initialParams.get("verify_token");
+      if (verifyToken) {
+        try {
+          const data = await submitJson("/auth/verify", { token: verifyToken });
+          renderAuth(data.user);
+          setStatusText(messages[currentLanguage].authVerified, "statusBalance");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (error) {
+          setStatusText(error.message, "statusFailed");
+        }
+      }
+      const resetToken = initialParams.get("reset_token");
+      if (resetToken) {
+        const password = window.prompt(currentLanguage === "ja" ? "新しいパスワードを入力してください（8文字以上）" : "Enter a new password (8+ characters)");
+        const passwordConfirm = password ? window.prompt(currentLanguage === "ja" ? "確認のためもう一度入力してください" : "Enter it again to confirm") : "";
+        if (password && passwordConfirm) {
+          try {
+            const data = await submitJson("/auth/reset", { token: resetToken, password, password_confirm: passwordConfirm });
+            renderAuth(data.user);
+            setStatusText(currentLanguage === "ja" ? "パスワードを更新しました。" : "Password updated.", "statusBalance");
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch (error) {
+            setStatusText(error.message, "statusFailed");
+          }
+        }
+      }
+      confirmCheckoutFromUrl();
+    });
   </script>
 </body>
 </html>

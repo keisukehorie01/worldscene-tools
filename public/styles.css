@@ -292,6 +292,15 @@ a {
   background: #fbfcfd;
 }
 
+.auth-summary {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+  color: var(--navy);
+  font-weight: 900;
+}
+
 .account-panel label {
   grid-column: 1 / -1;
   display: grid;
@@ -310,6 +319,10 @@ a {
   font: inherit;
 }
 
+.account-panel input[readonly] {
+  background: #f4fafb;
+}
+
 .small-button {
   min-height: 44px;
   border: 1px solid var(--teal);
@@ -322,12 +335,54 @@ a {
   cursor: pointer;
 }
 
+.ghost-button {
+  border-color: var(--line);
+  color: var(--muted);
+}
+
 .account-panel strong {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
   color: var(--navy);
   white-space: nowrap;
+}
+
+.auth-forms {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.auth-mini-form {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .72);
+}
+
+.auth-mini-form.compact {
+  grid-column: 1 / -1;
+  grid-template-columns: auto minmax(180px, 1fr) auto;
+  align-items: center;
+}
+
+.auth-mini-form strong {
+  min-height: auto;
+}
+
+.auth-mini-form button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--teal);
+  color: #fff;
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 900;
 }
 
 .sandbox-badge {

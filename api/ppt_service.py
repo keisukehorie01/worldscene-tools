@@ -17,6 +17,7 @@ import requests
 from flask import jsonify, request, send_file
 
 from billing_sqlite import consume_credit, normalize_email, refund_credit
+from drop2ppt_auth import current_auth_email
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -59,9 +60,9 @@ def register_ppt_routes(app):
 
     @app.route("/api/ppt/jobs", methods=["POST"])
     def create_ppt_job():
-      email = normalize_email(request.form.get("email", ""))
+      email = current_auth_email()
       if not email:
-          return jsonify({"ok": False, "error": "email is required"}), 400
+          return jsonify({"ok": False, "error": "login_required", "message": "Please log in and verify your email."}), 401
       quality = normalize_quality(request.form.get("quality", "standard"))
       credit_type = credit_type_for_quality(quality)
 

@@ -12,6 +12,7 @@ from billing_sqlite import (
     normalize_credit_type,
     normalize_email,
 )
+from drop2ppt_auth import current_auth_email
 
 
 try:
@@ -115,9 +116,9 @@ def register_stripe_routes(app):
 
     @app.route("/api/billing/balance", methods=["GET"])
     def billing_balance():
-        email = normalize_email(request.args.get("email", ""))
+        email = current_auth_email()
         if not email:
-            return jsonify({"ok": False, "error": "email is required"}), 400
+            return jsonify({"ok": False, "error": "login_required", "message": "Please log in and verify your email."}), 401
         return jsonify({"ok": True, "email": email, **get_balances(email)})
 
     @app.route("/api/checkout/create", methods=["POST"])
@@ -126,13 +127,13 @@ def register_stripe_routes(app):
             return jsonify({"ok": False, "error": "stripe package is not installed"}), 500
 
         payload = request.get_json(silent=True) or {}
-        email = normalize_email(payload.get("email", ""))
+        email = current_auth_email()
         product_key = (payload.get("product") or "starter").strip()
         product = PRODUCTS.get(product_key)
         stripe_mode = requested_stripe_mode(payload)
         stripe_secret_key = stripe_secret_for_mode(stripe_mode)
         if not email:
-            return jsonify({"ok": False, "error": "email is required"}), 400
+            return jsonify({"ok": False, "error": "login_required", "message": "Please log in and verify your email."}), 401
         if not product:
             return jsonify({"ok": False, "error": "unknown product"}), 400
         if stripe_mode == "test" and not is_test_key(env_value("STRIPE_SECRET_KEY")):
@@ -152,7 +153,7 @@ def register_stripe_routes(app):
                 mode="payment",
                 customer_email=email,
                 line_items=[{"price": price_id, "quantity": 1}],
-                success_url=f"{public_app_url()}/?checkout=success&session_id={{CHECKOUT_SESSION_ID}}&email={email}&stripe_mode={stripe_mode}",
+                success_url=f"{public_app_url()}/?checkout=success&session_id={{CHECKOUT_SESSION_ID}}&stripe_mode={stripe_mode}",
                 cancel_url=f"{public_app_url()}/?checkout=cancel&stripe_mode={stripe_mode}",
                 metadata={
                     "email": email,
@@ -192,6 +193,14 @@ def register_stripe_routes(app):
             return jsonify({"ok": False, "error": "checkout session is not paid"}), 400
 
         try:
+            session_email = normalize_email(
+                (session.get("metadata") or {}).get("email")
+                or (session.get("customer_details") or {}).get("email")
+                or session.get("customer_email")
+            )
+            auth_email = current_auth_email()
+            if auth_email and session_email and auth_email != session_email:
+                return jsonify({"ok": False, "error": "email_mismatch"}), 403
             balances = grant_checkout_session_credits(session)
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 500

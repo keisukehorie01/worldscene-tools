@@ -33,12 +33,20 @@ from ppt_service import (
     register_ppt_routes,
 )
 from stripe_service import register_stripe_routes
+from drop2ppt_auth import register_auth_routes
 
 load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY") or os.getenv("FLASK_SECRET_KEY") or os.getenv("DROP2PPT_SECRET_KEY") or "dev-only-change-me"
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE", "true").strip().lower() not in {"0", "false", "no", "off"},
+)
 register_ppt_routes(app)
 register_stripe_routes(app)
+register_auth_routes(app)
 
 GOOGLE_PLAY_PACKAGE_NAME = os.getenv("GOOGLE_PLAY_PACKAGE_NAME", "").strip()
 GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "").strip()
