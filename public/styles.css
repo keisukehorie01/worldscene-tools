@@ -328,7 +328,7 @@ a {
 .pricing-grid {
   order: 5;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-top: 18px;
   scroll-margin-top: 112px;
@@ -349,6 +349,11 @@ a {
 .price-card:hover {
   border-color: var(--teal);
   background: #f0faf8;
+}
+
+.price-card-featured {
+  border-color: var(--teal);
+  background: #f2fbf9;
 }
 
 .price-card span {
@@ -372,6 +377,49 @@ a {
   font-style: normal;
   font-weight: 700;
   line-height: 1.45;
+}
+
+.quality-comparison {
+  order: 6;
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+}
+
+.quality-comparison h2 {
+  margin: 0;
+  padding: 16px 18px 8px;
+  color: var(--navy);
+  font-size: 20px;
+}
+
+.quality-comparison table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.quality-comparison th,
+.quality-comparison td {
+  border-top: 1px solid var(--line);
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.55;
+}
+
+.quality-comparison th {
+  color: var(--navy);
+  background: #f3f8f8;
+  font-weight: 900;
+}
+
+.quality-comparison td:first-child {
+  width: 22%;
+  color: var(--navy);
+  font-weight: 900;
 }
 
 .drop-zone:hover,
@@ -1027,6 +1075,14 @@ a {
   .account-panel,
   .pricing-grid {
     grid-template-columns: 1fr;
+  }
+
+  .quality-comparison {
+    overflow-x: auto;
+  }
+
+  .quality-comparison table {
+    min-width: 620px;
   }
 }
 

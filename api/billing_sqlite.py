@@ -19,6 +19,11 @@ PRODUCTS = {
         "env": "STRIPE_PRICE_PRO",
         "name": "Pro",
     },
+    "high_quality": {
+        "credits": 1,
+        "env": "STRIPE_PRICE_HIGH_QUALITY",
+        "name": "High Quality",
+    },
 }
 
 
