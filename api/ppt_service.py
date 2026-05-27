@@ -39,6 +39,7 @@ IMAGE_REGION_MIN_AREA = float(os.getenv("PPT_IMAGE_REGION_MIN_AREA", "0.006"))
 
 SLIDE_W = 12192000
 SLIDE_H = 6858000
+BASE_SLIDE_LONG_EDGE = 12192000
 
 JOBS: Dict[str, Dict[str, Any]] = {}
 JOBS_LOCK = threading.Lock()
@@ -129,8 +130,8 @@ def register_ppt_routes(app):
           return jsonify({"ok": False, "error": "job is not completed"}), 409
 
       output_path = Path(job["output_path"])
-      if not output_path.exists():
-          return jsonify({"ok": False, "error": "output file is missing"}), 404
+      if not is_output_ready(job):
+          return jsonify({"ok": False, "error": "output file is not ready"}), 409
 
       return send_file(
           output_path,
@@ -257,15 +258,27 @@ def load_job(job_id: str) -> Optional[Dict[str, Any]]:
 
 
 def public_job(job: Dict[str, Any]) -> Dict[str, Any]:
+    output_ready = is_output_ready(job)
     return {
         "id": job["id"],
         "status": job["status"],
         "progress": job["progress"],
         "message": job["message"],
         "quality": job.get("quality", "standard"),
-        "download_url": f"/api/ppt/jobs/{job['id']}/download" if job.get("status") == "completed" else None,
+        "download_url": f"/api/ppt/jobs/{job['id']}/download" if job.get("status") == "completed" and output_ready else None,
         "error": job.get("error"),
     }
+
+
+def is_output_ready(job: Dict[str, Any]) -> bool:
+    output_path = Path(job.get("output_path") or "")
+    if job.get("status") != "completed" or not output_path.exists() or output_path.stat().st_size <= 0:
+        return False
+    try:
+        with zipfile.ZipFile(output_path) as archive:
+            return archive.testzip() is None
+    except (OSError, zipfile.BadZipFile):
+        return False
 
 
 def update_job(job_id: str, **changes) -> Dict[str, Any]:
@@ -275,6 +288,23 @@ def update_job(job_id: str, **changes) -> Dict[str, Any]:
     job.update(changes)
     save_job(job)
     return job
+
+
+def wait_for_output_ready(output_path: Path, timeout_seconds: float = 20.0) -> None:
+    deadline = time.time() + timeout_seconds
+    last_error = "output file is not ready"
+    while time.time() < deadline:
+        if output_path.exists() and output_path.stat().st_size > 0:
+            try:
+                with zipfile.ZipFile(output_path) as archive:
+                    bad_file = archive.testzip()
+                if bad_file is None:
+                    return
+                last_error = f"PPTX archive has a damaged member: {bad_file}"
+            except (OSError, zipfile.BadZipFile) as exc:
+                last_error = str(exc)
+        time.sleep(0.25)
+    raise RuntimeError(f"PPTX file was not ready after saving: {last_error}")
 
 
 def process_job(job_id: str) -> None:
@@ -315,10 +345,12 @@ def process_job(job_id: str) -> None:
         mime_type = job["input_mime_type"]
 
         analysis = analyze_image_for_ppt(image_bytes, mime_type, quality=job.get("quality", "standard"))
+        analysis["quality"] = job.get("quality", "standard")
         update_job(job_id, progress=70, message="Rebuilding editable slide")
 
         output_path = Path(job["output_path"])
         write_pptx(output_path, analysis, image_path)
+        wait_for_output_ready(output_path)
         update_job(job_id, status="completed", progress=100, message="Ready to download")
     except Exception as exc:
         job = load_job(job_id)
@@ -977,20 +1009,44 @@ def write_pptx(path: Path, analysis: Dict[str, Any], source_image_path: Optional
         raise RuntimeError("python-pptx is not installed. Run pip install -r api/requirements.txt") from exc
 
     prs = Presentation()
-    prs.slide_width = SLIDE_W
-    prs.slide_height = SLIDE_H
+    slide_w, slide_h = slide_size_for_source(source_image_path)
+    prs.slide_width = slide_w
+    prs.slide_height = slide_h
     editable_slide = prs.slides.add_slide(prs.slide_layouts[6])
-    render_editable_slide(editable_slide, analysis, source_image_path)
+    render_editable_slide(editable_slide, analysis, source_image_path, slide_w, slide_h)
 
     include_source = os.getenv("PPT_INCLUDE_SOURCE_SLIDE", "1").strip().lower() in {"1", "true", "yes"}
     if source_image_path and include_source:
         visual_slide = prs.slides.add_slide(prs.slide_layouts[6])
-        add_full_slide_image(visual_slide, source_image_path)
+        add_full_slide_image(visual_slide, source_image_path, slide_w, slide_h)
 
-    prs.save(path)
+    temp_path = path.with_suffix(".tmp.pptx")
+    prs.save(temp_path)
+    os.replace(temp_path, path)
 
 
-def render_editable_slide(slide, analysis: Dict[str, Any], source_image_path: Optional[Path] = None) -> None:
+def slide_size_for_source(source_image_path: Optional[Path]) -> tuple[int, int]:
+    if not source_image_path:
+        return SLIDE_W, SLIDE_H
+    try:
+        from PIL import Image
+
+        with Image.open(source_image_path) as image:
+            image_w, image_h = image.size
+        if image_w <= 0 or image_h <= 0:
+            return SLIDE_W, SLIDE_H
+        if image_w >= image_h:
+            width = BASE_SLIDE_LONG_EDGE
+            height = int(width * image_h / image_w)
+        else:
+            height = BASE_SLIDE_LONG_EDGE
+            width = int(height * image_w / image_h)
+        return max(3000000, width), max(3000000, height)
+    except Exception:
+        return SLIDE_W, SLIDE_H
+
+
+def render_editable_slide(slide, analysis: Dict[str, Any], source_image_path: Optional[Path], slide_w: int, slide_h: int) -> None:
     from pptx.dml.color import RGBColor
 
     theme = analysis.get("theme") or {}
@@ -1000,17 +1056,62 @@ def render_editable_slide(slide, analysis: Dict[str, Any], source_image_path: Op
     bg.solid()
     bg.fore_color.rgb = RGBColor.from_string(background)
 
-    elements = build_dense_reconstruction(analysis)
+    use_special_aeo_layout = should_use_aeo_layout(analysis)
+    if not use_special_aeo_layout and source_image_path:
+        add_full_slide_image(slide, source_image_path, slide_w, slide_h)
+
+    elements = build_dense_reconstruction(analysis) if use_special_aeo_layout else build_general_reconstruction(analysis)
     for element in elements:
         if element.get("type") == "imageRegions":
-            render_image_regions(slide, analysis, source_image_path, layer=element.get("layer") or "background")
+            render_image_regions(slide, analysis, source_image_path, layer=element.get("layer") or "background", slide_w=slide_w, slide_h=slide_h)
             continue
-        render_element(slide, element, accent)
+        render_element(slide, element, accent, slide_w, slide_h)
 
-    render_image_regions(slide, analysis, source_image_path, layer="foreground")
+    render_image_regions(slide, analysis, source_image_path, layer="foreground", slide_w=slide_w, slide_h=slide_h)
 
 
-def render_image_regions(slide, analysis: Dict[str, Any], source_image_path: Optional[Path], layer: str) -> None:
+def should_use_aeo_layout(analysis: Dict[str, Any]) -> bool:
+    title = clean_text(analysis.get("title"))
+    subtitle = clean_text(analysis.get("subtitle"))
+    if "AEO" not in f"{title} {subtitle}":
+        return False
+    labels = {
+        clean_text(step.get("label"))
+        for step in analysis.get("steps") or []
+        if isinstance(step, dict)
+    }
+    return len(labels.intersection({str(index) for index in range(1, 13)})) >= 8
+
+
+def build_general_reconstruction(analysis: Dict[str, Any]):
+    elements = []
+    quality = normalize_quality(analysis.get("quality", "standard"))
+    shape_transparency = 30 if quality == "high_quality" else 58
+    for element in analysis.get("elements") or []:
+        if not isinstance(element, dict):
+            continue
+        element_type = element.get("type")
+        if element_type in {"text", "rect", "roundRect", "pill", "circle", "line"}:
+            item = dict(element)
+            if element_type not in {"text", "line"}:
+                item.setdefault("transparency", shape_transparency)
+            elements.append(item)
+    if elements:
+        return elements[:100]
+
+    title = clean_text(analysis.get("title"))
+    subtitle = clean_text(analysis.get("subtitle"))
+    summary = clean_text(analysis.get("summary"))
+    if title:
+        elements.append({"type": "text", "text": title, "x": 0.06, "y": 0.05, "w": 0.62, "h": 0.08, "font": "0B2341", "font_size": 30, "bold": True})
+    if subtitle:
+        elements.append({"type": "text", "text": subtitle, "x": 0.06, "y": 0.15, "w": 0.62, "h": 0.06, "font": "1D3557", "font_size": 15, "bold": False})
+    if summary:
+        elements.append({"type": "text", "text": summary, "x": 0.06, "y": 0.84, "w": 0.88, "h": 0.06, "font": "1D3557", "font_size": 13, "bold": True})
+    return elements
+
+
+def render_image_regions(slide, analysis: Dict[str, Any], source_image_path: Optional[Path], layer: str, slide_w: int, slide_h: int) -> None:
     if not source_image_path or not source_image_path.exists():
         return
 
@@ -1022,7 +1123,7 @@ def render_image_regions(slide, analysis: Dict[str, Any], source_image_path: Opt
         if region_layer != layer:
             continue
         try:
-            add_cropped_image_region(slide, source_image_path, region, index)
+            add_cropped_image_region(slide, source_image_path, region, index, slide_w, slide_h)
         except Exception as exc:
             print(
                 f"Drop2PPT image region skipped index={index} error={redact_secret_text(str(exc))}",
@@ -1030,7 +1131,7 @@ def render_image_regions(slide, analysis: Dict[str, Any], source_image_path: Opt
             )
 
 
-def add_cropped_image_region(slide, source_image_path: Path, region: Dict[str, Any], index: int) -> None:
+def add_cropped_image_region(slide, source_image_path: Path, region: Dict[str, Any], index: int, slide_w: int, slide_h: int) -> None:
     from PIL import Image
 
     x_norm = clamp_float(region.get("x"), 0.0, 0.98)
@@ -1059,19 +1160,19 @@ def add_cropped_image_region(slide, source_image_path: Path, region: Dict[str, A
         crop_path = crop_dir / f"region-{index}.png"
         crop.save(crop_path)
 
-    slide_x = int(x_norm * SLIDE_W)
-    slide_y = int(y_norm * SLIDE_H)
-    slide_w = int(w_norm * SLIDE_W)
-    slide_h = int(h_norm * SLIDE_H)
-    slide.shapes.add_picture(str(crop_path), slide_x, slide_y, width=slide_w, height=slide_h)
+    slide_x = int(x_norm * slide_w)
+    slide_y = int(y_norm * slide_h)
+    region_w = int(w_norm * slide_w)
+    region_h = int(h_norm * slide_h)
+    slide.shapes.add_picture(str(crop_path), slide_x, slide_y, width=region_w, height=region_h)
 
 
-def render_element(slide, element: Dict[str, Any], accent: str) -> None:
+def render_element(slide, element: Dict[str, Any], accent: str, slide_w: int = SLIDE_W, slide_h: int = SLIDE_H) -> None:
     from pptx.dml.color import RGBColor
     from pptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
     from pptx.util import Pt
 
-    x, y, w, h = element_box(element)
+    x, y, w, h = element_box(element, slide_w, slide_h)
     element_type = element.get("type") or "rect"
     text = clean_text(element.get("text"))
     fill = clean_hex(element.get("fill")) or "123B59"
@@ -1079,6 +1180,7 @@ def render_element(slide, element: Dict[str, Any], accent: str) -> None:
     font = clean_hex(element.get("font")) or "FFFFFF"
     font_size = clamp_int(element.get("font_size"), 7, 44)
     bold = bool(element.get("bold"))
+    transparency = clamp_int(element.get("transparency"), 0, 100)
 
     if element_type == "line":
         connector = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, x, y, x + w, y + h)
@@ -1100,6 +1202,8 @@ def render_element(slide, element: Dict[str, Any], accent: str) -> None:
     shape = slide.shapes.add_shape(shape_type, x, y, w, h)
     shape.fill.solid()
     shape.fill.fore_color.rgb = RGBColor.from_string(fill)
+    if transparency:
+        shape.fill.transparency = transparency
     shape.line.color.rgb = RGBColor.from_string(line)
     shape.line.width = 15000
 
@@ -1121,34 +1225,34 @@ def render_element(slide, element: Dict[str, Any], accent: str) -> None:
             run.font.color.rgb = RGBColor.from_string(font)
 
 
-def element_box(element: Dict[str, Any]):
+def element_box(element: Dict[str, Any], slide_w: int = SLIDE_W, slide_h: int = SLIDE_H):
     is_line = (element.get("type") or "").lower() == "line"
-    x = int(clamp_float(element.get("x"), 0.0, 0.98) * SLIDE_W)
-    y = int(clamp_float(element.get("y"), 0.0, 0.98) * SLIDE_H)
-    w = int(clamp_float(element.get("w"), 0.0 if is_line else 0.01, 1.0) * SLIDE_W)
-    h = int(clamp_float(element.get("h"), 0.0 if is_line else 0.01, 1.0) * SLIDE_H)
+    x = int(clamp_float(element.get("x"), 0.0, 0.98) * slide_w)
+    y = int(clamp_float(element.get("y"), 0.0, 0.98) * slide_h)
+    w = int(clamp_float(element.get("w"), 0.0 if is_line else 0.01, 1.0) * slide_w)
+    h = int(clamp_float(element.get("h"), 0.0 if is_line else 0.01, 1.0) * slide_h)
     return x, y, w, h
 
 
-def add_full_slide_image(slide, image_path: Path) -> None:
+def add_full_slide_image(slide, image_path: Path, slide_w: int = SLIDE_W, slide_h: int = SLIDE_H) -> None:
     try:
         from PIL import Image
 
         with Image.open(image_path) as image:
             image_w, image_h = image.size
         image_ratio = image_w / image_h
-        slide_ratio = SLIDE_W / SLIDE_H
+        slide_ratio = slide_w / slide_h
         if image_ratio >= slide_ratio:
-            width = SLIDE_W
-            height = int(SLIDE_W / image_ratio)
+            width = slide_w
+            height = int(slide_w / image_ratio)
         else:
-            height = SLIDE_H
-            width = int(SLIDE_H * image_ratio)
-        left = int((SLIDE_W - width) / 2)
-        top = int((SLIDE_H - height) / 2)
+            height = slide_h
+            width = int(slide_h * image_ratio)
+        left = int((slide_w - width) / 2)
+        top = int((slide_h - height) / 2)
         slide.shapes.add_picture(str(image_path), left, top, width=width, height=height)
     except Exception:
-        slide.shapes.add_picture(str(image_path), 0, 0, width=SLIDE_W, height=SLIDE_H)
+        slide.shapes.add_picture(str(image_path), 0, 0, width=slide_w, height=slide_h)
 
 
 def add_textbox(slide, x: int, y: int, w: int, h: int, text: str, font: str, font_size: int, bold: bool = False) -> None:

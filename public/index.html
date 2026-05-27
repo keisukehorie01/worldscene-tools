@@ -889,13 +889,13 @@
       const source = String(message || status || "");
       const normalized = source.toLowerCase();
       if (normalized.includes("scan")) {
-        return messages[currentLanguage].progressScanning || "Scanning uploaded image";
+        return messages[currentLanguage].progressScanning || (currentLanguage === "ja" ? "ウイルススキャン中..." : "Scanning uploaded image...");
       }
       if (normalized.includes("analyz")) {
         return messages[currentLanguage].progressAnalyzing || "Analyzing image";
       }
       if (normalized.includes("rebuild")) {
-        return messages[currentLanguage].progressRebuilding || "Rebuilding editable PowerPoint";
+        return messages[currentLanguage].progressRebuilding || (currentLanguage === "ja" ? "PPTXファイルを生成中..." : "Building the PPTX file...");
       }
       if (normalized.includes("queued") || status === "queued") {
         return messages[currentLanguage].progressQueued || "Waiting in queue";
@@ -1131,6 +1131,13 @@
         setProgress(data.job.progress, jobMessage);
 
         if (data.job.status === "completed") {
+          if (!data.job.download_url) {
+            const finalizing = currentLanguage === "ja" ? "PPTXファイルの保存完了を確認しています..." : "Finalizing the PPTX file...";
+            setStatusText(finalizing, "statusProcessing");
+            setProgress(96, finalizing);
+            window.setTimeout(() => pollJob(jobId), 1800);
+            return;
+          }
           setStatus("statusCompleted", "PPTX is ready.");
           setProgress(100, messages[currentLanguage].statusCompleted || "PPTX is ready.");
           downloadLink.href = normalizeDownloadPath(data.job.download_url);
