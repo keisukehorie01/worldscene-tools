@@ -167,7 +167,7 @@
             <p class="quality-warning" data-i18n="qualityWalletNote">Starter / Pro credits and High Quality credits are separate. Pro credits cannot be used for High Quality conversion.</p>
           </fieldset>
 
-          <label class="drop-zone" id="drop-zone">
+          <div class="drop-zone" id="drop-zone" role="button" tabindex="0">
             <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
             <span class="drop-icon" aria-hidden="true">PPTX</span>
             <strong data-i18n="dropTitle">Drop image here</strong>
@@ -192,7 +192,7 @@
                 <span id="progress-bar"></span>
               </span>
             </span>
-          </label>
+          </div>
 
           <div class="conversion-status" id="conversion-status" aria-live="polite">
             <span class="status-dot"></span>
@@ -1054,13 +1054,7 @@
       return data;
     }
 
-    async function markSelected() {
-      if (fileInput.files && fileInput.files.length > 1) {
-        setStatus("statusOneFileOnly", "Only one image can be converted at a time.");
-        fileInput.value = "";
-        return;
-      }
-      const file = fileInput.files && fileInput.files[0];
+    async function handleSelectedFile(file) {
       if (!file) return;
       if (file.size > maxUploadBytes) {
         setStatus("statusFileTooLarge", "Image is too large. Please upload an image up to 12 MB.");
@@ -1076,6 +1070,17 @@
       resetProgress();
       setProgress(3, messages[currentLanguage].statusSelected || "Image selected.");
       await uploadImage(file);
+    }
+
+    async function markSelected() {
+      if (fileInput.files && fileInput.files.length > 1) {
+        setStatus("statusOneFileOnly", "Only one image can be converted at a time.");
+        fileInput.value = "";
+        return;
+      }
+      const file = fileInput.files && fileInput.files[0];
+      fileInput.value = "";
+      await handleSelectedFile(file);
     }
 
     async function uploadImage(file) {
@@ -1230,6 +1235,16 @@
       event.stopPropagation();
       fileInput.click();
     });
+    dropZone.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      fileInput.click();
+    });
+    dropZone.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
     checkBalance.addEventListener("click", loadBalance);
     async function logout() {
       await submitJson("/auth/logout", {});
@@ -1287,8 +1302,7 @@
         return;
       }
       if (event.dataTransfer.files.length) {
-        fileInput.files = event.dataTransfer.files;
-        markSelected();
+        handleSelectedFile(event.dataTransfer.files[0]);
       }
     });
     languageToggle.addEventListener("click", () => applyLanguage(currentLanguage === "ja" ? "en" : "ja"));
