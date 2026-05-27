@@ -105,12 +105,54 @@ def _validate_password(password: str) -> Optional[str]:
 
 
 def _set_session(user: Dict[str, Any]) -> None:
+    sandbox_allowed = bool(session.get("drop2ppt_sandbox_allowed"))
     session.clear()
+    if sandbox_allowed:
+        session["drop2ppt_sandbox_allowed"] = True
     session["drop2ppt_user_id"] = int(user["id"])
     session["csrf_token"] = secrets.token_urlsafe(32)
     with get_conn() as conn:
         conn.execute("UPDATE auth_users SET last_login_at = ?, updated_at = ? WHERE id = ?", (time.time(), time.time(), user["id"]))
         conn.commit()
+
+
+def set_sandbox_auth_session(email: str, password: str) -> Optional[Dict[str, Any]]:
+    email = normalize_email(email)
+    if not email or not password:
+        return None
+
+    init_auth_db()
+    now = time.time()
+    with get_conn() as conn:
+        existing = conn.execute("SELECT * FROM auth_users WHERE email = ?", (email,)).fetchone()
+        if existing:
+            user_id = int(existing["id"])
+            conn.execute(
+                """
+                UPDATE auth_users
+                SET email_verified = 1,
+                    verification_token = NULL,
+                    verification_expires_at = NULL,
+                    updated_at = ?
+                WHERE id = ?
+                """,
+                (now, user_id),
+            )
+        else:
+            cur = conn.execute(
+                """
+                INSERT INTO auth_users (email, password_hash, email_verified, created_at, updated_at)
+                VALUES (?, ?, 1, ?, ?)
+                """,
+                (email, generate_password_hash(password), now, now),
+            )
+            user_id = int(cur.lastrowid)
+        conn.commit()
+
+    user = _get_user_by_id(user_id)
+    if user:
+        _set_session(user)
+    return user
 
 
 def _create_verification_token(user_id: int) -> str:

@@ -11,7 +11,7 @@ from billing_sqlite import (
     normalize_credit_type,
     normalize_email,
 )
-from drop2ppt_auth import current_auth_email
+from drop2ppt_auth import current_auth_email, set_sandbox_auth_session
 
 
 try:
@@ -124,7 +124,8 @@ def register_stripe_routes(app):
         if not constant_time_equal(email, configured_email) or not constant_time_equal(password, configured_password):
             return jsonify({"ok": False, "error": "sandbox login failed"}), 401
         session["drop2ppt_sandbox_allowed"] = True
-        return jsonify({"ok": True, "sandbox_allowed": True})
+        user = set_sandbox_auth_session(configured_email, configured_password)
+        return jsonify({"ok": True, "sandbox_allowed": True, "user_email": user["email"] if user else configured_email})
 
     @app.route("/api/sandbox/logout", methods=["POST"])
     def sandbox_logout():

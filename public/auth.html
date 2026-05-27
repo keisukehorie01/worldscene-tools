@@ -227,6 +227,7 @@
     async function submitJson(path, payload) {
       const response = await fetch(apiPath(path), {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });

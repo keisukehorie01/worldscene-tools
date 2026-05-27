@@ -932,7 +932,7 @@
 
     async function loadSandboxState() {
       try {
-        const response = await fetch(apiPath("/sandbox/me"));
+        const response = await fetch(apiPath("/sandbox/me"), { credentials: "same-origin" });
         const data = await readApiJson(response);
         sandboxMode = Boolean(response.ok && data.ok && data.sandbox_allowed);
       } catch (error) {
@@ -1073,7 +1073,7 @@
     }
 
     async function loadAuth() {
-      const response = await fetch(apiPath("/auth/me"));
+      const response = await fetch(apiPath("/auth/me"), { credentials: "same-origin" });
       const data = await readApiJson(response);
       renderAuth(data.ok ? data.user : null);
       return data.user || null;
@@ -1082,6 +1082,7 @@
     async function submitJson(path, payload) {
       const response = await fetch(apiPath(path), {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
@@ -1132,6 +1133,7 @@
         formData.append("quality", selectedQuality());
         const response = await fetch(apiPath("/ppt/jobs"), {
           method: "POST",
+          credentials: "same-origin",
           body: formData
         });
         const data = await readApiJson(response);
@@ -1162,7 +1164,7 @@
 
     async function pollJob(jobId) {
       try {
-        const response = await fetch(apiPath(`/ppt/jobs/${jobId}`));
+        const response = await fetch(apiPath(`/ppt/jobs/${jobId}`), { credentials: "same-origin" });
         const data = await readApiJson(response);
         if (!response.ok || !data.ok) {
           throw new Error(data.message || data.error || "Status failed");
@@ -1212,7 +1214,7 @@
       if (!requireVerifiedAuth()) {
         return;
       }
-      const response = await fetch(apiPath("/billing/balance"));
+      const response = await fetch(apiPath("/billing/balance"), { credentials: "same-origin" });
       const data = await readApiJson(response);
       if (response.ok && data.ok) {
         renderBalance(data);
@@ -1231,6 +1233,7 @@
       }
       const response = await fetch(apiPath("/checkout/create"), {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(checkoutPayload)
       });
@@ -1254,6 +1257,7 @@
         setStatus("statusCheckout", "Confirming checkout...");
         const response = await fetch(apiPath("/checkout/confirm"), {
           method: "POST",
+          credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ session_id: sessionId, stripe_mode: params.get("stripe_mode") || undefined })
         });
