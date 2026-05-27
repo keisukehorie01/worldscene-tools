@@ -134,22 +134,29 @@
             Convert AI-generated images, screenshots, diagrams, and mockups into editable PPTX slides.
           </p>
           <div class="hero-actions">
+            <span class="sandbox-badge" id="sandbox-badge" hidden>Sandbox checkout</span>
             <a class="button button-secondary" href="#example" data-i18n="viewExample">View example flow</a>
           </div>
 
-          <div class="account-panel" aria-label="Credit balance">
+          <div class="account-panel" id="account-panel" aria-label="Credit balance">
             <div class="auth-summary" id="auth-summary">
               <span data-i18n="authStatusChecking">Checking login status...</span>
             </div>
-            <label>
-              <span data-i18n="emailLabel">Login email</span>
-              <input id="email-input" type="email" autocomplete="email" placeholder="you@example.com" readonly required>
-            </label>
-            <button class="small-button" type="button" id="check-balance" data-i18n="checkBalance">Check credits</button>
             <button class="small-button ghost-button" type="button" id="logout-button" data-i18n="logoutButton" hidden>Logout</button>
-            <strong id="credit-balance" data-i18n="creditsUnknown">Credits: unknown</strong>
-            <span class="sandbox-badge" id="sandbox-badge" hidden>Sandbox checkout</span>
             <p class="auth-panel-note" id="auth-panel-note" data-i18n="authPanelNote">Use the login and sign up buttons in the header to manage your account.</p>
+            <div class="credit-balance-card" id="credit-balance-card" hidden>
+              <span data-i18n="creditRemainingTitle">Remaining conversions</span>
+              <dl>
+                <div>
+                  <dt data-i18n="qualityStandard">Standard</dt>
+                  <dd><strong id="standard-credit-count">0</strong><span data-i18n="creditUnit">left</span></dd>
+                </div>
+                <div>
+                  <dt data-i18n="qualityHigh">High Quality</dt>
+                  <dd><strong id="high-quality-credit-count">0</strong><span data-i18n="creditUnit">left</span></dd>
+                </div>
+              </dl>
+            </div>
           </div>
 
           <fieldset class="quality-selector" aria-label="Conversion quality">
@@ -475,6 +482,8 @@
         creditsUnknown: "Credits: unknown",
         creditsLabel: "Credits",
         creditsBreakdown: "Standard: {standard} / High Quality: {high}",
+        creditRemainingTitle: "Remaining conversions",
+        creditUnit: "left",
         qualityLabel: "Conversion mode",
         qualityStandard: "Standard",
         qualityStandardCopy: "Uses Starter / Pro standard credits.",
@@ -586,6 +595,8 @@
         creditsUnknown: "クレジット: 未確認",
         creditsLabel: "クレジット",
         creditsBreakdown: "標準: {standard} / 高品質: {high}",
+        creditRemainingTitle: "残枚数",
+        creditUnit: "枚",
         qualityLabel: "変換モード",
         qualityStandard: "標準",
         qualityStandardCopy: "Starter / Pro の標準クレジットを使います。",
@@ -698,6 +709,8 @@
       creditsUnknown: "クレジット: 未確認",
       creditsLabel: "クレジット",
       creditsBreakdown: "標準: {standard} / 高品質: {high}",
+      creditRemainingTitle: "残枚数",
+      creditUnit: "枚",
       qualityLabel: "変換モード",
       qualityStandard: "標準",
       qualityStandardCopy: "Starter / Pro の標準クレジットを使います。",
@@ -800,7 +813,11 @@
     const downloadLink = document.getElementById("download-link");
     const emailInput = document.getElementById("email-input");
     const checkBalance = document.getElementById("check-balance");
+    const accountPanel = document.getElementById("account-panel");
     const creditBalance = document.getElementById("credit-balance");
+    const creditBalanceCard = document.getElementById("credit-balance-card");
+    const standardCreditCount = document.getElementById("standard-credit-count");
+    const highQualityCreditCount = document.getElementById("high-quality-credit-count");
     let lastBalanceData = null;
     const progressPanel = document.getElementById("progress-panel");
     const progressLabel = document.getElementById("progress-label");
@@ -812,6 +829,7 @@
     const loginForm = document.getElementById("login-form");
     const signupForm = document.getElementById("signup-form");
     const forgotForm = document.getElementById("forgot-form");
+    const authPanelNote = document.getElementById("auth-panel-note");
     const logoutButton = document.getElementById("logout-button");
     const loginNav = document.getElementById("login-nav");
     const signupNav = document.getElementById("signup-nav");
@@ -849,10 +867,18 @@
       lastBalanceData = data;
       const standard = Number(data.standard_credits ?? data.credits ?? 0);
       const high = Number(data.high_quality_credits ?? 0);
+      if (standardCreditCount) {
+        standardCreditCount.textContent = standard;
+      }
+      if (highQualityCreditCount) {
+        highQualityCreditCount.textContent = high;
+      }
       const template = messages[currentLanguage].creditsBreakdown || "Standard: {standard} / High Quality: {high}";
-      creditBalance.textContent = template
-        .replace("{standard}", standard)
-        .replace("{high}", high);
+      if (creditBalance) {
+        creditBalance.textContent = template
+          .replace("{standard}", standard)
+          .replace("{high}", high);
+      }
     }
 
     function selectedQuality() {
@@ -997,25 +1023,37 @@
     function renderAuth(user) {
       currentUser = user || null;
       if (currentUser) {
-        emailInput.value = currentUser.email || "";
+        document.body.classList.add("is-authenticated");
+        accountPanel?.classList.add("is-logged-in");
+        if (emailInput) emailInput.value = currentUser.email || "";
         if (authForms) authForms.hidden = true;
-        if (logoutButton) logoutButton.hidden = false;
+        if (logoutButton) logoutButton.hidden = true;
         if (loginNav) loginNav.hidden = true;
         if (signupNav) signupNav.hidden = true;
         if (logoutNav) logoutNav.hidden = false;
+        if (creditBalanceCard) creditBalanceCard.hidden = false;
+        if (authSummary) authSummary.hidden = true;
+        if (authPanelNote) authPanelNote.hidden = true;
         renderBalance(currentUser);
         const template = currentUser.email_verified
           ? messages[currentLanguage].authLoggedIn
           : messages[currentLanguage].authVerifyNeeded;
         authSummary.textContent = (template || "").replace("{email}", currentUser.email || "");
       } else {
-        emailInput.value = "";
+        document.body.classList.remove("is-authenticated");
+        accountPanel?.classList.remove("is-logged-in");
+        if (emailInput) emailInput.value = "";
         if (authForms) authForms.hidden = false;
         if (logoutButton) logoutButton.hidden = true;
         if (loginNav) loginNav.hidden = false;
         if (signupNav) signupNav.hidden = false;
         if (logoutNav) logoutNav.hidden = true;
-        creditBalance.textContent = messages[currentLanguage].creditsUnknown || "Credits: unknown";
+        if (creditBalanceCard) creditBalanceCard.hidden = true;
+        if (authSummary) authSummary.hidden = false;
+        if (authPanelNote) authPanelNote.hidden = false;
+        if (standardCreditCount) standardCreditCount.textContent = "0";
+        if (highQualityCreditCount) highQualityCreditCount.textContent = "0";
+        if (creditBalance) creditBalance.textContent = messages[currentLanguage].creditsUnknown || "Credits: unknown";
         authSummary.textContent = messages[currentLanguage].authLoggedOut || "Please log in.";
       }
     }
@@ -1245,7 +1283,7 @@
         fileInput.click();
       }
     });
-    checkBalance.addEventListener("click", loadBalance);
+    checkBalance?.addEventListener("click", loadBalance);
     async function logout() {
       await submitJson("/auth/logout", {});
       renderAuth(null);

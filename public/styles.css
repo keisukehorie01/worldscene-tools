@@ -190,6 +190,14 @@ a {
   padding: clamp(20px, 2.5vw, 34px);
 }
 
+body.is-authenticated .quality-selector {
+  grid-area: account;
+}
+
+body.is-authenticated .account-panel {
+  grid-area: quality;
+}
+
 .app-promo {
   grid-column: 1;
   grid-row: 2;
@@ -323,9 +331,8 @@ a {
   grid-area: account;
   order: 2;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: end;
+  gap: 8px;
+  align-items: start;
   margin-top: 0;
   padding: 12px;
   border: 1px solid var(--line);
@@ -334,34 +341,13 @@ a {
 }
 
 .auth-summary {
-  grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  min-height: 34px;
+  min-height: 0;
   color: var(--navy);
+  font-size: 14px;
   font-weight: 900;
-}
-
-.account-panel label {
-  grid-column: 1 / -1;
-  display: grid;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.account-panel input {
-  min-height: 44px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0 12px;
-  color: var(--ink);
-  font: inherit;
-}
-
-.account-panel input[readonly] {
-  background: #f4fafb;
+  line-height: 1.45;
 }
 
 .small-button {
@@ -381,11 +367,65 @@ a {
   color: var(--muted);
 }
 
-.account-panel strong {
-  min-height: 44px;
+.auth-panel-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.account-panel.is-logged-in {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.credit-balance-card {
+  display: grid;
+  gap: 4px;
+  padding: 2px 0 0;
+}
+
+.credit-balance-card[hidden] {
+  display: none;
+}
+
+.credit-balance-card > span {
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(24px, 2.4vw, 34px);
+  line-height: 1;
+}
+
+.credit-balance-card dl {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.credit-balance-card dl div {
+  display: grid;
+  grid-template-columns: minmax(70px, auto) 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.credit-balance-card dt,
+.credit-balance-card dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(22px, 2.2vw, 30px);
+  line-height: 1.08;
+}
+
+.credit-balance-card dd {
   display: inline-flex;
-  align-items: center;
-  color: var(--navy);
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.credit-balance-card strong {
+  color: var(--ink);
+  font: inherit;
   white-space: nowrap;
 }
 
@@ -427,7 +467,6 @@ a {
 }
 
 .sandbox-badge {
-  grid-column: 1 / -1;
   width: fit-content;
   border: 1px solid #f4b740;
   border-radius: 999px;
@@ -440,14 +479,6 @@ a {
 
 .sandbox-badge[hidden] {
   display: none;
-}
-
-.auth-panel-note {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.6;
 }
 
 .auth-page-body {
