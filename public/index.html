@@ -133,8 +133,8 @@
 
           <div class="account-panel" aria-label="Credit balance">
             <label>
-              <span data-i18n="emailLabel">Email for credits</span>
-              <input id="email-input" type="email" autocomplete="email" placeholder="you@example.com">
+              <span data-i18n="emailLabel">Email for credits (required)</span>
+              <input id="email-input" type="email" autocomplete="email" placeholder="you@example.com" required>
             </label>
             <button class="small-button" type="button" id="check-balance" data-i18n="checkBalance">Check credits</button>
             <strong id="credit-balance" data-i18n="creditsUnknown">Credits: unknown</strong>
@@ -432,6 +432,7 @@
         statusProcessing: "Converting to editable PowerPoint...",
         statusCompleted: "PPTX is ready.",
         statusFailed: "Conversion failed. Please try another image.",
+        statusEmailRequired: "Email address is required. Please enter it.",
         statusNeedCredits: "Please enter your email and buy credits before converting.",
         statusBalance: "Credits loaded.",
         statusCheckout: "Opening secure checkout...",
@@ -441,7 +442,7 @@
         progressAnalyzing: "Analyzing image",
         progressRebuilding: "Rebuilding editable PowerPoint",
         downloadPpt: "Download PPTX",
-        emailLabel: "Email for credits",
+        emailLabel: "Email for credits (required)",
         checkBalance: "Check credits",
         creditsUnknown: "Credits: unknown",
         creditsLabel: "Credits",
@@ -536,11 +537,12 @@
         statusProcessing: "編集可能なPowerPointへ変換中...",
         statusCompleted: "PPTXをダウンロードできます。",
         statusFailed: "変換に失敗しました。別の画像でお試しください。",
+        statusEmailRequired: "メールアドレスは必須です。入力してください。",
         statusNeedCredits: "変換前にメールを入力し、クレジットを購入してください。",
         statusBalance: "クレジット残高を確認しました。",
         statusCheckout: "安全な決済ページを開いています...",
         downloadPpt: "PPTXをダウンロード",
-        emailLabel: "クレジット用メール",
+        emailLabel: "クレジット用メール（必須）",
         checkBalance: "残高確認",
         creditsUnknown: "クレジット: 未確認",
         creditsLabel: "クレジット",
@@ -635,12 +637,13 @@
       statusProcessing: "編集可能なPowerPointへ変換中...",
       statusCompleted: "PPTXをダウンロードできます。",
       statusFailed: "変換に失敗しました。別の画像でお試しください。",
+      statusEmailRequired: "メールアドレスは必須です。入力してください。",
       statusNeedCredits: "変換前にメールを入力し、クレジットを購入してください。",
       statusBalance: "クレジット残高を確認しました。",
       statusCheckout: "安全な決済ページを開いています...",
       progressIdle: "待機中",
       downloadPpt: "PPTXをダウンロード",
-      emailLabel: "クレジット用メール",
+      emailLabel: "クレジット用メール（必須）",
       checkBalance: "残高確認",
       creditsUnknown: "クレジット: 未確認",
       creditsLabel: "クレジット",
@@ -874,7 +877,8 @@
         return;
       }
       if (!emailInput.value.trim()) {
-        setStatus("statusNeedCredits", "Please enter your email and buy credits before converting.");
+        setStatus("statusEmailRequired", "Email address is required. Please enter it.");
+        emailInput.focus();
         return;
       }
       setStatus("statusSelected", "Image selected.");
@@ -968,7 +972,8 @@
     async function loadBalance() {
       const email = emailInput.value.trim();
       if (!email) {
-        setStatus("statusNeedCredits", "Please enter your email.");
+        setStatus("statusEmailRequired", "Email address is required. Please enter it.");
+        emailInput.focus();
         return;
       }
       const response = await fetch(apiPath(`/billing/balance?email=${encodeURIComponent(email)}`));
@@ -983,7 +988,8 @@
     async function createCheckout(product) {
       const email = emailInput.value.trim();
       if (!email) {
-        setStatus("statusNeedCredits", "Please enter your email.");
+        setStatus("statusEmailRequired", "Email address is required. Please enter it.");
+        emailInput.focus();
         return;
       }
       setStatus("statusCheckout", "Opening checkout...");
