@@ -1,8 +1,7 @@
 import hmac
 import os
-import re
 
-from flask import jsonify, request
+from flask import jsonify, request, session
 
 from billing_sqlite import (
     PRODUCTS,
@@ -70,17 +69,12 @@ def price_id_for_product(product, mode):
     return env_value(product["env"])
 
 
-def sandbox_checkout_allowed(email, token):
-    configured_token = env_value("SANDBOX_CHECKOUT_TOKEN")
-    if configured_token and token and hmac.compare_digest(str(token), configured_token):
-        return True
+def sandbox_checkout_allowed():
+    return bool(session.get("drop2ppt_sandbox_allowed"))
 
-    emails = {
-        normalize_email(item)
-        for item in re.split(r"[,;\s]+", env_value("SANDBOX_CHECKOUT_EMAILS"))
-        if item.strip()
-    }
-    return bool(email and email in emails)
+
+def constant_time_equal(value, expected):
+    return hmac.compare_digest(str(value).encode("utf-8"), str(expected).encode("utf-8"))
 
 
 def grant_checkout_session_credits(session):
@@ -114,6 +108,29 @@ def grant_checkout_session_credits(session):
 def register_stripe_routes(app):
     init_billing_db()
 
+    @app.route("/api/sandbox/me", methods=["GET"])
+    def sandbox_me():
+        return jsonify({"ok": True, "sandbox_allowed": sandbox_checkout_allowed()})
+
+    @app.route("/api/sandbox/login", methods=["POST"])
+    def sandbox_login():
+        payload = request.get_json(silent=True) or {}
+        email = normalize_email(payload.get("email", ""))
+        password = str(payload.get("password") or "")
+        configured_email = normalize_email(env_value("DROP2PPT_SANDBOX_EMAIL") or env_value("SANDBOX_CHECKOUT_EMAIL"))
+        configured_password = env_value("DROP2PPT_SANDBOX_PASSWORD") or env_value("SANDBOX_CHECKOUT_PASSWORD")
+        if not configured_email or not configured_password:
+            return jsonify({"ok": False, "error": "sandbox login is not configured"}), 503
+        if not constant_time_equal(email, configured_email) or not constant_time_equal(password, configured_password):
+            return jsonify({"ok": False, "error": "sandbox login failed"}), 401
+        session["drop2ppt_sandbox_allowed"] = True
+        return jsonify({"ok": True, "sandbox_allowed": True})
+
+    @app.route("/api/sandbox/logout", methods=["POST"])
+    def sandbox_logout():
+        session.pop("drop2ppt_sandbox_allowed", None)
+        return jsonify({"ok": True, "sandbox_allowed": False})
+
     @app.route("/api/billing/balance", methods=["GET"])
     def billing_balance():
         email = current_auth_email()
@@ -137,8 +154,7 @@ def register_stripe_routes(app):
         if not product:
             return jsonify({"ok": False, "error": "unknown product"}), 400
         if stripe_mode == "test" and not is_test_key(env_value("STRIPE_SECRET_KEY")):
-            token = str(payload.get("sandbox_token") or "").strip()
-            if not sandbox_checkout_allowed(email, token):
+            if not sandbox_checkout_allowed():
                 return jsonify({"ok": False, "error": "sandbox checkout is not allowed for this email"}), 403
         if not stripe_secret_key:
             return jsonify({"ok": False, "error": f"Stripe {stripe_mode} secret key is not set"}), 500

@@ -87,6 +87,20 @@
         </label>
         <button type="submit" data-i18n="resetButton">Update password</button>
       </form>
+
+      <form id="sandbox-form" class="auth-card sandbox-auth-card" data-auth-panel="sandbox" hidden>
+        <h2 data-i18n="sandboxTitle">Sandbox checkout login</h2>
+        <p data-i18n="sandboxLead">Owner-only test checkout. Production users cannot access this mode.</p>
+        <label>
+          <span data-i18n="emailLabel">Email</span>
+          <input name="email" type="email" autocomplete="email" placeholder="owner@example.com" required>
+        </label>
+        <label>
+          <span data-i18n="passwordLabel">Password</span>
+          <input name="password" type="password" autocomplete="current-password" placeholder="Sandbox password" required>
+        </label>
+        <button type="submit" data-i18n="sandboxButton">Enable sandbox checkout</button>
+      </form>
     </section>
   </main>
 
@@ -109,10 +123,14 @@
         forgotLead: "Enter your email address and we will send a reset link if the account exists.",
         resetTitle: "Set a new password",
         resetButton: "Update password",
+        sandboxTitle: "Sandbox checkout login",
+        sandboxLead: "Owner-only test checkout. Production users cannot access this mode.",
+        sandboxButton: "Enable sandbox checkout",
         loginSuccess: "Logged in. Returning to Drop2PPT...",
         signupSuccess: "Account created. Please open the verification link sent to your email.",
         forgotSuccess: "If the account exists, a reset email has been sent.",
         resetSuccess: "Password updated. Returning to Drop2PPT...",
+        sandboxSuccess: "Sandbox checkout is enabled. Returning to Drop2PPT...",
         verifySuccess: "Email verified. Returning to Drop2PPT...",
         requestFailed: "Request failed."
       },
@@ -133,10 +151,14 @@
         forgotLead: "メールアドレスを入力してください。アカウントが存在する場合、再設定リンクを送信します。",
         resetTitle: "新しいパスワードを設定",
         resetButton: "パスワード更新",
+        sandboxTitle: "サンドボックス決済ログイン",
+        sandboxLead: "管理者専用のテスト決済モードです。本番利用者には表示しません。",
+        sandboxButton: "サンドボックス決済を有効化",
         loginSuccess: "ログインしました。Drop2PPTへ戻ります...",
         signupSuccess: "アカウントを作成しました。メールに届いた認証リンクを開いてください。",
         forgotSuccess: "アカウントが存在する場合、再設定メールを送信しました。",
         resetSuccess: "パスワードを更新しました。Drop2PPTへ戻ります...",
+        sandboxSuccess: "サンドボックス決済を有効化しました。Drop2PPTへ戻ります...",
         verifySuccess: "メール認証が完了しました。Drop2PPTへ戻ります...",
         requestFailed: "処理に失敗しました。"
       }
@@ -258,6 +280,17 @@
       try {
         await submitJson("/auth/reset", payload);
         setMessage(messages[currentLanguage].resetSuccess);
+        redirectSoon();
+      } catch (error) {
+        setMessage(error.message, true);
+      }
+    });
+
+    document.getElementById("sandbox-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        await submitJson("/sandbox/login", Object.fromEntries(new FormData(event.currentTarget).entries()));
+        setMessage(messages[currentLanguage].sandboxSuccess);
         redirectSoon();
       } catch (error) {
         setMessage(error.message, true);

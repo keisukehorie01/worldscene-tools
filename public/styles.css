@@ -882,6 +882,13 @@ a {
   padding: 12px;
 }
 
+.drop-progress {
+  grid-area: auto;
+  width: min(560px, calc(100% - 28px));
+  margin-top: 0;
+  text-align: left;
+}
+
 .progress-panel[hidden] {
   display: none;
 }

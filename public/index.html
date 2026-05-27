@@ -179,20 +179,20 @@
                 <span></span><span></span><span></span>
               </span>
             </span>
+            <span class="progress-panel drop-progress" id="progress-panel" hidden aria-label="Conversion progress">
+              <span class="progress-meta">
+                <span id="progress-label" data-i18n="progressIdle">Waiting</span>
+                <strong id="progress-percent">0%</strong>
+              </span>
+              <span class="progress-track">
+                <span id="progress-bar"></span>
+              </span>
+            </span>
           </label>
 
           <div class="conversion-status" id="conversion-status" aria-live="polite">
             <span class="status-dot"></span>
             <span data-i18n="statusReady">Ready for beta testing. Upload processing will be connected next.</span>
-          </div>
-          <div class="progress-panel" id="progress-panel" hidden aria-label="Conversion progress">
-            <div class="progress-meta">
-              <span id="progress-label" data-i18n="progressIdle">Waiting</span>
-              <strong id="progress-percent">0%</strong>
-            </div>
-            <div class="progress-track">
-              <span id="progress-bar"></span>
-            </div>
           </div>
           <a class="download-link" id="download-link" href="#" hidden data-i18n="downloadPpt">Download PPTX</a>
 
@@ -820,19 +820,7 @@
     let currentUser = null;
     let lastProgressValue = 0;
     const initialParams = new URLSearchParams(window.location.search);
-    const sandboxParam = (initialParams.get("sandbox") || "").toLowerCase();
-    if (["1", "true", "test", "sandbox"].includes(sandboxParam)) {
-      localStorage.setItem("drop2ppt-sandbox-mode", "1");
-    } else if (["0", "false", "live", "off"].includes(sandboxParam)) {
-      localStorage.removeItem("drop2ppt-sandbox-mode");
-      localStorage.removeItem("drop2ppt-sandbox-token");
-    }
-    const sandboxTokenFromUrl = initialParams.get("sandbox_token") || initialParams.get("token") || "";
-    if (sandboxTokenFromUrl) {
-      localStorage.setItem("drop2ppt-sandbox-token", sandboxTokenFromUrl);
-    }
-    let sandboxMode = localStorage.getItem("drop2ppt-sandbox-mode") === "1";
-    let sandboxToken = localStorage.getItem("drop2ppt-sandbox-token") || "";
+    let sandboxMode = false;
 
     function applyLanguage(language) {
       currentLanguage = language;
@@ -915,6 +903,18 @@
       if (sandboxBadge) {
         sandboxBadge.hidden = !sandboxMode;
       }
+    }
+
+    async function loadSandboxState() {
+      try {
+        const response = await fetch(apiPath("/sandbox/me"));
+        const data = await readApiJson(response);
+        sandboxMode = Boolean(response.ok && data.ok && data.sandbox_allowed);
+      } catch (error) {
+        sandboxMode = false;
+      }
+      updateSandboxBadge();
+      return sandboxMode;
     }
 
     function hideDownload() {
@@ -1186,7 +1186,6 @@
       const checkoutPayload = { product };
       if (sandboxMode) {
         checkoutPayload.stripe_mode = "test";
-        checkoutPayload.sandbox_token = sandboxToken;
       }
       const response = await fetch(apiPath("/checkout/create"), {
         method: "POST",
@@ -1205,9 +1204,7 @@
       const params = new URLSearchParams(window.location.search);
       if (params.get("checkout") !== "success") return;
       if (params.get("stripe_mode") === "test") {
-        sandboxMode = true;
-        localStorage.setItem("drop2ppt-sandbox-mode", "1");
-        updateSandboxBadge();
+        await loadSandboxState();
       }
 
       const sessionId = params.get("session_id");
@@ -1294,7 +1291,7 @@
     languageToggle.addEventListener("click", () => applyLanguage(currentLanguage === "ja" ? "en" : "ja"));
 
     applyLanguage(currentLanguage);
-    updateSandboxBadge();
+    loadSandboxState();
     loadAuth().then(async () => {
       const verifyToken = initialParams.get("verify_token");
       if (verifyToken) {
