@@ -117,6 +117,9 @@
       <a href="#pricing" data-i18n="navPricing">Pricing</a>
       <a href="#apps" data-i18n="navApps">Apps</a>
       <a href="#tools" data-i18n="navTools">Tools</a>
+      <a class="auth-nav-link" id="login-nav" href="/drop2ppt/auth.html?mode=login" data-i18n="navLogin">Login</a>
+      <a class="auth-nav-button" id="signup-nav" href="/drop2ppt/auth.html?mode=signup" data-i18n="navSignup">Sign up</a>
+      <button class="auth-nav-link auth-nav-logout" type="button" id="logout-nav" data-i18n="logoutButton" hidden>Logout</button>
       <button class="language-button" type="button" id="language-toggle" aria-label="Switch language">日本語</button>
     </nav>
   </header>
@@ -143,26 +146,7 @@
             <button class="small-button ghost-button" type="button" id="logout-button" data-i18n="logoutButton" hidden>Logout</button>
             <strong id="credit-balance" data-i18n="creditsUnknown">Credits: unknown</strong>
             <span class="sandbox-badge" id="sandbox-badge" hidden>Sandbox checkout</span>
-            <div class="auth-forms" id="auth-forms">
-              <form id="login-form" class="auth-mini-form">
-                <strong data-i18n="loginTitle">Login</strong>
-                <input name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
-                <input name="password" type="password" autocomplete="current-password" placeholder="Password" required>
-                <button type="submit" data-i18n="loginButton">Login</button>
-              </form>
-              <form id="signup-form" class="auth-mini-form">
-                <strong data-i18n="signupTitle">Create account</strong>
-                <input name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
-                <input name="password" type="password" autocomplete="new-password" placeholder="Password, 8+ chars" minlength="8" required>
-                <input name="password_confirm" type="password" autocomplete="new-password" placeholder="Confirm password" minlength="8" required>
-                <button type="submit" data-i18n="signupButton">Create account</button>
-              </form>
-              <form id="forgot-form" class="auth-mini-form compact">
-                <strong data-i18n="forgotTitle">Forgot password?</strong>
-                <input name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
-                <button type="submit" data-i18n="forgotButton">Send reset email</button>
-              </form>
-            </div>
+            <p class="auth-panel-note" id="auth-panel-note" data-i18n="authPanelNote">Use the login and sign up buttons in the header to manage your account.</p>
           </div>
 
           <fieldset class="quality-selector" aria-label="Conversion quality">
@@ -830,6 +814,9 @@
     const signupForm = document.getElementById("signup-form");
     const forgotForm = document.getElementById("forgot-form");
     const logoutButton = document.getElementById("logout-button");
+    const loginNav = document.getElementById("login-nav");
+    const signupNav = document.getElementById("signup-nav");
+    const logoutNav = document.getElementById("logout-nav");
     let currentUser = null;
     let lastProgressValue = 0;
     const initialParams = new URLSearchParams(window.location.search);
@@ -956,6 +943,9 @@
       forgotTitle: "Forgot password?",
       forgotButton: "Send reset email",
       logoutButton: "Logout",
+      navLogin: "Login",
+      navSignup: "Sign up",
+      authPanelNote: "Use the login and sign up buttons in the header to manage your account.",
       emailLabel: "Login email"
     });
 
@@ -974,6 +964,9 @@
       forgotTitle: "パスワードを忘れた場合",
       forgotButton: "再設定メール送信",
       logoutButton: "ログアウト",
+      navLogin: "ログイン",
+      navSignup: "新規登録",
+      authPanelNote: "ログイン・新規登録は画面右上のボタンから行えます。",
       emailLabel: "ログインメール"
     });
 
@@ -1006,8 +999,11 @@
       currentUser = user || null;
       if (currentUser) {
         emailInput.value = currentUser.email || "";
-        authForms.hidden = true;
-        logoutButton.hidden = false;
+        if (authForms) authForms.hidden = true;
+        if (logoutButton) logoutButton.hidden = false;
+        if (loginNav) loginNav.hidden = true;
+        if (signupNav) signupNav.hidden = true;
+        if (logoutNav) logoutNav.hidden = false;
         renderBalance(currentUser);
         const template = currentUser.email_verified
           ? messages[currentLanguage].authLoggedIn
@@ -1015,8 +1011,11 @@
         authSummary.textContent = (template || "").replace("{email}", currentUser.email || "");
       } else {
         emailInput.value = "";
-        authForms.hidden = false;
-        logoutButton.hidden = true;
+        if (authForms) authForms.hidden = false;
+        if (logoutButton) logoutButton.hidden = true;
+        if (loginNav) loginNav.hidden = false;
+        if (signupNav) signupNav.hidden = false;
+        if (logoutNav) logoutNav.hidden = true;
         creditBalance.textContent = messages[currentLanguage].creditsUnknown || "Credits: unknown";
         authSummary.textContent = messages[currentLanguage].authLoggedOut || "Please log in.";
       }
@@ -1232,12 +1231,14 @@
 
     selectFile.addEventListener("click", () => fileInput.click());
     checkBalance.addEventListener("click", loadBalance);
-    logoutButton.addEventListener("click", async () => {
+    async function logout() {
       await submitJson("/auth/logout", {});
       renderAuth(null);
       setStatusText(messages[currentLanguage].authLoggedOut, "statusReady");
-    });
-    loginForm.addEventListener("submit", async (event) => {
+    }
+    logoutButton?.addEventListener("click", logout);
+    logoutNav?.addEventListener("click", logout);
+    loginForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = new FormData(loginForm);
       try {
@@ -1248,7 +1249,7 @@
         setStatusText(error.message, "statusFailed");
       }
     });
-    signupForm.addEventListener("submit", async (event) => {
+    signupForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = new FormData(signupForm);
       try {
@@ -1259,7 +1260,7 @@
         setStatusText(error.message, "statusFailed");
       }
     });
-    forgotForm.addEventListener("submit", async (event) => {
+    forgotForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = new FormData(forgotForm);
       try {

@@ -117,7 +117,7 @@ def send_email(to: str, subject: str, body_text: str, cta_url: str = "", cta_lab
 
 
 def send_verification_email(email: str, token: str) -> dict:
-    url = _app_url(f"?verify_token={token}")
+    url = _app_url(f"auth.html?verify_token={token}")
     body = (
         "Drop2PPTのメール認証を行います。\n\n"
         "以下のURLを開いて、メールアドレスを確認してください。\n"
@@ -129,7 +129,7 @@ def send_verification_email(email: str, token: str) -> dict:
 
 
 def send_password_reset_email(email: str, token: str) -> dict:
-    url = _app_url(f"?reset_token={token}")
+    url = _app_url(f"auth.html?reset_token={token}")
     body = (
         "Drop2PPTのパスワード再設定を受け付けました。\n\n"
         "以下のURLから新しいパスワードを設定してください。\n"

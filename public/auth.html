@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drop2PPT Account | WorldScene</title>
+  <meta name="robots" content="noindex,follow">
+  <meta name="theme-color" content="#12324a">
+  <link rel="icon" href="worldscene-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-page-body">
+  <header class="site-header">
+    <a class="brand" href="/drop2ppt/" aria-label="WorldScene Drop2PPT">
+      <img src="worldscene-icon.png" alt="" class="brand-icon">
+      <span>WorldScene</span>
+    </a>
+    <nav class="nav" aria-label="Account navigation">
+      <a href="/drop2ppt/" data-i18n="backToTool">Back to tool</a>
+      <button class="language-button" type="button" id="language-toggle" aria-label="Switch language">日本語</button>
+    </nav>
+  </header>
+
+  <main class="auth-page">
+    <section class="auth-shell" aria-labelledby="auth-title">
+      <p class="eyebrow" data-i18n="accountEyebrow">Drop2PPT account</p>
+      <h1 id="auth-title" data-i18n="accountTitle">Log in or create an account</h1>
+      <p class="auth-lead" data-i18n="accountLead">Credits and conversion history are protected by your account.</p>
+
+      <div class="auth-tabs" role="tablist" aria-label="Account forms">
+        <button type="button" class="auth-tab" data-mode="login" data-i18n="loginTitle">Login</button>
+        <button type="button" class="auth-tab" data-mode="signup" data-i18n="signupTitle">Create account</button>
+        <button type="button" class="auth-tab" data-mode="forgot" data-i18n="forgotTitle">Forgot password?</button>
+      </div>
+
+      <p class="auth-message" id="auth-message" role="status"></p>
+
+      <form id="login-form" class="auth-card" data-auth-panel="login">
+        <h2 data-i18n="loginTitle">Login</h2>
+        <label>
+          <span data-i18n="emailLabel">Email</span>
+          <input name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+        </label>
+        <label>
+          <span data-i18n="passwordLabel">Password</span>
+          <input name="password" type="password" autocomplete="current-password" placeholder="Password" required>
+        </label>
+        <button type="submit" data-i18n="loginButton">Login</button>
+      </form>
+
+      <form id="signup-form" class="auth-card" data-auth-panel="signup" hidden>
+        <h2 data-i18n="signupTitle">Create account</h2>
+        <label>
+          <span data-i18n="emailLabel">Email</span>
+          <input name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+        </label>
+        <label>
+          <span data-i18n="passwordLabel">Password</span>
+          <input name="password" type="password" autocomplete="new-password" placeholder="Password, 8+ chars" minlength="8" required>
+        </label>
+        <label>
+          <span data-i18n="passwordConfirmLabel">Confirm password</span>
+          <input name="password_confirm" type="password" autocomplete="new-password" placeholder="Confirm password" minlength="8" required>
+        </label>
+        <button type="submit" data-i18n="signupButton">Create account</button>
+      </form>
+
+      <form id="forgot-form" class="auth-card" data-auth-panel="forgot" hidden>
+        <h2 data-i18n="forgotTitle">Forgot password?</h2>
+        <p data-i18n="forgotLead">Enter your email address and we will send a reset link if the account exists.</p>
+        <label>
+          <span data-i18n="emailLabel">Email</span>
+          <input name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+        </label>
+        <button type="submit" data-i18n="forgotButton">Send reset email</button>
+      </form>
+
+      <form id="reset-form" class="auth-card" data-auth-panel="reset" hidden>
+        <h2 data-i18n="resetTitle">Set a new password</h2>
+        <label>
+          <span data-i18n="passwordLabel">Password</span>
+          <input name="password" type="password" autocomplete="new-password" placeholder="Password, 8+ chars" minlength="8" required>
+        </label>
+        <label>
+          <span data-i18n="passwordConfirmLabel">Confirm password</span>
+          <input name="password_confirm" type="password" autocomplete="new-password" placeholder="Confirm password" minlength="8" required>
+        </label>
+        <button type="submit" data-i18n="resetButton">Update password</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const messages = {
+      en: {
+        backToTool: "Back to tool",
+        accountEyebrow: "Drop2PPT account",
+        accountTitle: "Log in or create an account",
+        accountLead: "Credits and conversion history are protected by your account.",
+        loginTitle: "Login",
+        signupTitle: "Create account",
+        forgotTitle: "Forgot password?",
+        emailLabel: "Email",
+        passwordLabel: "Password",
+        passwordConfirmLabel: "Confirm password",
+        loginButton: "Login",
+        signupButton: "Create account",
+        forgotButton: "Send reset email",
+        forgotLead: "Enter your email address and we will send a reset link if the account exists.",
+        resetTitle: "Set a new password",
+        resetButton: "Update password",
+        loginSuccess: "Logged in. Returning to Drop2PPT...",
+        signupSuccess: "Account created. Please open the verification link sent to your email.",
+        forgotSuccess: "If the account exists, a reset email has been sent.",
+        resetSuccess: "Password updated. Returning to Drop2PPT...",
+        verifySuccess: "Email verified. Returning to Drop2PPT...",
+        requestFailed: "Request failed."
+      },
+      ja: {
+        backToTool: "変換画面へ戻る",
+        accountEyebrow: "Drop2PPT アカウント",
+        accountTitle: "ログイン・新規登録",
+        accountLead: "クレジットと変換利用をアカウントで保護します。",
+        loginTitle: "ログイン",
+        signupTitle: "新規登録",
+        forgotTitle: "パスワードを忘れた場合",
+        emailLabel: "メールアドレス",
+        passwordLabel: "パスワード",
+        passwordConfirmLabel: "パスワード確認",
+        loginButton: "ログイン",
+        signupButton: "アカウント作成",
+        forgotButton: "再設定メール送信",
+        forgotLead: "メールアドレスを入力してください。アカウントが存在する場合、再設定リンクを送信します。",
+        resetTitle: "新しいパスワードを設定",
+        resetButton: "パスワード更新",
+        loginSuccess: "ログインしました。Drop2PPTへ戻ります...",
+        signupSuccess: "アカウントを作成しました。メールに届いた認証リンクを開いてください。",
+        forgotSuccess: "アカウントが存在する場合、再設定メールを送信しました。",
+        resetSuccess: "パスワードを更新しました。Drop2PPTへ戻ります...",
+        verifySuccess: "メール認証が完了しました。Drop2PPTへ戻ります...",
+        requestFailed: "処理に失敗しました。"
+      }
+    };
+
+    const supportedLanguages = ["en", "ja"];
+    const savedLanguage = localStorage.getItem("worldscene-language");
+    let currentLanguage = supportedLanguages.includes(savedLanguage)
+      ? savedLanguage
+      : (navigator.language || "en").toLowerCase().startsWith("ja") ? "ja" : "en";
+    const params = new URLSearchParams(window.location.search);
+    const languageToggle = document.getElementById("language-toggle");
+    const messageBox = document.getElementById("auth-message");
+    const tabs = Array.from(document.querySelectorAll("[data-mode]"));
+    const panels = Array.from(document.querySelectorAll("[data-auth-panel]"));
+    const apiBase = window.location.pathname.startsWith("/drop2ppt") ? "/drop2ppt/api" : "/api";
+    const returnUrl = "/drop2ppt/";
+
+    function apiPath(path) {
+      return `${apiBase}${path}`;
+    }
+
+    function applyLanguage(language) {
+      currentLanguage = language;
+      document.documentElement.lang = language;
+      document.querySelectorAll("[data-i18n]").forEach((node) => {
+        const key = node.getAttribute("data-i18n");
+        if (messages[language][key]) {
+          node.textContent = messages[language][key];
+        }
+      });
+      languageToggle.textContent = language === "ja" ? "English" : "日本語";
+      localStorage.setItem("worldscene-language", language);
+    }
+
+    function setMessage(text, isError = false) {
+      messageBox.textContent = text || "";
+      messageBox.classList.toggle("is-error", isError);
+    }
+
+    function setMode(mode) {
+      tabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.mode === mode));
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.authPanel !== mode;
+      });
+      const next = new URL(window.location.href);
+      next.searchParams.set("mode", mode);
+      next.searchParams.delete("verify_token");
+      next.searchParams.delete("reset_token");
+      window.history.replaceState({}, document.title, next);
+    }
+
+    async function readApiJson(response) {
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) return response.json();
+      const text = await response.text();
+      return { ok: false, message: text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() };
+    }
+
+    async function submitJson(path, payload) {
+      const response = await fetch(apiPath(path), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await readApiJson(response);
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || data.error || messages[currentLanguage].requestFailed);
+      }
+      return data;
+    }
+
+    function redirectSoon() {
+      window.setTimeout(() => {
+        window.location.href = returnUrl;
+      }, 900);
+    }
+
+    tabs.forEach((tab) => tab.addEventListener("click", () => {
+      setMessage("");
+      setMode(tab.dataset.mode);
+    }));
+
+    document.getElementById("login-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        await submitJson("/auth/login", Object.fromEntries(new FormData(event.currentTarget).entries()));
+        setMessage(messages[currentLanguage].loginSuccess);
+        redirectSoon();
+      } catch (error) {
+        setMessage(error.message, true);
+      }
+    });
+
+    document.getElementById("signup-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        const data = await submitJson("/auth/signup", Object.fromEntries(new FormData(event.currentTarget).entries()));
+        setMessage(data.mail_sent ? messages[currentLanguage].signupSuccess : (data.mail_error || messages[currentLanguage].signupSuccess), !data.mail_sent);
+      } catch (error) {
+        setMessage(error.message, true);
+      }
+    });
+
+    document.getElementById("forgot-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        await submitJson("/auth/forgot", Object.fromEntries(new FormData(event.currentTarget).entries()));
+        setMessage(messages[currentLanguage].forgotSuccess);
+      } catch (error) {
+        setMessage(error.message, true);
+      }
+    });
+
+    document.getElementById("reset-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
+      payload.token = params.get("reset_token") || "";
+      try {
+        await submitJson("/auth/reset", payload);
+        setMessage(messages[currentLanguage].resetSuccess);
+        redirectSoon();
+      } catch (error) {
+        setMessage(error.message, true);
+      }
+    });
+
+    languageToggle.addEventListener("click", () => applyLanguage(currentLanguage === "ja" ? "en" : "ja"));
+    applyLanguage(currentLanguage);
+
+    const verifyToken = params.get("verify_token");
+    const resetToken = params.get("reset_token");
+    if (verifyToken) {
+      submitJson("/auth/verify", { token: verifyToken })
+        .then(() => {
+          setMessage(messages[currentLanguage].verifySuccess);
+          redirectSoon();
+        })
+        .catch((error) => setMessage(error.message, true));
+    } else if (resetToken) {
+      setMode("reset");
+    } else {
+      setMode(params.get("mode") || "login");
+    }
+  </script>
+</body>
+</html>
