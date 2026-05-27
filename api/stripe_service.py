@@ -6,9 +6,10 @@ from flask import jsonify, request
 
 from billing_sqlite import (
     PRODUCTS,
-    get_balance,
+    get_balances,
     grant_credits,
     init_billing_db,
+    normalize_credit_type,
     normalize_email,
 )
 
@@ -95,15 +96,18 @@ def grant_checkout_session_credits(session):
     product_key = metadata.get("product_key", "starter")
     product = PRODUCTS.get(product_key, PRODUCTS["starter"])
     credits = int(metadata.get("credits") or product["credits"])
-    return grant_credits(
+    credit_type = normalize_credit_type(metadata.get("credit_type") or product.get("credit_type"))
+    grant_credits(
         email=email,
         credits=credits,
         reason="stripe_checkout",
         reference_id=session.get("id"),
         product_key=product_key,
+        credit_type=credit_type,
         amount_total=session.get("amount_total"),
         currency=session.get("currency"),
     )
+    return get_balances(email)
 
 
 def register_stripe_routes(app):
@@ -114,7 +118,7 @@ def register_stripe_routes(app):
         email = normalize_email(request.args.get("email", ""))
         if not email:
             return jsonify({"ok": False, "error": "email is required"}), 400
-        return jsonify({"ok": True, "email": email, "credits": get_balance(email)})
+        return jsonify({"ok": True, "email": email, **get_balances(email)})
 
     @app.route("/api/checkout/create", methods=["POST"])
     def checkout_create():
@@ -154,6 +158,7 @@ def register_stripe_routes(app):
                     "email": email,
                     "product_key": product_key,
                     "credits": str(product["credits"]),
+                    "credit_type": product.get("credit_type", "standard"),
                     "stripe_mode": stripe_mode,
                 },
                 allow_promotion_codes=True,
@@ -187,11 +192,11 @@ def register_stripe_routes(app):
             return jsonify({"ok": False, "error": "checkout session is not paid"}), 400
 
         try:
-            balance = grant_checkout_session_credits(session)
+            balances = grant_checkout_session_credits(session)
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 500
 
-        return jsonify({"ok": True, "credits": balance})
+        return jsonify({"ok": True, **balances})
 
     @app.route("/api/stripe/webhook", methods=["POST"])
     def stripe_webhook():

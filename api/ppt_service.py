@@ -43,6 +43,17 @@ JOBS: Dict[str, Dict[str, Any]] = {}
 JOBS_LOCK = threading.Lock()
 
 
+def normalize_quality(value: Optional[str]) -> str:
+    value = (value or "standard").strip().lower()
+    if value in {"high_quality", "high-quality", "high"}:
+        return "high_quality"
+    return "standard"
+
+
+def credit_type_for_quality(quality: str) -> str:
+    return "high_quality" if quality == "high_quality" else "standard"
+
+
 def register_ppt_routes(app):
     ensure_runtime_dirs()
 
@@ -51,6 +62,8 @@ def register_ppt_routes(app):
       email = normalize_email(request.form.get("email", ""))
       if not email:
           return jsonify({"ok": False, "error": "email is required"}), 400
+      quality = normalize_quality(request.form.get("quality", "standard"))
+      credit_type = credit_type_for_quality(quality)
 
       if "image" not in request.files:
           return jsonify({"ok": False, "error": "image file is required"}), 400
@@ -87,6 +100,8 @@ def register_ppt_routes(app):
           "input_path": str(upload_path),
           "output_path": str(output_path),
           "email": email,
+          "quality": quality,
+          "credit_type": credit_type,
           "credits_used": 0,
           "credit_refunded": False,
           "download_url": None,
@@ -246,6 +261,7 @@ def public_job(job: Dict[str, Any]) -> Dict[str, Any]:
         "status": job["status"],
         "progress": job["progress"],
         "message": job["message"],
+        "quality": job.get("quality", "standard"),
         "download_url": f"/api/ppt/jobs/{job['id']}/download" if job.get("status") == "completed" else None,
         "error": job.get("error"),
     }
@@ -281,20 +297,23 @@ def process_job(job_id: str) -> None:
             raise RuntimeError("Malware scanner is required but unavailable.")
 
         try:
-            consume_credit(job["email"], job_id, amount=1)
+            credit_type = job.get("credit_type") or credit_type_for_quality(job.get("quality", "standard"))
+            consume_credit(job["email"], job_id, amount=1, credit_type=credit_type)
             job = update_job(job_id, credits_used=1)
         except ValueError:
             try:
                 image_path.unlink(missing_ok=True)
             except OSError:
                 pass
-            raise ValueError("Insufficient credits. Please buy credits before converting.")
+            if job.get("quality") == "high_quality":
+                raise ValueError("Insufficient High Quality credits. Please buy High Quality before converting.")
+            raise ValueError("Insufficient Standard credits. Please buy Starter or Pro before converting.")
 
         job = update_job(job_id, status="processing", progress=20, message="Analyzing image")
         image_bytes = image_path.read_bytes()
         mime_type = job["input_mime_type"]
 
-        analysis = analyze_image_for_ppt(image_bytes, mime_type)
+        analysis = analyze_image_for_ppt(image_bytes, mime_type, quality=job.get("quality", "standard"))
         update_job(job_id, progress=70, message="Rebuilding editable slide")
 
         output_path = Path(job["output_path"])
@@ -304,7 +323,12 @@ def process_job(job_id: str) -> None:
         job = load_job(job_id)
         credits_used = int(job.get("credits_used") or 0) if job else 0
         if job and credits_used > 0 and job.get("email") and not job.get("credit_refunded"):
-            refund_credit(job["email"], job_id, amount=int(job.get("credits_used") or 1))
+            refund_credit(
+                job["email"],
+                job_id,
+                amount=int(job.get("credits_used") or 1),
+                credit_type=job.get("credit_type") or credit_type_for_quality(job.get("quality", "standard")),
+            )
             update_job(job_id, credit_refunded=True)
         error_message = safe_error_message(exc)
         print(f"Drop2PPT job failed job_id={job_id} error={error_message}", flush=True)
@@ -340,9 +364,26 @@ def redact_secret_text(text: str) -> str:
     return text
 
 
-def analyze_image_for_ppt(image_bytes: bytes, mime_type: str) -> Dict[str, Any]:
+def analyze_image_for_ppt(image_bytes: bytes, mime_type: str, quality: str = "standard") -> Dict[str, Any]:
     if not GEMINI_API_KEY:
         return fallback_analysis()
+
+    quality = normalize_quality(quality)
+    image_region_instruction = (
+        """
+Use image_regions only for areas that should remain as bitmap because they are difficult or undesirable
+to rebuild as editable objects: photos, realistic illustrations, product screenshots, logos, detailed
+icons, complex charts, dense decorative textures, QR codes, or highly detailed generated art.
+Do not mark ordinary text cards, simple boxes, bullets, arrows, or basic diagrams as image_regions.
+Avoid full-slide image regions unless the area is a mostly non-text photographic or decorative background.
+Prefer 2 to 8 carefully chosen regions. Coordinates must match the original image location.
+"""
+        if quality == "high_quality"
+        else """
+This is a standard conversion. Rebuild the slide with editable PowerPoint objects whenever possible.
+Return an empty image_regions array. Do not preserve bitmap regions except through simple editable shapes.
+"""
+    ).strip()
 
     prompt = """
 You convert visual drafts into editable PowerPoint structure.
@@ -406,13 +447,8 @@ Prioritize visual placement and editable PowerPoint objects over a generic summa
 the slide into only a few blocks.
 Keep each text string concise enough to fit its box.
 
-Use image_regions only for areas that should remain as bitmap because they are difficult or undesirable
-to rebuild as editable objects: photos, realistic illustrations, product screenshots, logos, detailed
-icons, complex charts, dense decorative textures, QR codes, or highly detailed generated art.
-Do not mark ordinary text cards, simple boxes, bullets, arrows, or basic diagrams as image_regions.
-Avoid full-slide image regions unless the area is a mostly non-text photographic or decorative background.
-Prefer 2 to 8 carefully chosen regions. Coordinates must match the original image location.
-""".strip()
+{image_region_instruction}
+""".strip().replace("{image_region_instruction}", image_region_instruction)
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -439,7 +475,10 @@ Prefer 2 to 8 carefully chosen regions. Coordinates must match the original imag
     parts = (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts")) or []
     text = "".join(part.get("text", "") for part in parts)
     parsed = parse_json_from_model(text)
-    return normalize_analysis(parsed)
+    analysis = normalize_analysis(parsed)
+    if quality != "high_quality":
+        analysis["image_regions"] = []
+    return analysis
 
 
 def parse_json_from_model(text: str) -> Dict[str, Any]:

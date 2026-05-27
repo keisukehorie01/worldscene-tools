@@ -141,6 +141,20 @@
             <span class="sandbox-badge" id="sandbox-badge" hidden>Sandbox checkout</span>
           </div>
 
+          <fieldset class="quality-selector" aria-label="Conversion quality">
+            <legend data-i18n="qualityLabel">Conversion mode</legend>
+            <label>
+              <input type="radio" name="quality" value="standard" checked>
+              <span data-i18n="qualityStandard">Standard</span>
+              <small data-i18n="qualityStandardCopy">Uses Starter / Pro standard credits.</small>
+            </label>
+            <label>
+              <input type="radio" name="quality" value="high_quality">
+              <span data-i18n="qualityHigh">High Quality</span>
+              <small data-i18n="qualityHighCopy">Uses High Quality credits only.</small>
+            </label>
+          </fieldset>
+
           <label class="drop-zone" id="drop-zone">
             <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
             <span class="drop-icon" aria-hidden="true">PPTX</span>
@@ -182,19 +196,19 @@
             <button class="price-card" type="button" data-product="starter">
               <span data-i18n="starterTitle">Starter</span>
               <strong>$4.99</strong>
-              <small data-i18n="starterCopy">5 conversions</small>
-              <em data-i18n="standardQualityCopy">Standard conversion for simple drafts and regular screenshots.</em>
+              <small data-i18n="starterCopy">5 standard conversions</small>
+              <em data-i18n="standardQualityCopy">Adds standard credits for simple drafts and regular screenshots.</em>
             </button>
             <button class="price-card" type="button" data-product="pro">
               <span data-i18n="proTitle">Pro</span>
               <strong>$14.99</strong>
-              <small data-i18n="proCopy">25 conversions</small>
-              <em data-i18n="standardQualityCopy">Standard conversion for simple drafts and regular screenshots.</em>
+              <small data-i18n="proCopy">25 standard conversions</small>
+              <em data-i18n="standardQualityCopy">Adds standard credits for simple drafts and regular screenshots.</em>
             </button>
             <button class="price-card price-card-featured" type="button" data-product="high_quality">
               <span data-i18n="hqTitle">High Quality</span>
               <strong>$4.99</strong>
-              <small data-i18n="hqCopy">1 complex slide</small>
+              <small data-i18n="hqCopy">1 high-quality conversion</small>
               <em data-i18n="highQualityCopy">Hybrid reconstruction that preserves photos, logos, screenshots, and complex visuals as images.</em>
             </button>
           </div>
@@ -209,6 +223,11 @@
                 </tr>
               </thead>
               <tbody>
+                <tr>
+                  <td data-i18n="comparisonCredit">Credit wallet</td>
+                  <td data-i18n="comparisonStandardCredit">Consumes standard credits bought with Starter or Pro</td>
+                  <td data-i18n="comparisonHighCredit">Consumes High Quality credits only</td>
+                </tr>
                 <tr>
                   <td data-i18n="comparisonBestFor">Best for</td>
                   <td data-i18n="comparisonStandardBest">Simple drafts, screenshots, and ordinary slide images</td>
@@ -433,7 +452,7 @@
         statusCompleted: "PPTX is ready.",
         statusFailed: "Conversion failed. Please try another image.",
         statusEmailRequired: "Email address is required. Please enter it.",
-        statusNeedCredits: "Please enter your email and buy credits before converting.",
+        statusNeedCredits: "Please buy credits for the selected conversion mode before converting.",
         statusBalance: "Credits loaded.",
         statusCheckout: "Opening secure checkout...",
         progressIdle: "Waiting",
@@ -446,18 +465,27 @@
         checkBalance: "Check credits",
         creditsUnknown: "Credits: unknown",
         creditsLabel: "Credits",
+        creditsBreakdown: "Standard: {standard} / High Quality: {high}",
+        qualityLabel: "Conversion mode",
+        qualityStandard: "Standard",
+        qualityStandardCopy: "Uses Starter / Pro standard credits.",
+        qualityHigh: "High Quality",
+        qualityHighCopy: "Uses High Quality credits only.",
         starterTitle: "Starter",
-        starterCopy: "5 conversions",
+        starterCopy: "5 standard conversions",
         proTitle: "Pro",
-        proCopy: "25 conversions",
+        proCopy: "25 standard conversions",
         hqTitle: "High Quality",
-        hqCopy: "1 complex slide",
-        standardQualityCopy: "Standard conversion for simple drafts and regular screenshots.",
+        hqCopy: "1 high-quality conversion",
+        standardQualityCopy: "Adds standard credits for simple drafts and regular screenshots.",
         highQualityCopy: "Hybrid reconstruction that preserves photos, logos, screenshots, and complex visuals as images.",
         comparisonTitle: "Plan comparison",
         comparisonFeature: "Feature",
         comparisonStandard: "Starter / Pro",
         comparisonHigh: "High Quality",
+        comparisonCredit: "Credit wallet",
+        comparisonStandardCredit: "Consumes standard credits bought with Starter or Pro",
+        comparisonHighCredit: "Consumes High Quality credits only",
         comparisonBestFor: "Best for",
         comparisonStandardBest: "Simple drafts, screenshots, and ordinary slide images",
         comparisonHighBest: "Dense AI-generated infographics, client deliverables, and complex diagrams",
@@ -538,7 +566,7 @@
         statusCompleted: "PPTXをダウンロードできます。",
         statusFailed: "変換に失敗しました。別の画像でお試しください。",
         statusEmailRequired: "メールアドレスは必須です。入力してください。",
-        statusNeedCredits: "変換前にメールを入力し、クレジットを購入してください。",
+        statusNeedCredits: "選択した変換モード用のクレジットを購入してください。",
         statusBalance: "クレジット残高を確認しました。",
         statusCheckout: "安全な決済ページを開いています...",
         downloadPpt: "PPTXをダウンロード",
@@ -546,18 +574,27 @@
         checkBalance: "残高確認",
         creditsUnknown: "クレジット: 未確認",
         creditsLabel: "クレジット",
+        creditsBreakdown: "標準: {standard} / 高品質: {high}",
+        qualityLabel: "変換モード",
+        qualityStandard: "標準",
+        qualityStandardCopy: "Starter / Pro の標準クレジットを使います。",
+        qualityHigh: "高品質",
+        qualityHighCopy: "High Qualityクレジットのみ使います。",
         starterTitle: "Starter",
-        starterCopy: "5回変換",
+        starterCopy: "標準5回変換",
         proTitle: "Pro",
-        proCopy: "25回変換",
+        proCopy: "標準25回変換",
         hqTitle: "High Quality",
-        hqCopy: "複雑な1枚",
-        standardQualityCopy: "標準変換。シンプルなカンプや通常のスクリーンショット向け。",
+        hqCopy: "高品質1回変換",
+        standardQualityCopy: "標準クレジットを追加。シンプルなカンプや通常のスクリーンショット向け。",
         highQualityCopy: "写真、ロゴ、スクリーンショット、複雑な図を画像として残すハイブリッド再構築。",
         comparisonTitle: "プラン比較",
         comparisonFeature: "比較項目",
         comparisonStandard: "Starter / Pro",
         comparisonHigh: "High Quality",
+        comparisonCredit: "使うクレジット",
+        comparisonStandardCredit: "Starter / Proで購入した標準クレジットを消費",
+        comparisonHighCredit: "High Quality専用クレジットのみ消費",
         comparisonBestFor: "向いている画像",
         comparisonStandardBest: "シンプルなカンプ、スクリーンショット、通常のスライド画像",
         comparisonHighBest: "AI生成の複雑な図解、納品資料、密度の高いインフォグラフィック",
@@ -638,7 +675,7 @@
       statusCompleted: "PPTXをダウンロードできます。",
       statusFailed: "変換に失敗しました。別の画像でお試しください。",
       statusEmailRequired: "メールアドレスは必須です。入力してください。",
-      statusNeedCredits: "変換前にメールを入力し、クレジットを購入してください。",
+      statusNeedCredits: "選択した変換モード用のクレジットを購入してください。",
       statusBalance: "クレジット残高を確認しました。",
       statusCheckout: "安全な決済ページを開いています...",
       progressIdle: "待機中",
@@ -647,18 +684,27 @@
       checkBalance: "残高確認",
       creditsUnknown: "クレジット: 未確認",
       creditsLabel: "クレジット",
+      creditsBreakdown: "標準: {standard} / 高品質: {high}",
+      qualityLabel: "変換モード",
+      qualityStandard: "標準",
+      qualityStandardCopy: "Starter / Pro の標準クレジットを使います。",
+      qualityHigh: "高品質",
+      qualityHighCopy: "High Qualityクレジットのみ使います。",
       starterTitle: "Starter",
-      starterCopy: "5回変換",
+      starterCopy: "標準5回変換",
       proTitle: "Pro",
-      proCopy: "25回変換",
+      proCopy: "標準25回変換",
       hqTitle: "High Quality",
-      hqCopy: "複雑な1枚",
-      standardQualityCopy: "標準変換。シンプルなカンプや通常のスクリーンショット向け。",
+      hqCopy: "高品質1回変換",
+      standardQualityCopy: "標準クレジットを追加。シンプルなカンプや通常のスクリーンショット向け。",
       highQualityCopy: "写真、ロゴ、スクリーンショット、複雑な図を画像として残すハイブリッド再構築。",
       comparisonTitle: "プラン比較",
       comparisonFeature: "比較項目",
       comparisonStandard: "Starter / Pro",
       comparisonHigh: "High Quality",
+      comparisonCredit: "使うクレジット",
+      comparisonStandardCredit: "Starter / Proで購入した標準クレジットを消費",
+      comparisonHighCredit: "High Quality専用クレジットのみ消費",
       comparisonBestFor: "向いている画像",
       comparisonStandardBest: "シンプルなカンプ、スクリーンショット、通常のスライド画像",
       comparisonHighBest: "AI生成の複雑な図解、納品資料、密度の高いインフォグラフィック",
@@ -740,6 +786,7 @@
     const emailInput = document.getElementById("email-input");
     const checkBalance = document.getElementById("check-balance");
     const creditBalance = document.getElementById("credit-balance");
+    let lastBalanceData = null;
     const progressPanel = document.getElementById("progress-panel");
     const progressLabel = document.getElementById("progress-label");
     const progressPercent = document.getElementById("progress-percent");
@@ -771,6 +818,9 @@
         }
       });
       languageToggle.textContent = language === "ja" ? "English" : "日本語";
+      if (lastBalanceData) {
+        renderBalance(lastBalanceData);
+      }
       localStorage.setItem("worldscene-language", language);
     }
 
@@ -780,6 +830,20 @@
 
     function setStatusText(text, fallbackKey) {
       statusText.textContent = text || messages[currentLanguage][fallbackKey] || messages[currentLanguage].statusFailed || "Conversion failed.";
+    }
+
+    function renderBalance(data) {
+      lastBalanceData = data;
+      const standard = Number(data.standard_credits ?? data.credits ?? 0);
+      const high = Number(data.high_quality_credits ?? 0);
+      const template = messages[currentLanguage].creditsBreakdown || "Standard: {standard} / High Quality: {high}";
+      creditBalance.textContent = template
+        .replace("{standard}", standard)
+        .replace("{high}", high);
+    }
+
+    function selectedQuality() {
+      return document.querySelector('input[name="quality"]:checked')?.value || "standard";
     }
 
     function localizeJobMessage(message, status) {
@@ -898,6 +962,7 @@
         const formData = new FormData();
         formData.append("image", file);
         formData.append("email", emailInput.value.trim());
+        formData.append("quality", selectedQuality());
         const response = await fetch(apiPath("/ppt/jobs"), {
           method: "POST",
           body: formData
@@ -979,7 +1044,7 @@
       const response = await fetch(apiPath(`/billing/balance?email=${encodeURIComponent(email)}`));
       const data = await readApiJson(response);
       if (response.ok && data.ok) {
-        creditBalance.textContent = `${messages[currentLanguage].creditsLabel}: ${data.credits}`;
+        renderBalance(data);
         localStorage.setItem("worldscene-email", email);
         setStatus("statusBalance", "Credits loaded.");
       }
@@ -1036,7 +1101,7 @@
         });
         const data = await readApiJson(response);
         if (response.ok && data.ok) {
-          creditBalance.textContent = `${messages[currentLanguage].creditsLabel}: ${data.credits}`;
+          renderBalance(data);
           setStatus("statusBalance", "Credits loaded.");
           return;
         }
