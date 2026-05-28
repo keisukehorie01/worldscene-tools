@@ -102,7 +102,15 @@ def grant_checkout_session_credits(session):
         amount_total=session.get("amount_total"),
         currency=session.get("currency"),
     )
-    return get_balances(email)
+    balances = get_balances(email)
+    balances.update(
+        {
+            "product_key": product_key,
+            "credit_type": credit_type,
+            "credits_granted": credits,
+        }
+    )
+    return balances
 
 
 def register_stripe_routes(app):
@@ -170,7 +178,7 @@ def register_stripe_routes(app):
                 mode="payment",
                 customer_email=email,
                 line_items=[{"price": price_id, "quantity": 1}],
-                success_url=f"{public_app_url()}/?checkout=success&session_id={{CHECKOUT_SESSION_ID}}&stripe_mode={stripe_mode}",
+                success_url=f"{public_app_url()}/?checkout=success&session_id={{CHECKOUT_SESSION_ID}}&stripe_mode={stripe_mode}&product={product_key}",
                 cancel_url=f"{public_app_url()}/?checkout=cancel&stripe_mode={stripe_mode}",
                 metadata={
                     "email": email,

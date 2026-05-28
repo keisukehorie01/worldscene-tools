@@ -886,6 +886,14 @@
       return document.querySelector('input[name="quality"]:checked')?.value || "standard";
     }
 
+    function setSelectedQuality(quality) {
+      const normalized = quality === "high_quality" ? "high_quality" : "standard";
+      const input = document.querySelector(`input[name="quality"][value="${normalized}"]`);
+      if (input) {
+        input.checked = true;
+      }
+    }
+
     function localizeJobMessage(message, status) {
       const source = String(message || status || "");
       const normalized = source.toLowerCase();
@@ -905,6 +913,33 @@
         return messages[currentLanguage].statusCompleted || "PPTX is ready.";
       }
       return source || messages[currentLanguage].progressIdle || "Waiting";
+    }
+
+    function localizeErrorMessage(message, error) {
+      const source = String(message || error || "");
+      const normalized = source.toLowerCase();
+      if (currentLanguage !== "ja") {
+        return source || messages[currentLanguage].statusFailed || "Conversion failed.";
+      }
+      if (normalized.includes("insufficient high quality")) {
+        return "高品質変換にはHigh Qualityクレジットが必要です。High Qualityを購入してください。";
+      }
+      if (normalized.includes("insufficient standard") || normalized.includes("insufficient_credits")) {
+        return "標準変換にはStarterまたはProの標準クレジットが必要です。";
+      }
+      if (normalized.includes("login") || normalized.includes("auth")) {
+        return "ログインが必要です。ログインしてからもう一度お試しください。";
+      }
+      if (normalized.includes("too large") || normalized.includes("413")) {
+        return "画像サイズが大きすぎます。12MB以下の画像をアップロードしてください。";
+      }
+      if (normalized.includes("malware") || normalized.includes("virus")) {
+        return "ウイルススキャンを完了できませんでした。時間をおいて再試行してください。";
+      }
+      if (normalized.includes("html") || normalized.includes("unexpected token")) {
+        return "サーバーから一時的にHTMLエラーが返りました。少し待ってから再試行してください。";
+      }
+      return source || "変換に失敗しました。別の画像でお試しください。";
     }
 
     function resetProgress() {
@@ -1005,9 +1040,10 @@
     }
 
     function finalizingMessage() {
-      return currentLanguage === "ja"
-        ? "PPTXファイルを最終保存中です。20秒ほどかかることがあります..."
-        : "Finalizing the PPTX file. This can take about 20 seconds...";
+      if (currentLanguage === "ja") {
+        return "PPTXファイルを最終保存中です。20秒ほどかかる場合があります...";
+      }
+      return "Finalizing the PPTX file. This can take about 20 seconds...";
     }
 
     function downloadFilenameFrom(response) {
@@ -1167,20 +1203,20 @@
             selectFile.disabled = false;
             return;
           }
-          if (data.error === "insufficient_credits") {
-            setStatus("statusNeedCredits", "Please buy credits before converting.");
+          if (data.error === "insufficient_credits" || String(data.error || "").includes("insufficient")) {
+            setStatusText(localizeErrorMessage(data.message, data.error), "statusFailed");
             await loadBalance();
             selectFile.disabled = false;
             return;
           }
-          throw new Error(data.message || data.error || "Upload failed");
+          throw new Error(localizeErrorMessage(data.message, data.error));
         }
         setStatus("statusQueued", "Queued.");
         setProgress(Math.max(data.job.progress || 10, 10), localizeJobMessage(data.job.message, data.job.status));
         activeJobId = data.job.id;
         pollJob(data.job.id);
       } catch (error) {
-        const message = error.message || messages[currentLanguage].statusFailed || "Conversion failed.";
+        const message = localizeErrorMessage(error.message, "");
         setStatusText(message, "statusFailed");
         setProgress(100, message);
         selectFile.disabled = false;
@@ -1219,7 +1255,7 @@
         }
 
         if (data.job.status === "failed") {
-          const message = data.job.error || messages[currentLanguage].statusFailed || "Conversion failed.";
+          const message = localizeErrorMessage(data.job.error, data.job.error);
           setStatusText(message, "statusFailed");
           setProgress(100, message);
           hideDownload();
@@ -1230,7 +1266,7 @@
         setStatusText(jobMessage, data.job.status === "queued" ? "statusQueued" : "statusProcessing");
         window.setTimeout(() => pollJob(jobId), 1800);
       } catch (error) {
-        const message = error.message || messages[currentLanguage].statusFailed || "Conversion failed.";
+        const message = localizeErrorMessage(error.message, "");
         setStatusText(message, "statusFailed");
         setProgress(100, message);
         hideDownload();
@@ -1273,7 +1309,7 @@
         const data = await readApiJson(response);
         if (response.status === 409) {
           hideDownload();
-          const waitText = data.message || finalizing;
+          const waitText = localizeJobMessage(data.message || finalizing, "processing");
           setStatusText(waitText, "statusProcessing");
           setProgress(96, waitText, true, { allowDecrease: true });
           if (jobId) {
@@ -1281,9 +1317,9 @@
           }
           return;
         }
-        throw new Error(data.message || data.error || "Download failed");
+        throw new Error(localizeErrorMessage(data.message, data.error || "Download failed"));
       } catch (error) {
-        const message = error.message || messages[currentLanguage].statusFailed || "Download failed.";
+        const message = localizeErrorMessage(error.message, "");
         setStatusText(message, "statusFailed");
       } finally {
         downloadLink.removeAttribute("aria-disabled");
@@ -1308,6 +1344,11 @@
         return;
       }
       setStatus("statusCheckout", "Opening checkout...");
+      try {
+        sessionStorage.setItem("drop2ppt-last-product", product);
+      } catch (error) {
+        // Session storage can be unavailable in strict privacy modes.
+      }
       const checkoutPayload = { product };
       if (sandboxMode) {
         checkoutPayload.stripe_mode = "test";
@@ -1345,6 +1386,18 @@
         const data = await readApiJson(response);
         if (response.ok && data.ok) {
           renderBalance(data);
+          const purchasedProduct = data.product_key || params.get("product") || (() => {
+            try {
+              return sessionStorage.getItem("drop2ppt-last-product");
+            } catch (error) {
+              return "";
+            }
+          })();
+          if (data.credit_type === "high_quality" || purchasedProduct === "high_quality") {
+            setSelectedQuality("high_quality");
+          } else if (data.credit_type === "standard" || purchasedProduct === "starter" || purchasedProduct === "pro") {
+            setSelectedQuality("standard");
+          }
           setStatus("statusBalance", "Credits loaded.");
           return;
         }

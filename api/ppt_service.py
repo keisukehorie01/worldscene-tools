@@ -34,7 +34,7 @@ MALWARE_SCAN_COMMAND = os.getenv("PPT_MALWARE_SCAN_COMMAND", "").strip()
 MALWARE_SCAN_TIMEOUT = int(os.getenv("PPT_MALWARE_SCAN_TIMEOUT", "60"))
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.getenv("PPT_GEMINI_MODEL", os.getenv("GEMINI_MODEL", "gemini-2.5-flash")).strip()
-MAX_IMAGE_REGIONS = int(os.getenv("PPT_MAX_IMAGE_REGIONS", "8"))
+MAX_IMAGE_REGIONS = int(os.getenv("PPT_MAX_IMAGE_REGIONS", "10"))
 IMAGE_REGION_MIN_AREA = float(os.getenv("PPT_IMAGE_REGION_MIN_AREA", "0.006"))
 
 SLIDE_W = 12192000
@@ -426,7 +426,10 @@ to rebuild as editable objects: photos, realistic illustrations, product screens
 icons, complex charts, dense decorative textures, QR codes, or highly detailed generated art.
 Do not mark ordinary text cards, simple boxes, bullets, arrows, or basic diagrams as image_regions.
 Avoid full-slide image regions unless the area is a mostly non-text photographic or decorative background.
-Prefer 2 to 8 carefully chosen regions. Coordinates must match the original image location.
+For High Quality output, image_regions are the product value. If the source contains photos, screenshots,
+product mockups, complex illustrations, logos, charts, or dense decorative visuals, return at least 3
+meaningful visual-only image_regions when possible and up to 10 carefully chosen regions.
+Coordinates must match the original image location.
 """
         if quality == "high_quality"
         else """
@@ -1032,7 +1035,7 @@ def write_pptx(path: Path, analysis: Dict[str, Any], source_image_path: Optional
     editable_slide = prs.slides.add_slide(prs.slide_layouts[6])
     render_editable_slide(editable_slide, analysis, source_image_path, slide_w, slide_h)
 
-    include_source = os.getenv("PPT_INCLUDE_SOURCE_SLIDE", "1").strip().lower() in {"1", "true", "yes"}
+    include_source = os.getenv("PPT_INCLUDE_SOURCE_SLIDE", "0").strip().lower() in {"1", "true", "yes"}
     if source_image_path and include_source:
         visual_slide = prs.slides.add_slide(prs.slide_layouts[6])
         add_full_slide_image(visual_slide, source_image_path, slide_w, slide_h)
@@ -1073,18 +1076,37 @@ def render_editable_slide(slide, analysis: Dict[str, Any], source_image_path: Op
     bg.solid()
     bg.fore_color.rgb = RGBColor.from_string(background)
 
+    quality = normalize_quality(analysis.get("quality", "standard"))
+    image_regions = analysis.get("image_regions") or []
     use_special_aeo_layout = should_use_aeo_layout(analysis)
-    if not use_special_aeo_layout and source_image_path:
+    use_full_source_backdrop = (
+        quality == "high_quality"
+        and not use_special_aeo_layout
+        and source_image_path
+        and os.getenv("PPT_HQ_FULL_SOURCE_FALLBACK", "1").strip().lower() in {"1", "true", "yes"}
+    )
+    if use_full_source_backdrop:
         add_full_slide_image(slide, source_image_path, slide_w, slide_h)
+
+    rendered_background_regions = False
+    if use_full_source_backdrop:
+        rendered_background_regions = True
+    elif quality == "high_quality" and image_regions:
+        render_image_regions(slide, analysis, source_image_path, layer="background", slide_w=slide_w, slide_h=slide_h)
+        rendered_background_regions = True
 
     elements = build_dense_reconstruction(analysis) if use_special_aeo_layout else build_general_reconstruction(analysis)
     for element in elements:
         if element.get("type") == "imageRegions":
-            render_image_regions(slide, analysis, source_image_path, layer=element.get("layer") or "background", slide_w=slide_w, slide_h=slide_h)
+            layer = element.get("layer") or "background"
+            if layer == "background" and rendered_background_regions:
+                continue
+            render_image_regions(slide, analysis, source_image_path, layer=layer, slide_w=slide_w, slide_h=slide_h)
             continue
         render_element(slide, element, accent, slide_w, slide_h)
 
-    render_image_regions(slide, analysis, source_image_path, layer="foreground", slide_w=slide_w, slide_h=slide_h)
+    if quality == "high_quality" and not use_full_source_backdrop:
+        render_image_regions(slide, analysis, source_image_path, layer="foreground", slide_w=slide_w, slide_h=slide_h)
 
 
 def should_use_aeo_layout(analysis: Dict[str, Any]) -> bool:
@@ -1103,7 +1125,7 @@ def should_use_aeo_layout(analysis: Dict[str, Any]) -> bool:
 def build_general_reconstruction(analysis: Dict[str, Any]):
     elements = []
     quality = normalize_quality(analysis.get("quality", "standard"))
-    shape_transparency = 30 if quality == "high_quality" else 58
+    shape_transparency = 12 if quality == "high_quality" else 58
     for element in analysis.get("elements") or []:
         if not isinstance(element, dict):
             continue
