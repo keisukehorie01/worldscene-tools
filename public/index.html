@@ -838,6 +838,7 @@
     let lastProgressValue = 0;
     const initialParams = new URLSearchParams(window.location.search);
     let sandboxMode = false;
+    let activeJobId = null;
 
     function applyLanguage(language) {
       currentLanguage = language;
@@ -945,6 +946,9 @@
     function hideDownload() {
       downloadLink.hidden = true;
       downloadLink.removeAttribute("href");
+      downloadLink.removeAttribute("data-job-id");
+      downloadLink.removeAttribute("aria-disabled");
+      downloadLink.classList.remove("is-disabled");
     }
 
     const apiBase = window.location.pathname.startsWith("/drop2ppt") ? "/drop2ppt/api" : "/api";
@@ -998,6 +1002,26 @@
     function normalizeDownloadPath(url) {
       if (!url) return "#";
       return url.startsWith("/api/") ? `${apiBase}${url.slice(4)}` : url;
+    }
+
+    function finalizingMessage() {
+      return currentLanguage === "ja"
+        ? "PPTXファイルを最終保存中です。20秒ほどかかることがあります..."
+        : "Finalizing the PPTX file. This can take about 20 seconds...";
+    }
+
+    function downloadFilenameFrom(response) {
+      const disposition = response.headers.get("content-disposition") || "";
+      const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+      if (utf8Match) {
+        try {
+          return decodeURIComponent(utf8Match[1]);
+        } catch (error) {
+          return "drop2ppt-editable.pptx";
+        }
+      }
+      const asciiMatch = disposition.match(/filename="?([^";]+)"?/i);
+      return asciiMatch ? asciiMatch[1] : "drop2ppt-editable.pptx";
     }
 
     async function readApiJson(response) {
@@ -1153,6 +1177,7 @@
         }
         setStatus("statusQueued", "Queued.");
         setProgress(Math.max(data.job.progress || 10, 10), localizeJobMessage(data.job.message, data.job.status));
+        activeJobId = data.job.id;
         pollJob(data.job.id);
       } catch (error) {
         const message = error.message || messages[currentLanguage].statusFailed || "Conversion failed.";
@@ -1175,7 +1200,7 @@
 
         if (data.job.status === "completed") {
           if (!data.job.download_url) {
-            const finalizing = currentLanguage === "ja" ? "PPTXファイルの保存完了を確認しています..." : "Finalizing the PPTX file...";
+            const finalizing = finalizingMessage();
             setStatusText(finalizing, "statusProcessing");
             setProgress(96, finalizing);
             window.setTimeout(() => pollJob(jobId), 1800);
@@ -1184,6 +1209,9 @@
           setStatus("statusCompleted", "PPTX is ready.");
           setProgress(100, messages[currentLanguage].statusCompleted || "PPTX is ready.");
           downloadLink.href = normalizeDownloadPath(data.job.download_url);
+          downloadLink.dataset.jobId = jobId;
+          downloadLink.removeAttribute("aria-disabled");
+          downloadLink.classList.remove("is-disabled");
           downloadLink.hidden = false;
           selectFile.disabled = false;
           await loadBalance();
@@ -1207,6 +1235,59 @@
         setProgress(100, message);
         hideDownload();
         selectFile.disabled = false;
+      }
+    }
+
+    async function handleDownloadClick(event) {
+      event.preventDefault();
+      const href = downloadLink.getAttribute("href");
+      const jobId = downloadLink.dataset.jobId || activeJobId;
+      if (!href || href === "#") {
+        return;
+      }
+
+      const finalizing = finalizingMessage();
+      downloadLink.setAttribute("aria-disabled", "true");
+      downloadLink.classList.add("is-disabled");
+      setStatusText(finalizing, "statusProcessing");
+      setProgress(98, finalizing, true, { allowDecrease: true });
+
+      try {
+        const response = await fetch(href, { credentials: "same-origin" });
+        const contentType = response.headers.get("content-type") || "";
+        if (response.ok && !contentType.includes("application/json")) {
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const anchor = document.createElement("a");
+          anchor.href = blobUrl;
+          anchor.download = downloadFilenameFrom(response);
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+          setStatus("statusCompleted", "PPTX is ready.");
+          setProgress(100, messages[currentLanguage].statusCompleted || "PPTX is ready.");
+          return;
+        }
+
+        const data = await readApiJson(response);
+        if (response.status === 409) {
+          hideDownload();
+          const waitText = data.message || finalizing;
+          setStatusText(waitText, "statusProcessing");
+          setProgress(96, waitText, true, { allowDecrease: true });
+          if (jobId) {
+            window.setTimeout(() => pollJob(jobId), Number(data.retry_after || 2) * 1000);
+          }
+          return;
+        }
+        throw new Error(data.message || data.error || "Download failed");
+      } catch (error) {
+        const message = error.message || messages[currentLanguage].statusFailed || "Download failed.";
+        setStatusText(message, "statusFailed");
+      } finally {
+        downloadLink.removeAttribute("aria-disabled");
+        downloadLink.classList.remove("is-disabled");
       }
     }
 
@@ -1331,6 +1412,7 @@
       button.addEventListener("click", () => createCheckout(button.getAttribute("data-product")));
     });
     fileInput.addEventListener("change", markSelected);
+    downloadLink.addEventListener("click", handleDownloadClick);
     dropZone.addEventListener("dragover", (event) => {
       event.preventDefault();
       dropZone.classList.add("drop-zone-active");

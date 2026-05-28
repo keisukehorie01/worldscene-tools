@@ -127,11 +127,26 @@ def register_ppt_routes(app):
       if not job:
           return jsonify({"ok": False, "error": "job not found"}), 404
       if job.get("status") != "completed":
-          return jsonify({"ok": False, "error": "job is not completed"}), 409
+          return jsonify({
+              "ok": False,
+              "error": "job is not completed",
+              "message": "PPTX is still being generated. Please wait a few seconds.",
+              "retry_after": 2,
+              "job": public_job(job),
+          }), 409
 
       output_path = Path(job["output_path"])
       if not is_output_ready(job):
-          return jsonify({"ok": False, "error": "output file is not ready"}), 409
+          try:
+              wait_for_output_ready(output_path)
+          except RuntimeError:
+              return jsonify({
+                  "ok": False,
+                  "error": "output file is not ready",
+                  "message": "PPTX is still being finalized. Please wait a few seconds.",
+                  "retry_after": 2,
+                  "job": public_job(job),
+              }), 409
 
       return send_file(
           output_path,
@@ -237,24 +252,26 @@ def save_job(job: Dict[str, Any]) -> None:
     job["updated_at"] = time.time()
     with JOBS_LOCK:
         JOBS[job["id"]] = job
-    (JOB_DIR / f"{job['id']}.json").write_text(json.dumps(job, ensure_ascii=False, indent=2), encoding="utf-8")
+    path = JOB_DIR / f"{job['id']}.json"
+    temp_path = path.with_suffix(".json.tmp")
+    temp_path.write_text(json.dumps(job, ensure_ascii=False, indent=2), encoding="utf-8")
+    temp_path.replace(path)
 
 
 def load_job(job_id: str) -> Optional[Dict[str, Any]]:
-    with JOBS_LOCK:
-        if job_id in JOBS:
-            return JOBS[job_id]
-
     path = JOB_DIR / f"{job_id}.json"
-    if not path.exists():
-        return None
-    try:
-        job = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return None
+    if path.exists():
+        try:
+            job = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            job = None
+        if job:
+            with JOBS_LOCK:
+                JOBS[job_id] = job
+            return job
+
     with JOBS_LOCK:
-        JOBS[job_id] = job
-    return job
+        return JOBS.get(job_id)
 
 
 def public_job(job: Dict[str, Any]) -> Dict[str, Any]:

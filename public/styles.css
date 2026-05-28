@@ -920,6 +920,11 @@ body.is-authenticated .account-panel {
   display: none;
 }
 
+.download-link.is-disabled {
+  pointer-events: none;
+  opacity: 0.65;
+}
+
 .app-promo,
 .affiliate-panel {
   display: flex;
