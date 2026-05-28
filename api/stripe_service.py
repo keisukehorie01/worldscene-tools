@@ -69,6 +69,16 @@ def price_id_for_product(product, mode):
     return env_value(product["env"])
 
 
+def checkout_quantity(payload, product_key):
+    if product_key != "high_quality":
+        return 1
+    try:
+        quantity = int(payload.get("quantity") or 1)
+    except (TypeError, ValueError):
+        quantity = 1
+    return max(1, min(quantity, 50))
+
+
 def sandbox_checkout_allowed():
     return bool(session.get("drop2ppt_sandbox_allowed"))
 
@@ -158,6 +168,7 @@ def register_stripe_routes(app):
         product = PRODUCTS.get(product_key)
         stripe_mode = requested_stripe_mode(payload)
         stripe_secret_key = stripe_secret_for_mode(stripe_mode)
+        quantity = checkout_quantity(payload, product_key)
         if not email:
             return jsonify({"ok": False, "error": "login_required", "message": "Please log in and verify your email."}), 401
         if not product:
@@ -177,13 +188,15 @@ def register_stripe_routes(app):
             session = stripe.checkout.Session.create(
                 mode="payment",
                 customer_email=email,
-                line_items=[{"price": price_id, "quantity": 1}],
-                success_url=f"{public_app_url()}/?checkout=success&session_id={{CHECKOUT_SESSION_ID}}&stripe_mode={stripe_mode}&product={product_key}",
+                line_items=[{"price": price_id, "quantity": quantity}],
+                success_url=f"{public_app_url()}/?checkout=success&session_id={{CHECKOUT_SESSION_ID}}&stripe_mode={stripe_mode}&product={product_key}&quantity={quantity}",
                 cancel_url=f"{public_app_url()}/?checkout=cancel&stripe_mode={stripe_mode}",
                 metadata={
                     "email": email,
                     "product_key": product_key,
-                    "credits": str(product["credits"]),
+                    "quantity": str(quantity),
+                    "unit_credits": str(product["credits"]),
+                    "credits": str(product["credits"] * quantity),
                     "credit_type": product.get("credit_type", "standard"),
                     "stripe_mode": stripe_mode,
                 },
@@ -191,7 +204,7 @@ def register_stripe_routes(app):
             )
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 502
-        return jsonify({"ok": True, "url": session.url, "stripe_mode": stripe_mode})
+        return jsonify({"ok": True, "url": session.url, "stripe_mode": stripe_mode, "quantity": quantity})
 
     @app.route("/api/checkout/confirm", methods=["POST"])
     def checkout_confirm():

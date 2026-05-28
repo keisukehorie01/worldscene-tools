@@ -699,6 +699,10 @@ body.is-authenticated .account-panel {
   background: #f2fbf9;
 }
 
+.hq-purchase-card {
+  cursor: default;
+}
+
 .price-card span {
   color: var(--navy);
   font-weight: 900;
@@ -720,6 +724,52 @@ body.is-authenticated .account-panel {
   font-style: normal;
   font-weight: 700;
   line-height: 1.45;
+}
+
+.quantity-control {
+  display: grid;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.quantity-control span {
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.quantity-control input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--navy);
+  font: inherit;
+  font-weight: 900;
+  padding: 8px 10px;
+}
+
+.quantity-help {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.checkout-button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--teal);
+  color: white;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.checkout-button:hover {
+  background: #087f74;
 }
 
 .pricing-note {

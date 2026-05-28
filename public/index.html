@@ -220,12 +220,18 @@
               <small data-i18n="proCopy">25 standard conversions</small>
               <em data-i18n="standardQualityCopy">Hybrid standard: rebuilds text and shapes, keeping only necessary photos, logos, and QR codes as images.</em>
             </button>
-            <button class="price-card price-card-featured" type="button" data-product="high_quality">
+            <div class="price-card price-card-featured hq-purchase-card">
               <span data-i18n="hqTitle">High Quality</span>
               <strong>$4.99</strong>
-              <small data-i18n="hqCopy">1 high-quality conversion</small>
+              <small data-i18n="hqCopy">High-quality conversions</small>
               <em data-i18n="highQualityCopy">More detailed reconstruction with closer layout, font, and image-region decisions.</em>
-            </button>
+              <label class="quantity-control" for="high-quality-quantity">
+                <span data-i18n="hqQuantityLabel">Quantity</span>
+                <input id="high-quality-quantity" type="number" min="1" max="50" step="1" value="1" inputmode="numeric">
+              </label>
+              <small class="quantity-help" data-i18n="hqQuantityHelp">Buy 1 or more high-quality conversions at once.</small>
+              <button class="checkout-button" type="button" data-product="high_quality" data-i18n="buyHighQuality">Buy High Quality</button>
+            </div>
           </div>
           <p class="pricing-note" data-i18n="pricingCreditNote">Credits are not pooled: Starter / Pro adds standard credits, while High Quality adds high-quality credits. Select the matching conversion mode before uploading.</p>
           <div class="quality-comparison" aria-label="Plan comparison">
@@ -495,7 +501,10 @@
         proTitle: "Pro",
         proCopy: "25 standard conversions",
         hqTitle: "High Quality",
-        hqCopy: "1 high-quality conversion",
+        hqCopy: "High-quality conversions",
+        hqQuantityLabel: "Quantity",
+        hqQuantityHelp: "Buy 1 or more high-quality conversions at once.",
+        buyHighQuality: "Buy High Quality",
         standardQualityCopy: "Hybrid standard: rebuilds text and shapes, keeping only necessary photos, logos, and QR codes as images.",
         highQualityCopy: "More detailed reconstruction with closer layout, font, and image-region decisions.",
         pricingCreditNote: "Credits are not pooled: Starter / Pro adds standard credits, while High Quality adds high-quality credits. Select the matching conversion mode before uploading.",
@@ -608,7 +617,10 @@
         proTitle: "Pro",
         proCopy: "標準25回変換",
         hqTitle: "High Quality",
-        hqCopy: "高品質1回変換",
+        hqCopy: "高品質変換をまとめて購入",
+        hqQuantityLabel: "購入枚数",
+        hqQuantityHelp: "1枚以上をまとめて購入できます。",
+        buyHighQuality: "高品質を購入",
         standardQualityCopy: "標準ハイブリッド変換。文字や図形は編集可能にし、必要な写真・ロゴ・QRだけ画像として残します。",
         highQualityCopy: "より細かく解析し、配置・フォント・画像として残す領域を原稿に近づけます。",
         pricingCreditNote: "クレジットは共通残高ではありません。Starter / Proは標準クレジット、High Qualityは高品質クレジットを追加します。アップロード前に変換モードを合わせてください。",
@@ -722,7 +734,10 @@
       proTitle: "Pro",
       proCopy: "標準25回変換",
       hqTitle: "High Quality",
-      hqCopy: "高品質1回変換",
+      hqCopy: "高品質変換をまとめて購入",
+      hqQuantityLabel: "購入枚数",
+      hqQuantityHelp: "1枚以上をまとめて購入できます。",
+      buyHighQuality: "高品質を購入",
       standardQualityCopy: "標準ハイブリッド変換。文字や図形は編集可能にし、必要な写真・ロゴ・QRだけ画像として残します。",
       highQualityCopy: "より細かく解析し、配置・フォント・画像として残す領域を原稿に近づけます。",
       pricingCreditNote: "クレジットは共通残高ではありません。Starter / Proは標準クレジット、High Qualityは高品質クレジットを追加します。アップロード前に変換モードを合わせてください。",
@@ -1339,17 +1354,32 @@
       }
     }
 
+    function checkoutQuantity(product) {
+      if (product !== "high_quality") {
+        return 1;
+      }
+      const input = document.getElementById("high-quality-quantity");
+      const rawQuantity = Number.parseInt(input?.value || "1", 10);
+      const quantity = Math.min(50, Math.max(1, Number.isFinite(rawQuantity) ? rawQuantity : 1));
+      if (input) {
+        input.value = String(quantity);
+      }
+      return quantity;
+    }
+
     async function createCheckout(product) {
       if (!requireVerifiedAuth()) {
         return;
       }
+      const quantity = checkoutQuantity(product);
       setStatus("statusCheckout", "Opening checkout...");
       try {
         sessionStorage.setItem("drop2ppt-last-product", product);
+        sessionStorage.setItem("drop2ppt-last-quantity", String(quantity));
       } catch (error) {
         // Session storage can be unavailable in strict privacy modes.
       }
-      const checkoutPayload = { product };
+      const checkoutPayload = { product, quantity };
       if (sandboxMode) {
         checkoutPayload.stripe_mode = "test";
       }
