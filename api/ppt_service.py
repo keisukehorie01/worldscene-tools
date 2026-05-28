@@ -422,13 +422,15 @@ def analyze_image_for_ppt(image_bytes: bytes, mime_type: str, quality: str = "st
     image_region_instruction = (
         """
 Use image_regions only for areas that should remain as bitmap because they are difficult or undesirable
-to rebuild as editable objects: photos, realistic illustrations, product screenshots, logos, detailed
-icons, complex charts, dense decorative textures, QR codes, or highly detailed generated art.
-Do not mark ordinary text cards, simple boxes, bullets, arrows, or basic diagrams as image_regions.
-Avoid full-slide image regions unless the area is a mostly non-text photographic or decorative background.
-For High Quality output, image_regions are the product value. If the source contains photos, screenshots,
-product mockups, complex illustrations, logos, charts, or dense decorative visuals, return at least 3
-meaningful visual-only image_regions when possible and up to 10 carefully chosen regions.
+to rebuild as editable objects: photos, realistic illustrations, detailed screenshots that are not meant
+to be edited internally, dense decorative textures, QR codes, or highly detailed generated art.
+High Quality is not screenshot mode. Never preserve the whole slide as one image.
+Do not mark ordinary text cards, buttons, forms, simple boxes, bullets, arrows, logos, simple icons,
+or basic diagrams as image_regions; rebuild those as editable PowerPoint text and shapes.
+Avoid large image_regions that contain important editable text. Crop only the photographic or
+non-editable visual part.
+For High Quality output, return many more editable elements than Standard. Use image_regions sparingly:
+only for visual-only areas that would clearly look worse if approximated as shapes.
 Coordinates must match the original image location.
 """
         if quality == "high_quality"
@@ -498,7 +500,10 @@ large title, subtitle, numbered cards, side panels, bottom flow blocks, status p
 thin connectors, progress bars, and simple icon placeholders. Use Japanese text when the image is Japanese.
 Prioritize visual placement and editable PowerPoint objects over a generic summary. Do not simplify
 the slide into only a few blocks.
-Keep each text string concise enough to fit its box.
+Every visible heading, label, button caption, bullet, number, table-like row, and form label must become
+an editable text element or a shape with text. Keep x/y/w/h very close to the source image. Adjust each
+text box so text does not overlap nearby objects; use smaller font_size and wider boxes when needed.
+Keep each text string concise enough to fit its box, but do not move text far from its original position.
 
 {image_region_instruction}
 """.strip().replace("{image_region_instruction}", image_region_instruction)
@@ -1083,7 +1088,7 @@ def render_editable_slide(slide, analysis: Dict[str, Any], source_image_path: Op
         quality == "high_quality"
         and not use_special_aeo_layout
         and source_image_path
-        and os.getenv("PPT_HQ_FULL_SOURCE_FALLBACK", "1").strip().lower() in {"1", "true", "yes"}
+        and os.getenv("PPT_HQ_FULL_SOURCE_FALLBACK", "0").strip().lower() in {"1", "true", "yes"}
     )
     if use_full_source_backdrop:
         add_full_slide_image(slide, source_image_path, slide_w, slide_h)
