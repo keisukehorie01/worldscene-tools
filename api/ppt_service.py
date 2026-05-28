@@ -36,10 +36,14 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.getenv("PPT_GEMINI_MODEL", os.getenv("GEMINI_MODEL", "gemini-2.5-flash")).strip()
 MAX_IMAGE_REGIONS = int(os.getenv("PPT_MAX_IMAGE_REGIONS", "10"))
 IMAGE_REGION_MIN_AREA = float(os.getenv("PPT_IMAGE_REGION_MIN_AREA", "0.006"))
+DEFAULT_JA_FONT = os.getenv("PPT_DEFAULT_JA_FONT", "Yu Gothic").strip() or "Yu Gothic"
+SERIF_JA_FONT = os.getenv("PPT_SERIF_JA_FONT", "Yu Mincho").strip() or "Yu Mincho"
+DEFAULT_LATIN_FONT = os.getenv("PPT_DEFAULT_LATIN_FONT", "Aptos").strip() or "Aptos"
 
 SLIDE_W = 12192000
 SLIDE_H = 6858000
 BASE_SLIDE_LONG_EDGE = 12192000
+JAPANESE_TEXT_RE = re.compile(r"[\u3040-\u30ff\u3400-\u9fff\u3000-\u303f]")
 
 JOBS: Dict[str, Dict[str, Any]] = {}
 JOBS_LOCK = threading.Lock()
@@ -464,6 +468,7 @@ Use this schema:
       "fill": "hex color",
       "line": "hex color",
       "font": "hex color",
+      "font_face": "Yu Gothic|Yu Mincho|Meiryo|Aptos",
       "font_size": 14,
       "bold": true
     }
@@ -504,6 +509,10 @@ Every visible heading, label, button caption, bullet, number, table-like row, an
 an editable text element or a shape with text. Keep x/y/w/h very close to the source image. Adjust each
 text box so text does not overlap nearby objects; use smaller font_size and wider boxes when needed.
 Keep each text string concise enough to fit its box, but do not move text far from its original position.
+Set font_face for every text-bearing element. Use common Windows/Office fonts so the PPTX keeps its
+appearance on most client PCs: Yu Gothic for Japanese sans/UI text, Yu Mincho for Japanese serif or
+elegant poster-like headings, Meiryo for compact Japanese UI labels, and Aptos for Latin text. If unsure,
+use Yu Gothic for Japanese and Aptos for Latin. Do not choose decorative or rare fonts.
 
 {image_region_instruction}
 """.strip().replace("{image_region_instruction}", image_region_instruction)
@@ -580,6 +589,7 @@ def normalize_analysis(raw: Dict[str, Any]) -> Dict[str, Any]:
             "fill": clean_hex(item.get("fill")) or default_fill,
             "line": clean_hex(item.get("line")) or analysis["theme"]["accent"],
             "font": clean_hex(item.get("font")) or "FFFFFF",
+            "font_face": clean_font_face(item.get("font_face") or item.get("font_family") or item.get("typeface"), clean_text(item.get("text")), item.get("font_size")),
             "font_size": clamp_int(item.get("font_size"), 7, 44),
             "bold": bool(item.get("bold", element_type in {"text", "pill", "circle"})),
         })
@@ -1011,6 +1021,51 @@ def clean_hex(value: Any) -> str:
     return text if re.fullmatch(r"[0-9A-F]{6}", text) else ""
 
 
+def clean_font_face(value: Any, text: str = "", font_size: Any = None) -> str:
+    raw = clean_text(value).replace("\n", " ").strip()
+    lowered = raw.lower()
+    if raw:
+        if "mincho" in lowered or "serif" in lowered or "明朝" in raw:
+            return SERIF_JA_FONT
+        if "meiryo" in lowered or "メイリオ" in raw:
+            return "Meiryo"
+        if "gothic" in lowered or "sans" in lowered or "ゴシック" in raw:
+            return DEFAULT_JA_FONT
+        if "aptos" in lowered:
+            return DEFAULT_LATIN_FONT
+        if raw in {DEFAULT_JA_FONT, SERIF_JA_FONT, DEFAULT_LATIN_FONT, "Meiryo", "Yu Gothic", "Yu Mincho", "Aptos"}:
+            return raw[:60]
+    return default_font_face(text, font_size)
+
+
+def default_font_face(text: str = "", font_size: Any = None) -> str:
+    size = clamp_int(font_size, 0, 200)
+    if JAPANESE_TEXT_RE.search(text or ""):
+        # Large Japanese poster headings often look closer to Mincho; UI/body text is safer in Gothic.
+        return SERIF_JA_FONT if size >= 30 else DEFAULT_JA_FONT
+    return DEFAULT_LATIN_FONT
+
+
+def apply_run_font(run, font_face: str) -> None:
+    font_face = clean_font_face(font_face)
+    if not font_face:
+        return
+    run.font.name = font_face
+    try:
+        from pptx.oxml import OxmlElement
+        from pptx.oxml.ns import qn
+
+        rpr = run._r.get_or_add_rPr()
+        for tag in ("a:latin", "a:ea", "a:cs"):
+            node = rpr.find(qn(tag))
+            if node is None:
+                node = OxmlElement(tag)
+                rpr.append(node)
+            node.set("typeface", font_face)
+    except Exception:
+        pass
+
+
 def clamp_int(value: Any, minimum: int, maximum: int) -> int:
     try:
         number = int(float(value))
@@ -1223,6 +1278,7 @@ def render_element(slide, element: Dict[str, Any], accent: str, slide_w: int = S
     line = clean_hex(element.get("line")) or accent
     font = clean_hex(element.get("font")) or "FFFFFF"
     font_size = clamp_int(element.get("font_size"), 7, 44)
+    font_face = clean_font_face(element.get("font_face") or element.get("font_family") or element.get("typeface"), text, font_size)
     bold = bool(element.get("bold"))
     transparency = clamp_int(element.get("transparency"), 0, 100)
 
@@ -1233,7 +1289,7 @@ def render_element(slide, element: Dict[str, Any], accent: str, slide_w: int = S
         return
 
     if element_type == "text":
-        add_textbox(slide, x, y, w, h, text, font, font_size, bold=bold)
+        add_textbox(slide, x, y, w, h, text, font, font_size, bold=bold, font_face=font_face)
         return
 
     shape_type = {
@@ -1267,6 +1323,7 @@ def render_element(slide, element: Dict[str, Any], accent: str, slide_w: int = S
             run.font.bold = bold or index == 0
             run.font.size = Pt(font_size if index == 0 else max(7, font_size - 2))
             run.font.color.rgb = RGBColor.from_string(font)
+            apply_run_font(run, font_face)
 
 
 def element_box(element: Dict[str, Any], slide_w: int = SLIDE_W, slide_h: int = SLIDE_H):
@@ -1299,7 +1356,7 @@ def add_full_slide_image(slide, image_path: Path, slide_w: int = SLIDE_W, slide_
         slide.shapes.add_picture(str(image_path), 0, 0, width=slide_w, height=slide_h)
 
 
-def add_textbox(slide, x: int, y: int, w: int, h: int, text: str, font: str, font_size: int, bold: bool = False) -> None:
+def add_textbox(slide, x: int, y: int, w: int, h: int, text: str, font: str, font_size: int, bold: bool = False, font_face: str = "") -> None:
     from pptx.dml.color import RGBColor
     from pptx.util import Pt
 
@@ -1316,6 +1373,7 @@ def add_textbox(slide, x: int, y: int, w: int, h: int, text: str, font: str, fon
     run.font.bold = bold
     run.font.size = Pt(font_size)
     run.font.color.rgb = RGBColor.from_string(font)
+    apply_run_font(run, clean_font_face(font_face, text, font_size))
 
 
 def add_block(
@@ -1354,6 +1412,7 @@ def add_block(
     title_run.font.bold = True
     title_run.font.size = Pt(14)
     title_run.font.color.rgb = RGBColor.from_string(font)
+    apply_run_font(title_run, clean_font_face("", title, 14))
 
     if body:
         body_p = frame.add_paragraph()
@@ -1361,6 +1420,7 @@ def add_block(
         body_run.text = body
         body_run.font.size = Pt(11)
         body_run.font.color.rgb = RGBColor.from_string(font)
+        apply_run_font(body_run, clean_font_face("", body, 11))
 
 
 def build_slide_xml(analysis: Dict[str, Any]) -> str:
