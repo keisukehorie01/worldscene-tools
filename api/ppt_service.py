@@ -35,6 +35,7 @@ MALWARE_SCAN_TIMEOUT = int(os.getenv("PPT_MALWARE_SCAN_TIMEOUT", "60"))
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.getenv("PPT_GEMINI_MODEL", os.getenv("GEMINI_MODEL", "gemini-2.5-flash")).strip()
 MAX_IMAGE_REGIONS = int(os.getenv("PPT_MAX_IMAGE_REGIONS", "10"))
+STANDARD_MAX_IMAGE_REGIONS = int(os.getenv("PPT_STANDARD_MAX_IMAGE_REGIONS", "4"))
 IMAGE_REGION_MIN_AREA = float(os.getenv("PPT_IMAGE_REGION_MIN_AREA", "0.006"))
 DEFAULT_JA_FONT = os.getenv("PPT_DEFAULT_JA_FONT", "Yu Gothic").strip() or "Yu Gothic"
 SERIF_JA_FONT = os.getenv("PPT_SERIF_JA_FONT", "Yu Mincho").strip() or "Yu Mincho"
@@ -439,8 +440,11 @@ Coordinates must match the original image location.
 """
         if quality == "high_quality"
         else """
-This is a standard conversion. Rebuild the slide with editable PowerPoint objects whenever possible.
-Return an empty image_regions array. Do not preserve bitmap regions except through simple editable shapes.
+This is a standard hybrid conversion. Rebuild text, panels, arrows, cards, buttons, simple icons,
+and layout with editable PowerPoint objects whenever possible. Use image_regions sparingly, up to
+4 regions, only for necessary bitmap areas such as photos, logos, QR codes, realistic illustrations,
+product images, or detailed screenshots that should not be internally edited.
+Do not preserve the whole slide as an image. Avoid image_regions that contain important editable text.
 """
     ).strip()
 
@@ -544,7 +548,7 @@ use Yu Gothic for Japanese and Aptos for Latin. Do not choose decorative or rare
     parsed = parse_json_from_model(text)
     analysis = normalize_analysis(parsed)
     if quality != "high_quality":
-        analysis["image_regions"] = []
+        analysis["image_regions"] = (analysis.get("image_regions") or [])[:STANDARD_MAX_IMAGE_REGIONS]
     return analysis
 
 
@@ -1151,7 +1155,7 @@ def render_editable_slide(slide, analysis: Dict[str, Any], source_image_path: Op
     rendered_background_regions = False
     if use_full_source_backdrop:
         rendered_background_regions = True
-    elif quality == "high_quality" and image_regions:
+    elif image_regions:
         render_image_regions(slide, analysis, source_image_path, layer="background", slide_w=slide_w, slide_h=slide_h)
         rendered_background_regions = True
 
@@ -1165,7 +1169,7 @@ def render_editable_slide(slide, analysis: Dict[str, Any], source_image_path: Op
             continue
         render_element(slide, element, accent, slide_w, slide_h)
 
-    if quality == "high_quality" and not use_full_source_backdrop:
+    if image_regions and not use_full_source_backdrop:
         render_image_regions(slide, analysis, source_image_path, layer="foreground", slide_w=slide_w, slide_h=slide_h)
 
 

@@ -212,19 +212,19 @@
               <span data-i18n="starterTitle">Starter</span>
               <strong>$4.99</strong>
               <small data-i18n="starterCopy">5 standard conversions</small>
-              <em data-i18n="standardQualityCopy">Adds standard credits for simple drafts and regular screenshots.</em>
+              <em data-i18n="standardQualityCopy">Hybrid standard: rebuilds text and shapes, keeping only necessary photos, logos, and QR codes as images.</em>
             </button>
             <button class="price-card" type="button" data-product="pro">
               <span data-i18n="proTitle">Pro</span>
               <strong>$14.99</strong>
               <small data-i18n="proCopy">25 standard conversions</small>
-              <em data-i18n="standardQualityCopy">Adds standard credits for simple drafts and regular screenshots.</em>
+              <em data-i18n="standardQualityCopy">Hybrid standard: rebuilds text and shapes, keeping only necessary photos, logos, and QR codes as images.</em>
             </button>
             <button class="price-card price-card-featured" type="button" data-product="high_quality">
               <span data-i18n="hqTitle">High Quality</span>
               <strong>$4.99</strong>
               <small data-i18n="hqCopy">1 high-quality conversion</small>
-              <em data-i18n="highQualityCopy">Hybrid reconstruction that preserves photos, logos, screenshots, and complex visuals as images.</em>
+              <em data-i18n="highQualityCopy">More detailed reconstruction with closer layout, font, and image-region decisions.</em>
             </button>
           </div>
           <p class="pricing-note" data-i18n="pricingCreditNote">Credits are not pooled: Starter / Pro adds standard credits, while High Quality adds high-quality credits. Select the matching conversion mode before uploading.</p>
@@ -251,13 +251,13 @@
                 </tr>
                 <tr>
                   <td data-i18n="comparisonRebuild">Reconstruction</td>
-                  <td data-i18n="comparisonStandardRebuild">Text, panels, arrows, and layout are rebuilt as editable objects</td>
-                  <td data-i18n="comparisonHighRebuild">Editable objects plus bitmap preservation for detailed visual regions</td>
+                  <td data-i18n="comparisonStandardRebuild">Text, panels, arrows, and layout are rebuilt as editable objects; necessary photos and logos may remain as images</td>
+                  <td data-i18n="comparisonHighRebuild">More detailed editable reconstruction with closer placement, font choices, and visual-region decisions</td>
                 </tr>
                 <tr>
                   <td data-i18n="comparisonPreserve">Image preservation</td>
-                  <td data-i18n="comparisonStandardPreserve">Best effort for simple icons and backgrounds</td>
-                  <td data-i18n="comparisonHighPreserve">AI selects photos, logos, charts, screenshots, and textures to keep as images</td>
+                  <td data-i18n="comparisonStandardPreserve">Keeps only necessary photos, logos, QR codes, product images, and detailed screenshots as images</td>
+                  <td data-i18n="comparisonHighPreserve">Selects image regions more carefully for photos, logos, charts, screenshots, textures, and complex visuals</td>
                 </tr>
               </tbody>
             </table>
@@ -496,8 +496,8 @@
         proCopy: "25 standard conversions",
         hqTitle: "High Quality",
         hqCopy: "1 high-quality conversion",
-        standardQualityCopy: "Adds standard credits for simple drafts and regular screenshots.",
-        highQualityCopy: "Hybrid reconstruction that preserves photos, logos, screenshots, and complex visuals as images.",
+        standardQualityCopy: "Hybrid standard: rebuilds text and shapes, keeping only necessary photos, logos, and QR codes as images.",
+        highQualityCopy: "More detailed reconstruction with closer layout, font, and image-region decisions.",
         pricingCreditNote: "Credits are not pooled: Starter / Pro adds standard credits, while High Quality adds high-quality credits. Select the matching conversion mode before uploading.",
         comparisonTitle: "Plan comparison",
         comparisonFeature: "Feature",
@@ -510,11 +510,11 @@
         comparisonStandardBest: "Simple drafts, screenshots, and ordinary slide images",
         comparisonHighBest: "Dense AI-generated infographics, client deliverables, and complex diagrams",
         comparisonRebuild: "Reconstruction",
-        comparisonStandardRebuild: "Text, panels, arrows, and layout are rebuilt as editable objects",
-        comparisonHighRebuild: "Editable objects plus bitmap preservation for detailed visual regions",
+        comparisonStandardRebuild: "Text, panels, arrows, and layout are rebuilt as editable objects; necessary photos and logos may remain as images",
+        comparisonHighRebuild: "More detailed editable reconstruction with closer placement, font choices, and visual-region decisions",
         comparisonPreserve: "Image preservation",
-        comparisonStandardPreserve: "Best effort for simple icons and backgrounds",
-        comparisonHighPreserve: "AI selects photos, logos, charts, screenshots, and textures to keep as images",
+        comparisonStandardPreserve: "Keeps only necessary photos, logos, QR codes, product images, and detailed screenshots as images",
+        comparisonHighPreserve: "Selects image regions more carefully for photos, logos, charts, screenshots, textures, and complex visuals",
         chooseImage: "Choose image",
         viewExample: "View example flow",
         appsEyebrow: "Android app",
@@ -609,8 +609,8 @@
         proCopy: "標準25回変換",
         hqTitle: "High Quality",
         hqCopy: "高品質1回変換",
-        standardQualityCopy: "標準クレジットを追加。シンプルなカンプや通常のスクリーンショット向け。",
-        highQualityCopy: "写真、ロゴ、スクリーンショット、複雑な図を画像として残すハイブリッド再構築。",
+        standardQualityCopy: "標準ハイブリッド変換。文字や図形は編集可能にし、必要な写真・ロゴ・QRだけ画像として残します。",
+        highQualityCopy: "より細かく解析し、配置・フォント・画像として残す領域を原稿に近づけます。",
         pricingCreditNote: "クレジットは共通残高ではありません。Starter / Proは標準クレジット、High Qualityは高品質クレジットを追加します。アップロード前に変換モードを合わせてください。",
         comparisonTitle: "プラン比較",
         comparisonFeature: "比較項目",
@@ -623,11 +623,11 @@
         comparisonStandardBest: "シンプルなカンプ、スクリーンショット、通常のスライド画像",
         comparisonHighBest: "AI生成の複雑な図解、納品資料、密度の高いインフォグラフィック",
         comparisonRebuild: "再構築方式",
-        comparisonStandardRebuild: "文字、枠、矢印、レイアウトを編集可能オブジェクト化",
-        comparisonHighRebuild: "編集可能オブジェクト化に加え、細密な領域を画像として保持",
+        comparisonStandardRebuild: "文字、枠、矢印、レイアウトを編集可能オブジェクト化。必要な写真やロゴは画像として保持",
+        comparisonHighRebuild: "より細かく編集可能化し、配置・フォント・画像保持の判断を原稿に近づける",
         comparisonPreserve: "画像保持",
-        comparisonStandardPreserve: "単純なアイコンや背景はベストエフォートで再現",
-        comparisonHighPreserve: "写真、ロゴ、グラフ、スクショ、質感をAIが判断して画像保持",
+        comparisonStandardPreserve: "必要な写真、ロゴ、QR、商品画像、細かいスクショだけ画像として保持",
+        comparisonHighPreserve: "写真、ロゴ、グラフ、スクショ、質感、複雑なビジュアルをより慎重に画像保持",
         chooseImage: "画像を選ぶ",
         viewExample: "変換の流れを見る",
         appsEyebrow: "Androidアプリ",
@@ -723,8 +723,8 @@
       proCopy: "標準25回変換",
       hqTitle: "High Quality",
       hqCopy: "高品質1回変換",
-      standardQualityCopy: "標準クレジットを追加。シンプルなカンプや通常のスクリーンショット向け。",
-      highQualityCopy: "写真、ロゴ、スクリーンショット、複雑な図を画像として残すハイブリッド再構築。",
+      standardQualityCopy: "標準ハイブリッド変換。文字や図形は編集可能にし、必要な写真・ロゴ・QRだけ画像として残します。",
+      highQualityCopy: "より細かく解析し、配置・フォント・画像として残す領域を原稿に近づけます。",
       pricingCreditNote: "クレジットは共通残高ではありません。Starter / Proは標準クレジット、High Qualityは高品質クレジットを追加します。アップロード前に変換モードを合わせてください。",
       comparisonTitle: "プラン比較",
       comparisonFeature: "比較項目",
@@ -737,11 +737,11 @@
       comparisonStandardBest: "シンプルなカンプ、スクリーンショット、通常のスライド画像",
       comparisonHighBest: "AI生成の複雑な図解、納品資料、密度の高いインフォグラフィック",
       comparisonRebuild: "再構築方式",
-      comparisonStandardRebuild: "文字、枠、矢印、レイアウトを編集可能オブジェクト化",
-      comparisonHighRebuild: "編集可能オブジェクト化に加え、細密な領域を画像として保持",
+      comparisonStandardRebuild: "文字、枠、矢印、レイアウトを編集可能オブジェクト化。必要な写真やロゴは画像として保持",
+      comparisonHighRebuild: "より細かく編集可能化し、配置・フォント・画像保持の判断を原稿に近づける",
       comparisonPreserve: "画像保持",
-      comparisonStandardPreserve: "単純なアイコンや背景はベストエフォートで再現",
-      comparisonHighPreserve: "写真、ロゴ、グラフ、スクショ、質感をAIが判断して画像保持",
+      comparisonStandardPreserve: "必要な写真、ロゴ、QR、商品画像、細かいスクショだけ画像として保持",
+      comparisonHighPreserve: "写真、ロゴ、グラフ、スクショ、質感、複雑なビジュアルをより慎重に画像保持",
       chooseImage: "画像を選ぶ",
       viewExample: "変換の流れを見る",
       appsEyebrow: "Androidアプリ",
