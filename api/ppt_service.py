@@ -436,6 +436,10 @@ Avoid large image_regions that contain important editable text. Crop only the ph
 non-editable visual part.
 For High Quality output, return many more editable elements than Standard. Use image_regions sparingly:
 only for visual-only areas that would clearly look worse if approximated as shapes.
+The slide title, headline, subheads, bullets, CTA text, form labels, button captions, plan names,
+prices, and table labels must be editable text elements. Missing the main headline is a failure.
+If a photo or phone screenshot contains visible text, preserve the photo/screenshot as an image region
+only when that internal text is not expected to be edited. Rebuild all surrounding page text separately.
 Coordinates must match the original image location.
 """
         if quality == "high_quality"
@@ -513,6 +517,9 @@ Every visible heading, label, button caption, bullet, number, table-like row, an
 an editable text element or a shape with text. Keep x/y/w/h very close to the source image. Adjust each
 text box so text does not overlap nearby objects; use smaller font_size and wider boxes when needed.
 Keep each text string concise enough to fit its box, but do not move text far from its original position.
+For High Quality, normal Japanese flyers and landing-page comps should usually contain at least 24
+text-bearing editable elements. Dense infographics should contain 35 or more. Do not trade editable
+text for larger bitmap regions.
 Set font_face for every text-bearing element. Use common Windows/Office fonts so the PPTX keeps its
 appearance on most client PCs: Yu Gothic for Japanese sans/UI text, Yu Mincho for Japanese serif or
 elegant poster-like headings, Meiryo for compact Japanese UI labels, and Aptos for Latin text. If unsure,
@@ -525,28 +532,54 @@ use Yu Gothic for Japanese and Aptos for Latin. Do not choose decorative or rare
         "https://generativelanguage.googleapis.com/v1beta/models/"
         f"{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
     )
-    body = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt},
-                    {
-                        "inline_data": {
-                            "mime_type": mime_type,
-                            "data": base64.b64encode(image_bytes).decode("ascii"),
-                        }
-                    },
-                ]
-            }
-        ]
-    }
-    response = requests.post(url, json=body, timeout=90)
-    response.raise_for_status()
-    data = response.json()
-    parts = (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts")) or []
-    text = "".join(part.get("text", "") for part in parts)
-    parsed = parse_json_from_model(text)
-    analysis = normalize_analysis(parsed)
+
+    def request_analysis(request_prompt: str) -> Dict[str, Any]:
+        body = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": request_prompt},
+                        {
+                            "inline_data": {
+                                "mime_type": mime_type,
+                                "data": base64.b64encode(image_bytes).decode("ascii"),
+                            }
+                        },
+                    ]
+                }
+            ],
+            "generationConfig": {
+                "temperature": 0.1 if quality == "high_quality" else 0.2,
+                "maxOutputTokens": 12000 if quality == "high_quality" else 7000,
+                "responseMimeType": "application/json",
+            },
+        }
+        response = requests.post(url, json=body, timeout=90)
+        response.raise_for_status()
+        data = response.json()
+        parts = (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts")) or []
+        text = "".join(part.get("text", "") for part in parts)
+        parsed = parse_json_from_model(text)
+        return normalize_analysis(parsed)
+
+    analysis = request_analysis(prompt)
+    if quality == "high_quality" and high_quality_needs_retry(analysis):
+        retry_prompt = f"""{prompt}
+
+STRICT RETRY FOR HIGH QUALITY:
+Your previous structure likely preserved too much as bitmap or missed visible text.
+Return a fuller editable reconstruction. Include every visible Japanese headline, subhead, bullet,
+CTA, caption, form label, price, service name, plan name, and comparison label as an editable
+text-bearing element. Use bitmap image_regions only for photo/realistic/screenshot content that
+would clearly be worse as PowerPoint shapes. Do not include surrounding editable text inside those
+image regions. Prefer smaller cropped image regions plus editable text placed over or beside them.
+"""
+        try:
+            retry_analysis = request_analysis(retry_prompt)
+            if high_quality_analysis_score(retry_analysis) >= high_quality_analysis_score(analysis):
+                analysis = retry_analysis
+        except Exception as exc:
+            print(f"Drop2PPT high quality retry skipped error={redact_secret_text(str(exc))}", flush=True)
     if quality != "high_quality":
         analysis["image_regions"] = (analysis.get("image_regions") or [])[:STANDARD_MAX_IMAGE_REGIONS]
     return analysis
@@ -560,6 +593,43 @@ def parse_json_from_model(text: str) -> Dict[str, Any]:
     if match:
         cleaned = match.group(0)
     return json.loads(cleaned)
+
+
+def high_quality_needs_retry(analysis: Dict[str, Any]) -> bool:
+    text_count = text_bearing_element_count(analysis)
+    element_count = len(analysis.get("elements") or [])
+    regions = analysis.get("image_regions") or []
+    large_regions = sum(1 for region in regions if image_region_area(region) > 0.18)
+    total_region_area = sum(image_region_area(region) for region in regions)
+    return text_count < 18 or element_count < 28 or large_regions >= 3 or total_region_area > 0.58
+
+
+def high_quality_analysis_score(analysis: Dict[str, Any]) -> float:
+    text_count = text_bearing_element_count(analysis)
+    element_count = len(analysis.get("elements") or [])
+    regions = analysis.get("image_regions") or []
+    large_region_penalty = sum(10 for region in regions if image_region_area(region) > 0.18)
+    area_penalty = sum(image_region_area(region) for region in regions) * 20
+    return text_count * 4 + element_count - large_region_penalty - area_penalty
+
+
+def text_bearing_element_count(analysis: Dict[str, Any]) -> int:
+    count = 0
+    for element in analysis.get("elements") or []:
+        if isinstance(element, dict) and str(element.get("text") or "").strip():
+            count += 1
+    return count
+
+
+def image_region_area(region: Any) -> float:
+    if not isinstance(region, dict):
+        return 0.0
+    try:
+        width = float(region.get("w") or 0)
+        height = float(region.get("h") or 0)
+    except (TypeError, ValueError):
+        return 0.0
+    return max(0.0, width) * max(0.0, height)
 
 
 def normalize_analysis(raw: Dict[str, Any]) -> Dict[str, Any]:
@@ -1186,6 +1256,96 @@ def should_use_aeo_layout(analysis: Dict[str, Any]) -> bool:
     return len(labels.intersection({str(index) for index in range(1, 13)})) >= 8
 
 
+def enrich_high_quality_elements(analysis: Dict[str, Any], elements):
+    enriched = list(elements)
+    existing_text = compact_text(" ".join(clean_text(item.get("text")) for item in enriched if isinstance(item, dict)))
+    theme = analysis.get("theme") or {}
+    background = clean_hex(theme.get("background")) or "FFFFFF"
+    font = readable_font_for_background(background)
+
+    title = clean_text(analysis.get("title"))
+    if title and not text_already_present(title, existing_text):
+        enriched.insert(0, {
+            "type": "text",
+            "text": title,
+            "x": 0.055,
+            "y": 0.045,
+            "w": 0.62,
+            "h": 0.075,
+            "font": font,
+            "font_face": clean_font_face("", title, 30),
+            "font_size": 30,
+            "bold": True,
+        })
+        existing_text += compact_text(title)
+
+    subtitle = clean_text(analysis.get("subtitle"))
+    if subtitle and not text_already_present(subtitle, existing_text):
+        enriched.insert(1, {
+            "type": "text",
+            "text": subtitle,
+            "x": 0.06,
+            "y": 0.135,
+            "w": 0.68,
+            "h": 0.055,
+            "font": font,
+            "font_face": clean_font_face("", subtitle, 15),
+            "font_size": 15,
+            "bold": False,
+        })
+        existing_text += compact_text(subtitle)
+
+    if text_bearing_element_count({"elements": enriched}) < 18:
+        for section in analysis.get("sections") or []:
+            if not isinstance(section, dict):
+                continue
+            section_text = "\n".join(
+                part for part in [clean_text(section.get("title")), clean_text(section.get("body"))] if part
+            )
+            if not section_text or text_already_present(section_text, existing_text):
+                continue
+            enriched.append({
+                "type": "roundRect",
+                "text": section_text,
+                "x": section.get("x", 0.08),
+                "y": section.get("y", 0.22),
+                "w": section.get("w", 0.28),
+                "h": section.get("h", 0.14),
+                "fill": "FFFFFF",
+                "line": clean_hex(theme.get("accent")) or "1AA6D9",
+                "font": "0B2341",
+                "font_face": clean_font_face("", section_text, 12),
+                "font_size": 12,
+                "bold": True,
+                "transparency": 12,
+            })
+            existing_text += compact_text(section_text)
+
+    return enriched
+
+
+def compact_text(text: str) -> str:
+    return re.sub(r"\s+", "", text or "").lower()
+
+
+def text_already_present(text: str, compact_existing: str) -> bool:
+    compact = compact_text(text)
+    if not compact:
+        return True
+    return bool(compact_existing) and (compact in compact_existing or compact_existing in compact)
+
+
+def readable_font_for_background(background: str) -> str:
+    try:
+        red = int(background[0:2], 16)
+        green = int(background[2:4], 16)
+        blue = int(background[4:6], 16)
+    except Exception:
+        return "0B2341"
+    luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+    return "FFFFFF" if luminance < 105 else "0B2341"
+
+
 def build_general_reconstruction(analysis: Dict[str, Any]):
     elements = []
     quality = normalize_quality(analysis.get("quality", "standard"))
@@ -1200,6 +1360,8 @@ def build_general_reconstruction(analysis: Dict[str, Any]):
                 item.setdefault("transparency", shape_transparency)
             elements.append(item)
     if elements:
+        if quality == "high_quality":
+            elements = enrich_high_quality_elements(analysis, elements)
         return elements[:100]
 
     title = clean_text(analysis.get("title"))
