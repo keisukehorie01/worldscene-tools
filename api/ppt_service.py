@@ -468,6 +468,15 @@ Do not preserve the whole slide as an image. Avoid image_regions that contain im
 You convert visual drafts into editable PowerPoint structure.
 
 Analyze the image and return only valid JSON. Do not wrap it in Markdown.
+CRITICAL TEXT FIDELITY RULES:
+- Preserve visible text in the original language and wording. Never translate, romanize,
+  paraphrase, summarize, or convert Japanese text into English.
+- If the image is Japanese, text fields must stay Japanese except for exact visible Latin
+  acronyms/words already present in the image, such as AEO, LP, SEO, FAQ, AI, or URL text.
+- Do not invent English section labels such as "Hero Section", "Service Strengths",
+  "Comparison", or "CTA & Footer" unless those exact English words are visible in the image.
+- title/subtitle/sections are only for exact visible source text. If unsure, leave them empty
+  and put the visible text in elements instead.
 Use this schema:
 {
   "title": "short slide title",
@@ -539,6 +548,8 @@ Set font_face for every text-bearing element. Use common Windows/Office fonts so
 appearance on most client PCs: Yu Gothic for Japanese sans/UI text, Yu Mincho for Japanese serif or
 elegant poster-like headings, Meiryo for compact Japanese UI labels, and Aptos for Latin text. If unsure,
 use Yu Gothic for Japanese and Aptos for Latin. Do not choose decorative or rare fonts.
+Do not add explanatory English labels that are not visible in the source image. The output is a
+reconstruction of the image, not an analysis report.
 
 {image_region_instruction}
 """.strip().replace("{image_region_instruction}", image_region_instruction)
@@ -588,6 +599,8 @@ CTA, caption, form label, price, service name, plan name, and comparison label a
 text-bearing element. Use bitmap image_regions only for photo/realistic/screenshot content that
 would clearly be worse as PowerPoint shapes. Do not include surrounding editable text inside those
 image regions. Prefer smaller cropped image regions plus editable text placed over or beside them.
+Keep Japanese text in Japanese. Do not return English summary section names or English descriptions
+unless those exact English words are visible in the source image.
 For LP/flyer images, explicitly include: hero body copy, benefit icon captions, every feature-list row,
 every checklist row, each service/construction caption, each comparison bullet, footer strip captions,
 and final CTA captions.
@@ -1283,13 +1296,28 @@ def should_use_aeo_layout(analysis: Dict[str, Any]) -> bool:
 
 def enrich_high_quality_elements(analysis: Dict[str, Any], elements):
     enriched = list(elements)
+    source_has_japanese = any(
+        contains_japanese(clean_text(item.get("text")))
+        for item in enriched
+        if isinstance(item, dict)
+    )
+    if source_has_japanese:
+        enriched = [
+            item
+            for item in enriched
+            if not (
+                isinstance(item, dict)
+                and likely_non_source_english_analysis_text(clean_text(item.get("text")), source_has_japanese)
+            )
+        ]
+
     existing_text = compact_text(" ".join(clean_text(item.get("text")) for item in enriched if isinstance(item, dict)))
     theme = analysis.get("theme") or {}
     background = clean_hex(theme.get("background")) or "FFFFFF"
     font = readable_font_for_background(background)
 
     title = clean_text(analysis.get("title"))
-    if title and not text_already_present(title, existing_text):
+    if title and not likely_non_source_english_analysis_text(title, source_has_japanese) and not text_already_present(title, existing_text):
         enriched.insert(0, {
             "type": "text",
             "text": title,
@@ -1305,7 +1333,7 @@ def enrich_high_quality_elements(analysis: Dict[str, Any], elements):
         existing_text += compact_text(title)
 
     subtitle = clean_text(analysis.get("subtitle"))
-    if subtitle and not text_already_present(subtitle, existing_text):
+    if subtitle and not likely_non_source_english_analysis_text(subtitle, source_has_japanese) and not text_already_present(subtitle, existing_text):
         enriched.insert(1, {
             "type": "text",
             "text": subtitle,
@@ -1320,37 +1348,67 @@ def enrich_high_quality_elements(analysis: Dict[str, Any], elements):
         })
         existing_text += compact_text(subtitle)
 
-    if text_bearing_element_count({"elements": enriched}) < HIGH_QUALITY_RETRY_MIN_TEXT:
-        for section in analysis.get("sections") or []:
-            if not isinstance(section, dict):
-                continue
-            section_text = "\n".join(
-                part for part in [clean_text(section.get("title")), clean_text(section.get("body"))] if part
-            )
-            if not section_text or text_already_present(section_text, existing_text):
-                continue
-            enriched.append({
-                "type": "roundRect",
-                "text": section_text,
-                "x": section.get("x", 0.08),
-                "y": section.get("y", 0.22),
-                "w": section.get("w", 0.28),
-                "h": section.get("h", 0.14),
-                "fill": "FFFFFF",
-                "line": clean_hex(theme.get("accent")) or "1AA6D9",
-                "font": "0B2341",
-                "font_face": clean_font_face("", section_text, 12),
-                "font_size": 12,
-                "bold": True,
-                "transparency": 12,
-            })
-            existing_text += compact_text(section_text)
-
     return enriched
 
 
 def compact_text(text: str) -> str:
     return re.sub(r"\s+", "", text or "").lower()
+
+
+def contains_japanese(text: str) -> bool:
+    return bool(re.search(r"[\u3040-\u30ff\u3400-\u9fff]", text or ""))
+
+
+def likely_non_source_english_analysis_text(text: str, source_has_japanese: bool) -> bool:
+    if not source_has_japanese:
+        return False
+    cleaned = clean_text(text)
+    if not cleaned or contains_japanese(cleaned):
+        return False
+    # Keep short visible acronyms/labels that commonly appear in Japanese designs.
+    if re.fullmatch(r"[A-Z0-9+/#&.:\- ]{1,24}", cleaned):
+        return False
+    lowered = cleaned.lower()
+    analysis_markers = (
+        "hero section",
+        "service strengths",
+        "target pain",
+        "construction type",
+        "comparison",
+        "cta",
+        "footer",
+        "main value proposition",
+        "final conversion",
+        "detailed list",
+        "source image",
+        "uploaded visual",
+        "editable text",
+        "generated as",
+        "layout",
+        "hierarchy",
+    )
+    if any(marker in lowered for marker in analysis_markers):
+        return True
+    english_words = re.findall(r"[A-Za-z]{3,}", cleaned)
+    report_words = {
+        "section",
+        "summary",
+        "proposition",
+        "targeting",
+        "detailed",
+        "features",
+        "service",
+        "comparison",
+        "conversion",
+        "trust",
+        "panels",
+        "layout",
+        "visual",
+        "draft",
+        "hierarchy",
+        "editable",
+    }
+    return len(english_words) >= 4 and any(word.lower() in report_words for word in english_words)
 
 
 def text_already_present(text: str, compact_existing: str) -> bool:
