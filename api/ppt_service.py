@@ -565,7 +565,7 @@ reconstruction of the image, not an analysis report.
     def request_analysis(request_prompt: str) -> Dict[str, Any]:
         current_prompt = request_prompt
         last_json_error: Optional[json.JSONDecodeError] = None
-        for attempt in range(2):
+        for attempt in range(3):
             try:
                 return request_analysis_once(current_prompt)
             except json.JSONDecodeError as exc:
@@ -574,13 +574,29 @@ reconstruction of the image, not an analysis report.
                     f"Drop2PPT AI JSON parse retry quality={quality} attempt={attempt + 1} error={redact_secret_text(str(exc))}",
                     flush=True,
                 )
-                current_prompt = f"""{request_prompt}
+                if attempt == 0:
+                    current_prompt = f"""{request_prompt}
 
 JSON FORMAT RECOVERY:
 The previous response was not valid JSON. Return one complete JSON object only.
 Do not use Markdown fences, comments, trailing commas, ellipses, or text outside the JSON object.
 Keep the structure compact. If the image is very dense, prioritize the main headline, section headings,
 large labels, major cards, CTA text, and important list rows so the JSON finishes completely.
+"""
+                else:
+                    current_prompt = f"""{request_prompt}
+
+DENSE REPORT RECOVERY:
+The previous response still was not valid JSON, likely because the image is a dense report,
+dashboard, score sheet, table-heavy infographic, or chart-heavy document.
+Return one complete JSON object only.
+Limit the response to at most 45 elements.
+For small tables, charts, radar graphs, bar graphs, code blocks, and dense score/detail panels,
+use cropped image_regions instead of trying to recreate every tiny label as editable text.
+Recreate only the main title, section titles, large score labels, major callouts, and bottom headline
+as editable text. The goal is a valid, downloadable, visually faithful PPTX rather than a perfect
+line-by-line editable extraction.
+Do not include Markdown fences, comments, trailing commas, ellipses, or text outside JSON.
 """
         raise last_json_error or json.JSONDecodeError("AI response did not contain JSON", "", 0)
 
@@ -608,8 +624,12 @@ large labels, major cards, CTA text, and important list rows so the JSON finishe
         response = requests.post(url, json=body, timeout=GEMINI_TIMEOUT_SECONDS)
         response.raise_for_status()
         data = response.json()
-        parts = (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts")) or []
+        candidate = (data.get("candidates") or [{}])[0]
+        finish_reason = candidate.get("finishReason")
+        parts = ((candidate.get("content") or {}).get("parts")) or []
         text = "".join(part.get("text", "") for part in parts)
+        if finish_reason:
+            print(f"Drop2PPT Gemini finishReason={redact_secret_text(str(finish_reason))}", flush=True)
         parsed = parse_json_from_model(text)
         return normalize_analysis(parsed)
 
