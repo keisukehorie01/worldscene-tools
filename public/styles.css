@@ -866,6 +866,14 @@ body.is-authenticated .account-panel {
   letter-spacing: 0;
 }
 
+.amex-logo {
+  background: #2e77bc;
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
 .mastercard-logo {
   position: relative;
 }
