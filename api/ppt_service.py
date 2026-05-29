@@ -890,77 +890,42 @@ def normalize_analysis(raw: Dict[str, Any]) -> Dict[str, Any]:
 
 def fallback_analysis() -> Dict[str, Any]:
     return {
-        "title": "AEO処理シーケンス",
-        "subtitle": "公式HP・入力情報・デザインカンプを解析し、個別設計のLPへ分解・構築",
-        "summary": "画像の主要な情報構造を、編集できるPowerPointオブジェクトとして再構成します。",
+        "title": "Image to PowerPoint",
+        "subtitle": "The source image is preserved because AI analysis was unavailable.",
+        "summary": "The uploaded image is kept on the slide so it can still be reviewed and rebuilt manually.",
         "theme": {
-            "background": "10233F",
-            "accent": "1AA6D9",
+            "background": "F6FAFC",
+            "accent": "0E8F82",
         },
         "elements": fallback_elements(),
-        "image_regions": [],
+        "image_regions": [{"x": 0.0, "y": 0.0, "w": 1.0, "h": 1.0, "layer": "background"}],
         "sections": [
-            {"title": "Source image", "body": "Uploaded visual draft", "x": 0.05, "y": 0.22, "w": 0.26, "h": 0.18},
-            {"title": "Layout", "body": "Main panels and hierarchy", "x": 0.37, "y": 0.22, "w": 0.26, "h": 0.18},
-            {"title": "Editable text", "body": "Slide text can be revised", "x": 0.69, "y": 0.22, "w": 0.26, "h": 0.18},
-            {"title": "PowerPoint", "body": "Generated as PPTX", "x": 0.21, "y": 0.52, "w": 0.26, "h": 0.18},
-            {"title": "Delivery", "body": "Ready for human cleanup", "x": 0.53, "y": 0.52, "w": 0.26, "h": 0.18},
+            {"title": "Source image", "body": "Preserved for visual fidelity", "x": 0.05, "y": 0.78, "w": 0.28, "h": 0.10},
+            {"title": "Manual cleanup", "body": "Run conversion again for editable reconstruction", "x": 0.36, "y": 0.78, "w": 0.30, "h": 0.10},
+            {"title": "PPTX", "body": "Generated fallback slide", "x": 0.69, "y": 0.78, "w": 0.26, "h": 0.10},
         ],
         "steps": [
             {"label": "1", "title": "Upload", "body": "Drop an image"},
             {"label": "2", "title": "Analyze", "body": "Read the layout"},
-            {"label": "3", "title": "Rebuild", "body": "Create editable objects"},
+            {"label": "3", "title": "Preserve", "body": "Keep the original visual"},
             {"label": "4", "title": "Download", "body": "Get a PPTX file"},
         ],
     }
 
 
 def fallback_elements():
-    elements = [
-        {"type": "text", "text": "AEO処理シーケンス", "x": 0.23, "y": 0.03, "w": 0.52, "h": 0.08, "font_size": 34, "bold": True},
-        {"type": "text", "text": "公式HP・入力情報・デザインカンプを解析し、個別設計のLPへ分解・構築", "x": 0.25, "y": 0.11, "w": 0.50, "h": 0.04, "font_size": 13, "bold": True, "font": "EAF7FF"},
-        {"type": "rect", "text": "リアルタイム処理ログ\n> クライアント情報を更新\n> 公式HPを読み込み\n> FAQ構造を設計中\n> HTMLを分解・再構築\n> LPを仕上げています", "x": 0.01, "y": 0.10, "w": 0.16, "h": 0.55, "fill": "021B24", "line": "09D980", "font": "34F28A", "font_size": 8},
-        {"type": "rect", "text": "処理ステータス\nStage 10 / 12\nカンプ解析中\n\n87%\n進行状況\n████████░░\n\n現在の処理\n・カンプ画像を解析中\n・サービスカードを抽出\n・CTAを構造化しています", "x": 0.82, "y": 0.03, "w": 0.16, "h": 0.67, "fill": "071A33", "line": "1AA6D9", "font": "EAF7FF", "font_size": 10, "bold": True},
-        {"type": "circle", "text": "AI", "x": 0.42, "y": 0.30, "w": 0.16, "h": 0.22, "fill": "0A5FA8", "line": "38D5FF", "font_size": 34, "bold": True},
+    return [
+        {"type": "rect", "x": 0.03, "y": 0.03, "w": 0.94, "h": 0.08, "fill": "FFFFFF", "line": "0E8F82"},
+        {"type": "text", "text": "Image preserved because AI analysis was unavailable", "x": 0.06, "y": 0.052, "w": 0.70, "h": 0.035, "font": "0B2B40", "font_size": 18, "bold": True},
+        {"type": "text", "text": "Please retry the conversion if you need more editable objects.", "x": 0.06, "y": 0.88, "w": 0.70, "h": 0.035, "font": "536678", "font_size": 12},
     ]
-    card_data = [
-        ("1", "制作受付", "会社情報・公式HP等を受け付ける", 0.19, 0.15),
-        ("2", "公式HP読込", "サイト情報・電話番号を取得", 0.32, 0.15),
-        ("3", "下層ページ調査", "サービス・FAQ・お知らせを収集", 0.48, 0.15),
-        ("4", "FAQ設計", "問い合わせ前の疑問を整理", 0.64, 0.15),
-        ("5", "強み抽出", "特徴・差別化・信頼材料を抽出", 0.64, 0.29),
-        ("6", "導線設計", "フォーム・予約・CTAを設計", 0.65, 0.43),
-        ("7", "AEO構造化", "検索AIに伝わりやすく整理", 0.61, 0.57),
-        ("8", "画像候補整理", "必要な画像の役割を決める", 0.45, 0.57),
-        ("9", "カンプ生成", "複数デザイン案を生成", 0.31, 0.57),
-        ("10", "カンプ解析", "画像から構造を読み取る", 0.17, 0.57),
-        ("11", "HTML分解", "文章・リンク・ボタンへ再構築", 0.17, 0.43),
-        ("12", "LP仕上げ", "独自ページとして仕上げる", 0.17, 0.29),
-    ]
-    for label, title, body, x, y in card_data:
-        elements.append({"type": "roundRect", "text": f"{label}  {title}\n{body}", "x": x, "y": y, "w": 0.14, "h": 0.10, "fill": "0A2745", "line": "38D5FF", "font": "FFFFFF", "font_size": 9, "bold": True})
-        elements.append({"type": "circle", "text": label, "x": x - 0.012, "y": y - 0.008, "w": 0.030, "h": 0.040, "fill": "0B6EEA", "line": "7FE6FF", "font_size": 12, "bold": True})
-    bottom = [
-        ("重要キーワード", 0.02, 0.71, 0.15),
-        ("1 デザインカンプ生成", 0.19, 0.71, 0.26),
-        ("2 カンプ解析", 0.48, 0.71, 0.16),
-        ("3 HTML分解", 0.66, 0.71, 0.14),
-        ("4 個別LP完成", 0.82, 0.71, 0.16),
-    ]
-    for text, x, y, w in bottom:
-        elements.append({"type": "roundRect", "text": text, "x": x, "y": y, "w": w, "h": 0.16, "fill": "062646", "line": "25BFFF", "font": "FFFFFF", "font_size": 11, "bold": True})
-    for x in (0.31, 0.46, 0.59, 0.73):
-        elements.append({"type": "line", "x": x, "y": 0.77, "w": 0.045, "h": 0.0, "line": "38D5FF"})
-    elements.append({"type": "text", "text": "画像を貼るだけではありません。意味を理解し、HTMLとして再構築することで、本物のLPを生成します。", "x": 0.09, "y": 0.91, "w": 0.82, "h": 0.05, "font": "FFFFFF", "font_size": 14, "bold": True})
-    return elements
-
 
 def build_dense_reconstruction(analysis: Dict[str, Any]):
     cards = extract_step_cards(analysis)
     logs = extract_log_lines(analysis)
-    title = clean_text(analysis.get("title")) or "AEO処理シーケンス"
-    subtitle = clean_text(analysis.get("subtitle")) or "公式HP・入力情報・デザインカンプを解析し、個別設計のLPへ分解・構築"
-    summary = clean_text(analysis.get("summary")) or "意味を理解し、編集可能なPowerPointとして再構築します。"
+    title = clean_text(analysis.get("title")) or "Image to PowerPoint"
+    subtitle = clean_text(analysis.get("subtitle")) or "Editable reconstruction"
+    summary = clean_text(analysis.get("summary")) or "Generated from the uploaded image."
 
     elements = []
     add_bg_grid(elements)
@@ -1020,37 +985,23 @@ def extract_step_cards(analysis: Dict[str, Any]):
 
 def default_step_cards():
     rows = [
-        ("1", "制作受付", "会社情報・公式HP・問い合わせ導線を受け付ける"),
-        ("2", "公式HP読込", "サイト情報・電話番号・問い合わせ先を取得"),
-        ("3", "下層ページ調査", "サービス・FAQ・お知らせなどを収集"),
-        ("4", "FAQ設計", "疑問を整理し、AI検索に伝わるFAQ構造を作る"),
-        ("5", "強み抽出", "特徴・差別化・信頼材料を抽出"),
-        ("6", "問い合わせ導線設計", "電話・フォーム・予約・資料請求などを設計"),
-        ("7", "AEO・LLMO構造化", "検索AIに伝わりやすい構造へ整理"),
-        ("8", "画像候補整理", "必要な画像と役割を決める"),
-        ("9", "デザインカンプ生成", "複数のデザイン案を生成"),
-        ("10", "カンプ解析", "画像からセクション構造を読み取る"),
-        ("11", "HTML分解", "文章・リンク・ボタンとして再構築"),
-        ("12", "LP仕上げ", "スマホ表示や導線を確認して仕上げる"),
+        ("1", "Upload", "Receive the uploaded image"),
+        ("2", "Scan", "Check the file before processing"),
+        ("3", "Analyze", "Read the visible layout and text"),
+        ("4", "Structure", "Group important visual sections"),
+        ("5", "Extract text", "Recreate readable text where possible"),
+        ("6", "Preserve images", "Keep photo-like areas as image regions"),
+        ("7", "Rebuild", "Create editable PowerPoint objects"),
+        ("8", "Style", "Apply matching colors and typography"),
+        ("9", "Review", "Check basic slide consistency"),
+        ("10", "Package", "Write the generated PPTX file"),
+        ("11", "Finalize", "Prepare the download file"),
+        ("12", "Download", "Return the finished PowerPoint"),
     ]
     return {label: {"label": label, "title": title, "body": body} for label, title, body in rows}
 
-
 def extract_log_lines(analysis: Dict[str, Any]):
-    defaults = [
-        "12 > クライアント情報を受信しました",
-        "12 > 公式HPを読み込んでいます...",
-        "12 > 下層ページを調査中...",
-        "13 > FAQ構造を設計中...",
-        "13 > 強み・差別化を抽出中...",
-        "18 > 問い合わせ導線を設計中...",
-        "19 > AEO・LLMO構造化中...",
-        "19 > 画像候補を整理中...",
-        "18 > デザインカンプを生成中...",
-        "18 > カンプを解析中...",
-        "13 > HTMLを分解・再構築中...",
-        "10 > Complete!",
-    ]
+    defaults = []
     found = []
     for element in analysis.get("elements") or []:
         if not isinstance(element, dict):
@@ -1087,7 +1038,7 @@ def add_bg_grid(elements):
 
 
 def add_left_log_panel(elements, logs):
-    add_panel(elements, 0.01, 0.09, 0.16, 0.56, "リアルタイム処理ログ", line="0CE879", fill="021A24")
+    add_panel(elements, 0.01, 0.09, 0.16, 0.56, "Processing log", line="0CE879", fill="021A24")
     for index, line in enumerate(logs):
         y = 0.145 + index * 0.0375
         add_text(elements, line, 0.012, y, 0.145, 0.021, 7, font="33F28A", bold=True)
@@ -1407,37 +1358,10 @@ def render_editable_slide(slide, analysis: Dict[str, Any], source_image_path: Op
 
 
 def should_use_aeo_layout(analysis: Dict[str, Any]) -> bool:
-    title = clean_text(analysis.get("title"))
-    subtitle = clean_text(analysis.get("subtitle"))
-    title_blob = f"{title} {subtitle}"
-    if "AEO" not in title_blob:
-        return False
-    if "処理シーケンス" in title_blob or "process sequence" in title_blob.lower():
-        return True
-
-    labels = set()
-    for step in analysis.get("steps") or []:
-        if not isinstance(step, dict):
-            continue
-        label = clean_text(step.get("label"))
-        if label.isdigit():
-            labels.add(label)
-            continue
-        parsed = parse_step_heading(label)
-        if parsed:
-            labels.add(parsed[0])
-
-    for element in analysis.get("elements") or []:
-        if not isinstance(element, dict):
-            continue
-        text = clean_text(element.get("text"))
-        for line in text.splitlines():
-            parsed = parse_step_heading(line)
-            if parsed:
-                labels.add(parsed[0])
-
-    return len(labels.intersection({str(index) for index in range(1, 13)})) >= 8
-
+    # The old AEO process-sequence reconstruction was too specific and could leak
+    # into unrelated AEO reports when AI analysis fell back. Keep all images on
+    # the general reconstruction path unless a future dedicated detector is added.
+    return False
 
 def parse_step_heading(text: str):
     match = re.match(r"^\s*(\d{1,2})\s*[.:\-)]?\s+(.+?)\s*$", clean_text(text))
