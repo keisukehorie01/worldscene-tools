@@ -37,6 +37,8 @@ GEMINI_MODEL = os.getenv("PPT_GEMINI_MODEL", os.getenv("GEMINI_MODEL", "gemini-2
 MAX_IMAGE_REGIONS = int(os.getenv("PPT_MAX_IMAGE_REGIONS", "10"))
 STANDARD_MAX_IMAGE_REGIONS = int(os.getenv("PPT_STANDARD_MAX_IMAGE_REGIONS", "4"))
 IMAGE_REGION_MIN_AREA = float(os.getenv("PPT_IMAGE_REGION_MIN_AREA", "0.006"))
+HIGH_QUALITY_RETRY_MIN_TEXT = int(os.getenv("PPT_HQ_RETRY_MIN_TEXT", "42"))
+HIGH_QUALITY_RETRY_MIN_ELEMENTS = int(os.getenv("PPT_HQ_RETRY_MIN_ELEMENTS", "54"))
 DEFAULT_JA_FONT = os.getenv("PPT_DEFAULT_JA_FONT", "Yu Gothic").strip() or "Yu Gothic"
 SERIF_JA_FONT = os.getenv("PPT_SERIF_JA_FONT", "Yu Mincho").strip() or "Yu Mincho"
 DEFAULT_LATIN_FONT = os.getenv("PPT_DEFAULT_LATIN_FONT", "Aptos").strip() or "Aptos"
@@ -438,6 +440,16 @@ For High Quality output, return many more editable elements than Standard. Use i
 only for visual-only areas that would clearly look worse if approximated as shapes.
 The slide title, headline, subheads, bullets, CTA text, form labels, button captions, plan names,
 prices, and table labels must be editable text elements. Missing the main headline is a failure.
+Do not collapse lists into one summary. Each visible bullet row, checklist row, icon caption,
+comparison-row caption, footer-strip caption, and small CTA caption must be its own editable text
+element near the original position.
+For landing-page or flyer designs, pay special attention to these text-dense areas:
+hero body copy below the headline, benefit icon captions, feature list rows, problem checklist rows,
+service/construction captions, before-vs-after comparison bullets, footer feature captions, and final
+CTA copy.
+For brochure-like Japanese sources, preserve the information architecture: hero headline, body copy,
+benefit cards, feature-list table, problem checklist, construction/service gallery captions,
+comparison panels, bottom feature bar, and final CTA should all remain editable.
 If a photo or phone screenshot contains visible text, preserve the photo/screenshot as an image region
 only when that internal text is not expected to be edited. Rebuild all surrounding page text separately.
 Coordinates must match the original image location.
@@ -517,9 +529,12 @@ Every visible heading, label, button caption, bullet, number, table-like row, an
 an editable text element or a shape with text. Keep x/y/w/h very close to the source image. Adjust each
 text box so text does not overlap nearby objects; use smaller font_size and wider boxes when needed.
 Keep each text string concise enough to fit its box, but do not move text far from its original position.
-For High Quality, normal Japanese flyers and landing-page comps should usually contain at least 24
-text-bearing editable elements. Dense infographics should contain 35 or more. Do not trade editable
-text for larger bitmap regions.
+For High Quality, normal Japanese flyers, brochures, and landing-page comps should usually contain at
+least 42 text-bearing editable elements. Dense infographics or text-heavy LP images should contain 55
+or more. If you return fewer than 38 text-bearing elements for a text-heavy Japanese source, the
+reconstruction is incomplete. Do not trade editable text for larger bitmap regions.
+When a source has stacked rows, comparison boxes, checklist lines, or bottom navigation-like feature
+bars, keep each row/caption as a separate editable element instead of merging it into a paragraph.
 Set font_face for every text-bearing element. Use common Windows/Office fonts so the PPTX keeps its
 appearance on most client PCs: Yu Gothic for Japanese sans/UI text, Yu Mincho for Japanese serif or
 elegant poster-like headings, Meiryo for compact Japanese UI labels, and Aptos for Latin text. If unsure,
@@ -573,6 +588,11 @@ CTA, caption, form label, price, service name, plan name, and comparison label a
 text-bearing element. Use bitmap image_regions only for photo/realistic/screenshot content that
 would clearly be worse as PowerPoint shapes. Do not include surrounding editable text inside those
 image regions. Prefer smaller cropped image regions plus editable text placed over or beside them.
+For LP/flyer images, explicitly include: hero body copy, benefit icon captions, every feature-list row,
+every checklist row, each service/construction caption, each comparison bullet, footer strip captions,
+and final CTA captions.
+The retry result should have at least {HIGH_QUALITY_RETRY_MIN_TEXT} text-bearing editable elements
+unless the source image is truly sparse.
 """
         try:
             retry_analysis = request_analysis(retry_prompt)
@@ -601,7 +621,12 @@ def high_quality_needs_retry(analysis: Dict[str, Any]) -> bool:
     regions = analysis.get("image_regions") or []
     large_regions = sum(1 for region in regions if image_region_area(region) > 0.18)
     total_region_area = sum(image_region_area(region) for region in regions)
-    return text_count < 18 or element_count < 28 or large_regions >= 3 or total_region_area > 0.58
+    return (
+        text_count < HIGH_QUALITY_RETRY_MIN_TEXT
+        or element_count < HIGH_QUALITY_RETRY_MIN_ELEMENTS
+        or large_regions >= 3
+        or (total_region_area > 0.48 and text_count < HIGH_QUALITY_RETRY_MIN_TEXT + 8)
+    )
 
 
 def high_quality_analysis_score(analysis: Dict[str, Any]) -> float:
@@ -610,7 +635,7 @@ def high_quality_analysis_score(analysis: Dict[str, Any]) -> float:
     regions = analysis.get("image_regions") or []
     large_region_penalty = sum(10 for region in regions if image_region_area(region) > 0.18)
     area_penalty = sum(image_region_area(region) for region in regions) * 20
-    return text_count * 4 + element_count - large_region_penalty - area_penalty
+    return text_count * 5 + element_count - large_region_penalty - area_penalty
 
 
 def text_bearing_element_count(analysis: Dict[str, Any]) -> int:
@@ -668,7 +693,7 @@ def normalize_analysis(raw: Dict[str, Any]) -> Dict[str, Any]:
             "bold": bool(item.get("bold", element_type in {"text", "pill", "circle"})),
         })
     if elements:
-        analysis["elements"] = elements[:80]
+        analysis["elements"] = elements[:120]
 
     image_regions = []
     raw_regions = raw.get("image_regions") or raw.get("bitmap_regions") or raw.get("preserve_regions") or []
@@ -1295,7 +1320,7 @@ def enrich_high_quality_elements(analysis: Dict[str, Any], elements):
         })
         existing_text += compact_text(subtitle)
 
-    if text_bearing_element_count({"elements": enriched}) < 18:
+    if text_bearing_element_count({"elements": enriched}) < HIGH_QUALITY_RETRY_MIN_TEXT:
         for section in analysis.get("sections") or []:
             if not isinstance(section, dict):
                 continue
@@ -1362,7 +1387,7 @@ def build_general_reconstruction(analysis: Dict[str, Any]):
     if elements:
         if quality == "high_quality":
             elements = enrich_high_quality_elements(analysis, elements)
-        return elements[:100]
+        return elements[:120 if quality == "high_quality" else 100]
 
     title = clean_text(analysis.get("title"))
     subtitle = clean_text(analysis.get("subtitle"))
