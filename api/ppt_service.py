@@ -39,6 +39,9 @@ STANDARD_MAX_IMAGE_REGIONS = int(os.getenv("PPT_STANDARD_MAX_IMAGE_REGIONS", "4"
 IMAGE_REGION_MIN_AREA = float(os.getenv("PPT_IMAGE_REGION_MIN_AREA", "0.006"))
 HIGH_QUALITY_RETRY_MIN_TEXT = int(os.getenv("PPT_HQ_RETRY_MIN_TEXT", "42"))
 HIGH_QUALITY_RETRY_MIN_ELEMENTS = int(os.getenv("PPT_HQ_RETRY_MIN_ELEMENTS", "54"))
+HIGH_QUALITY_MAX_OUTPUT_TOKENS = int(os.getenv("PPT_HQ_MAX_OUTPUT_TOKENS", "20000"))
+STANDARD_MAX_OUTPUT_TOKENS = int(os.getenv("PPT_STANDARD_MAX_OUTPUT_TOKENS", "7000"))
+GEMINI_TIMEOUT_SECONDS = int(os.getenv("PPT_GEMINI_TIMEOUT_SECONDS", "120"))
 DEFAULT_JA_FONT = os.getenv("PPT_DEFAULT_JA_FONT", "Yu Gothic").strip() or "Yu Gothic"
 SERIF_JA_FONT = os.getenv("PPT_SERIF_JA_FONT", "Yu Mincho").strip() or "Yu Mincho"
 DEFAULT_LATIN_FONT = os.getenv("PPT_DEFAULT_LATIN_FONT", "Aptos").strip() or "Aptos"
@@ -560,6 +563,28 @@ reconstruction of the image, not an analysis report.
     )
 
     def request_analysis(request_prompt: str) -> Dict[str, Any]:
+        current_prompt = request_prompt
+        last_json_error: Optional[json.JSONDecodeError] = None
+        for attempt in range(2):
+            try:
+                return request_analysis_once(current_prompt)
+            except json.JSONDecodeError as exc:
+                last_json_error = exc
+                print(
+                    f"Drop2PPT AI JSON parse retry quality={quality} attempt={attempt + 1} error={redact_secret_text(str(exc))}",
+                    flush=True,
+                )
+                current_prompt = f"""{request_prompt}
+
+JSON FORMAT RECOVERY:
+The previous response was not valid JSON. Return one complete JSON object only.
+Do not use Markdown fences, comments, trailing commas, ellipses, or text outside the JSON object.
+Keep the structure compact. If the image is very dense, prioritize the main headline, section headings,
+large labels, major cards, CTA text, and important list rows so the JSON finishes completely.
+"""
+        raise last_json_error or json.JSONDecodeError("AI response did not contain JSON", "", 0)
+
+    def request_analysis_once(request_prompt: str) -> Dict[str, Any]:
         body = {
             "contents": [
                 {
@@ -576,11 +601,11 @@ reconstruction of the image, not an analysis report.
             ],
             "generationConfig": {
                 "temperature": 0.1 if quality == "high_quality" else 0.2,
-                "maxOutputTokens": 12000 if quality == "high_quality" else 7000,
+                "maxOutputTokens": HIGH_QUALITY_MAX_OUTPUT_TOKENS if quality == "high_quality" else STANDARD_MAX_OUTPUT_TOKENS,
                 "responseMimeType": "application/json",
             },
         }
-        response = requests.post(url, json=body, timeout=90)
+        response = requests.post(url, json=body, timeout=GEMINI_TIMEOUT_SECONDS)
         response.raise_for_status()
         data = response.json()
         parts = (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts")) or []
@@ -619,13 +644,88 @@ unless the source image is truly sparse.
 
 
 def parse_json_from_model(text: str) -> Dict[str, Any]:
-    cleaned = text.strip()
-    cleaned = re.sub(r"^```(?:json)?", "", cleaned).strip()
-    cleaned = re.sub(r"```$", "", cleaned).strip()
-    match = re.search(r"\{[\s\S]*\}", cleaned)
-    if match:
-        cleaned = match.group(0)
-    return json.loads(cleaned)
+    cleaned = (text or "").strip().lstrip("\ufeff")
+    last_error: Optional[json.JSONDecodeError] = None
+
+    for candidate in json_candidates_from_model_text(cleaned):
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError as exc:
+            last_error = exc
+            continue
+        if not isinstance(parsed, dict):
+            last_error = json.JSONDecodeError("Top-level JSON value must be an object", candidate, 0)
+            continue
+        return parsed
+
+    raise last_error or json.JSONDecodeError("No complete JSON object found", cleaned, 0)
+
+
+def json_candidates_from_model_text(text: str):
+    seen = set()
+
+    def add(candidate: str):
+        candidate = strip_markdown_json_fence(candidate.strip())
+        if candidate and candidate not in seen:
+            seen.add(candidate)
+            return candidate
+        return None
+
+    direct = add(text)
+    if direct:
+        yield direct
+
+    for match in re.finditer(r"```(?:json)?\s*([\s\S]*?)```", text, flags=re.IGNORECASE):
+        candidate = add(match.group(1))
+        if candidate:
+            yield candidate
+
+    balanced = extract_balanced_json_objects(text)
+    balanced.sort(key=len, reverse=True)
+    for candidate_text in balanced:
+        candidate = add(candidate_text)
+        if candidate:
+            yield candidate
+
+
+def strip_markdown_json_fence(text: str) -> str:
+    text = re.sub(r"^\s*```(?:json)?\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s*```\s*$", "", text)
+    return text.strip()
+
+
+def extract_balanced_json_objects(text: str):
+    objects = []
+    start = None
+    depth = 0
+    in_string = False
+    escaped = False
+
+    for index, char in enumerate(text):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+
+        if char == '"':
+            in_string = True
+            continue
+        if char == "{":
+            if depth == 0:
+                start = index
+            depth += 1
+            continue
+        if char == "}" and depth:
+            depth -= 1
+            if depth == 0 and start is not None:
+                objects.append(text[start:index + 1])
+                start = None
+
+    return objects
 
 
 def high_quality_needs_retry(analysis: Dict[str, Any]) -> bool:

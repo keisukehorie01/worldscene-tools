@@ -932,6 +932,11 @@
     function localizeErrorMessage(message, error) {
       const source = String(message || error || "");
       const normalized = source.toLowerCase();
+      if (normalized.includes("valid json") || normalized.includes("jsondecode") || normalized.includes("json decode")) {
+        return currentLanguage === "ja"
+          ? "AI解析結果の形式が崩れました。もう一度変換してください。"
+          : "AI analysis returned invalid JSON. Please retry the conversion.";
+      }
       if (currentLanguage !== "ja") {
         return source || messages[currentLanguage].statusFailed || "Conversion failed.";
       }
