@@ -864,7 +864,12 @@ def extract_step_cards(analysis: Dict[str, Any]):
         if not isinstance(step, dict):
             continue
         label = clean_text(step.get("label")) or str(len(cards) + 1)
-        title = clean_text(step.get("title")) or defaults.get(label, {}).get("title", "Step")
+        parsed = parse_step_heading(label)
+        if parsed:
+            label, parsed_title = parsed
+        else:
+            parsed_title = ""
+        title = clean_text(step.get("title")) or parsed_title or defaults.get(label, {}).get("title", "Step")
         body = clean_text(step.get("body")) or defaults.get(label, {}).get("body", "")
         if label.isdigit():
             cards[label] = {"label": label, "title": title, "body": body}
@@ -1284,14 +1289,48 @@ def render_editable_slide(slide, analysis: Dict[str, Any], source_image_path: Op
 def should_use_aeo_layout(analysis: Dict[str, Any]) -> bool:
     title = clean_text(analysis.get("title"))
     subtitle = clean_text(analysis.get("subtitle"))
-    if "AEO" not in f"{title} {subtitle}":
+    title_blob = f"{title} {subtitle}"
+    if "AEO" not in title_blob:
         return False
-    labels = {
-        clean_text(step.get("label"))
-        for step in analysis.get("steps") or []
-        if isinstance(step, dict)
-    }
+    if "処理シーケンス" in title_blob or "process sequence" in title_blob.lower():
+        return True
+
+    labels = set()
+    for step in analysis.get("steps") or []:
+        if not isinstance(step, dict):
+            continue
+        label = clean_text(step.get("label"))
+        if label.isdigit():
+            labels.add(label)
+            continue
+        parsed = parse_step_heading(label)
+        if parsed:
+            labels.add(parsed[0])
+
+    for element in analysis.get("elements") or []:
+        if not isinstance(element, dict):
+            continue
+        text = clean_text(element.get("text"))
+        for line in text.splitlines():
+            parsed = parse_step_heading(line)
+            if parsed:
+                labels.add(parsed[0])
+
     return len(labels.intersection({str(index) for index in range(1, 13)})) >= 8
+
+
+def parse_step_heading(text: str):
+    match = re.match(r"^\s*(\d{1,2})\s*[.:\-)]?\s+(.+?)\s*$", clean_text(text))
+    if not match:
+        return None
+    label, heading = match.groups()
+    try:
+        number = int(label)
+    except ValueError:
+        return None
+    if not 1 <= number <= 12:
+        return None
+    return str(number), heading
 
 
 def enrich_high_quality_elements(analysis: Dict[str, Any], elements):
