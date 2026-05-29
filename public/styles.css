@@ -1467,6 +1467,65 @@ body.is-authenticated .account-panel {
   font-weight: 800;
 }
 
+.terms-panel {
+  width: min(1040px, 100%);
+}
+
+.terms-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 28px;
+}
+
+.terms-toc a {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--navy);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.terms-section {
+  color: #16324a;
+  line-height: 1.85;
+}
+
+.terms-section h2,
+.terms-section h3 {
+  margin: 28px 0 10px;
+  color: var(--navy);
+  line-height: 1.35;
+}
+
+.terms-section h2 {
+  font-size: clamp(22px, 3vw, 30px);
+}
+
+.terms-section h3 {
+  font-size: 20px;
+}
+
+.terms-section p {
+  margin: 0 0 14px;
+}
+
+.terms-section ul {
+  margin: 0 0 18px;
+  padding-left: 1.4em;
+}
+
+.terms-section li {
+  margin: 6px 0;
+}
+
+.terms-divider {
+  margin: 42px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
 @media (max-width: 1120px) {
   .hero-grid {
     grid-template-columns: 1fr;
