@@ -135,6 +135,10 @@
           </p>
           <div class="hero-actions">
             <span class="sandbox-badge" id="sandbox-badge" hidden>Sandbox checkout</span>
+            <span class="payment-logos" aria-label="Visa and Mastercard accepted">
+              <span class="payment-logo visa-logo" aria-hidden="true">VISA</span>
+              <span class="payment-logo mastercard-logo" aria-hidden="true"><span></span><span></span></span>
+            </span>
             <a class="button button-secondary" href="#example" data-i18n="viewExample">View example flow</a>
           </div>
 
@@ -180,15 +184,6 @@
             <strong data-i18n="dropTitle">Drop image here</strong>
             <small data-i18n="dropHint">PNG, JPG, and WebP supported</small>
             <small class="drop-note" data-i18n="dropNote">Up to 12 MB. One image per conversion. Convert multiple images one at a time.</small>
-            <span class="drop-demo" aria-hidden="true">
-              <span class="demo-slide demo-source">
-                <span></span><span></span><span></span>
-              </span>
-              <span class="demo-arrow">&rarr;</span>
-              <span class="demo-slide demo-ppt">
-                <span></span><span></span><span></span>
-              </span>
-            </span>
             <button class="inline-file-button" id="select-file" type="button" data-i18n="chooseImage">Choose image</button>
             <span class="progress-panel drop-progress" id="progress-panel" hidden aria-label="Conversion progress">
               <span class="progress-meta">

@@ -141,7 +141,7 @@ a {
 
 .tool-hero {
   min-height: calc(100vh - 72px);
-  padding: clamp(18px, 3vw, 34px);
+  padding: clamp(8px, 1.4vw, 18px) clamp(18px, 2.4vw, 34px) clamp(18px, 2.6vw, 34px);
   background:
     linear-gradient(140deg, rgba(18, 50, 74, 0.94), rgba(15, 141, 128, 0.78)),
     radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.18), transparent 32%),
@@ -150,11 +150,11 @@ a {
 
 .hero-grid {
   width: min(1480px, 100%);
-  min-height: calc(100vh - 140px);
+  min-height: auto;
   margin: 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr);
-  gap: 18px;
+  gap: 14px;
   align-items: start;
 }
 
@@ -171,7 +171,7 @@ a {
   grid-column: 1;
   grid-row: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  grid-template-columns: minmax(0, 1.45fr) minmax(268px, 0.75fr);
   grid-template-areas:
     "eyebrow eyebrow"
     "title actions"
@@ -183,11 +183,11 @@ a {
     "pricing pricing"
     "pricing-note pricing-note"
     "comparison comparison";
-  column-gap: 18px;
-  row-gap: 12px;
+  column-gap: 16px;
+  row-gap: 6px;
   align-items: start;
   min-width: 0;
-  padding: clamp(20px, 2.5vw, 34px);
+  padding: clamp(12px, 1.4vw, 18px);
 }
 
 body.is-authenticated .quality-selector {
@@ -216,7 +216,7 @@ body.is-authenticated .account-panel {
 
 .eyebrow {
   grid-area: eyebrow;
-  margin: 0 0 8px;
+  margin: 0;
   color: var(--gold);
   font-size: 13px;
   font-weight: 900;
@@ -229,7 +229,7 @@ body.is-authenticated .account-panel {
   margin: 0;
   width: 100%;
   color: var(--navy);
-  font-size: clamp(28px, 2.35vw, 38px);
+  font-size: clamp(26px, 2.1vw, 34px);
   line-height: 1.06;
   letter-spacing: 0;
   white-space: nowrap;
@@ -240,8 +240,8 @@ body.is-authenticated .account-panel {
   width: min(760px, 100%);
   margin: 0;
   color: var(--muted);
-  font-size: clamp(15px, 1.45vw, 18px);
-  line-height: 1.45;
+  font-size: clamp(14px, 1.25vw, 16px);
+  line-height: 1.35;
 }
 
 .drop-zone {
@@ -249,8 +249,10 @@ body.is-authenticated .account-panel {
   order: 1;
   display: grid;
   place-items: center;
-  gap: 8px;
-  min-height: 214px;
+  align-content: center;
+  gap: 5px;
+  min-height: 0;
+  padding: 10px 14px;
   margin-top: 0;
   border: 2px dashed rgba(15, 141, 128, 0.55);
   border-radius: 8px;
@@ -262,79 +264,14 @@ body.is-authenticated .account-panel {
   transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
 
-.drop-demo {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 12px;
-  align-items: center;
-  width: min(460px, calc(100% - 28px));
-  margin-top: 4px;
-}
-
-.demo-slide {
-  display: grid;
-  gap: 8px;
-  min-height: 78px;
-  border: 1px solid rgba(18, 50, 74, 0.16);
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 14px;
-}
-
-.demo-slide span {
-  display: block;
-  min-height: 12px;
-  border-radius: 8px;
-  background: #cdd8e2;
-}
-
-.demo-source span:nth-child(1) {
-  width: 70%;
-  background: #74b7d5;
-}
-
-.demo-source span:nth-child(2) {
-  width: 92%;
-}
-
-.demo-source span:nth-child(3) {
-  width: 54%;
-  background: #e4b44d;
-}
-
-.demo-ppt {
-  border-color: rgba(15, 141, 128, 0.34);
-  background: #f4fbf9;
-}
-
-.demo-ppt span:nth-child(1) {
-  width: 74%;
-  background: var(--teal);
-}
-
-.demo-ppt span:nth-child(2) {
-  width: 88%;
-}
-
-.demo-ppt span:nth-child(3) {
-  width: 46%;
-  background: var(--gold);
-}
-
-.demo-arrow {
-  color: var(--teal);
-  font-size: 26px;
-  font-weight: 900;
-}
-
 .account-panel {
   grid-area: account;
   order: 2;
   display: grid;
-  gap: 8px;
+  gap: 5px;
   align-items: start;
   margin-top: 0;
-  padding: 12px;
+  padding: 9px 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfcfd;
@@ -380,7 +317,7 @@ body.is-authenticated .account-panel {
 
 .credit-balance-card {
   display: grid;
-  gap: 4px;
+  gap: 2px;
   padding: 2px 0 0;
 }
 
@@ -391,13 +328,13 @@ body.is-authenticated .account-panel {
 .credit-balance-card > span {
   color: var(--ink);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(24px, 2.4vw, 34px);
+  font-size: clamp(18px, 1.65vw, 23px);
   line-height: 1;
 }
 
 .credit-balance-card dl {
   display: grid;
-  gap: 2px;
+  gap: 0;
   margin: 0;
 }
 
@@ -413,7 +350,7 @@ body.is-authenticated .account-panel {
   margin: 0;
   color: var(--ink);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(22px, 2.2vw, 30px);
+  font-size: clamp(18px, 1.7vw, 23px);
   line-height: 1.08;
 }
 
@@ -617,10 +554,10 @@ body.is-authenticated .account-panel {
   grid-area: quality;
   order: 2;
   display: grid;
-  gap: 10px;
+  gap: 7px;
   min-width: 0;
   margin: 0;
-  padding: 12px;
+  padding: 9px 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f4fbf9;
@@ -652,7 +589,7 @@ body.is-authenticated .account-panel {
 .quality-selector small {
   grid-column: 2;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1.4;
 }
@@ -662,9 +599,9 @@ body.is-authenticated .account-panel {
   border-left: 3px solid var(--gold);
   color: #6a4b05;
   padding: 0 0 0 10px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  line-height: 1.45;
+  line-height: 1.35;
 }
 
 .pricing-grid {
@@ -672,19 +609,19 @@ body.is-authenticated .account-panel {
   order: 5;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 2px;
+  gap: 8px;
+  margin-top: 0;
   scroll-margin-top: 112px;
 }
 
 .price-card {
   display: grid;
-  gap: 4px;
-  min-height: 116px;
+  gap: 3px;
+  min-height: 86px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: white;
-  padding: 14px;
+  padding: 9px 10px;
   text-align: left;
   cursor: pointer;
 }
@@ -710,26 +647,27 @@ body.is-authenticated .account-panel {
 
 .price-card strong {
   color: var(--teal);
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .price-card small {
   color: var(--muted);
+  font-size: 11px;
   font-weight: 800;
 }
 
 .price-card em {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 10px;
   font-style: normal;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.32;
 }
 
 .quantity-control {
   display: grid;
   gap: 5px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .quantity-control span {
@@ -740,7 +678,7 @@ body.is-authenticated .account-panel {
 
 .quantity-control input {
   width: 100%;
-  min-height: 38px;
+  min-height: 34px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: white;
@@ -757,7 +695,7 @@ body.is-authenticated .account-panel {
 }
 
 .checkout-button {
-  min-height: 38px;
+  min-height: 34px;
   border: 0;
   border-radius: 8px;
   background: var(--teal);
@@ -780,10 +718,10 @@ body.is-authenticated .account-panel {
   border-radius: 8px;
   background: #fff8e4;
   color: #6a4b05;
-  padding: 12px 14px;
-  font-size: 13px;
+  padding: 8px 10px;
+  font-size: 12px;
   font-weight: 800;
-  line-height: 1.5;
+  line-height: 1.35;
 }
 
 .quality-comparison {
@@ -845,8 +783,8 @@ body.is-authenticated .account-panel {
 .drop-icon {
   display: inline-grid;
   place-items: center;
-  width: 68px;
-  height: 68px;
+  width: 50px;
+  height: 50px;
   border-radius: 8px;
   background: var(--navy);
   color: white;
@@ -856,12 +794,12 @@ body.is-authenticated .account-panel {
 
 .drop-zone strong {
   color: var(--navy);
-  font-size: clamp(22px, 2.5vw, 30px);
+  font-size: clamp(21px, 2vw, 27px);
 }
 
 .drop-zone small {
   color: var(--muted);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -869,8 +807,8 @@ body.is-authenticated .account-panel {
   display: block;
   width: min(560px, calc(100% - 24px));
   color: #687483;
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .conversion-status {
@@ -878,8 +816,8 @@ body.is-authenticated .account-panel {
   order: 3;
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
+  gap: 8px;
+  min-height: 30px;
   margin-top: 0;
   color: var(--muted);
   font-weight: 800;
@@ -900,12 +838,58 @@ body.is-authenticated .account-panel {
   flex-wrap: wrap;
   justify-content: flex-end;
   align-self: start;
-  gap: 12px;
+  gap: 10px;
   margin-top: 0;
 }
 
+.payment-logos {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.payment-logo {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(7, 22, 36, 0.08);
+}
+
+.visa-logo {
+  color: #1434cb;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.mastercard-logo {
+  position: relative;
+}
+
+.mastercard-logo span {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.mastercard-logo span:first-child {
+  left: 9px;
+  background: #eb001b;
+}
+
+.mastercard-logo span:last-child {
+  right: 9px;
+  background: rgba(247, 158, 27, 0.9);
+  mix-blend-mode: multiply;
+}
+
 .inline-file-button {
-  min-height: 44px;
+  min-height: 30px;
   border: 0;
   border-radius: 8px;
   background: var(--teal);
@@ -925,7 +909,7 @@ body.is-authenticated .account-panel {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 52px;
+  min-height: 44px;
   border: 0;
   border-radius: 8px;
   padding: 0 20px;
@@ -956,7 +940,7 @@ body.is-authenticated .account-panel {
   align-items: center;
   justify-content: center;
   width: fit-content;
-  min-height: 48px;
+  min-height: 42px;
   margin-top: 0;
   border-radius: 8px;
   background: var(--navy);
@@ -986,12 +970,12 @@ body.is-authenticated .account-panel {
   grid-area: progress;
   order: 3;
   display: grid;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 2px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfcfd;
-  padding: 12px;
+  padding: 10px;
 }
 
 .drop-progress {
@@ -1020,7 +1004,7 @@ body.is-authenticated .account-panel {
 }
 
 .progress-track {
-  height: 10px;
+  height: 8px;
   overflow: hidden;
   border-radius: 999px;
   background: #dce7ee;
@@ -1047,7 +1031,7 @@ body.is-authenticated .account-panel {
   grid-template-columns: 36px minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
-  min-height: 52px;
+  min-height: 44px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfcfd;
@@ -1471,6 +1455,7 @@ body.is-authenticated .account-panel {
 .legal-updated {
   margin: 24px 0 0;
   color: var(--muted);
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -1526,15 +1511,7 @@ body.is-authenticated .account-panel {
   }
 
   .drop-zone {
-    min-height: 210px;
-  }
-
-  .drop-demo {
-    grid-template-columns: 1fr;
-  }
-
-  .demo-arrow {
-    transform: rotate(90deg);
+    min-height: 190px;
   }
 
   .account-panel,
