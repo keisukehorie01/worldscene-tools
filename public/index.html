@@ -115,6 +115,7 @@
     <nav class="nav" aria-label="Main navigation">
       <a href="#converter" data-i18n="navConvert">Convert</a>
       <a href="#pricing" data-i18n="navPricing">Pricing</a>
+      <a href="#samples" data-i18n="navSamples">Samples</a>
       <a href="#apps" data-i18n="navApps">Apps</a>
       <a href="#tools" data-i18n="navTools">Tools</a>
       <a class="auth-nav-link" id="login-nav" href="/drop2ppt/auth.html?mode=login" data-i18n="navLogin">Login</a>
@@ -264,6 +265,41 @@
               </tbody>
             </table>
           </div>
+          <section class="samples-panel" id="samples" aria-labelledby="samples-title">
+            <p class="eyebrow" data-i18n="samplesEyebrow">High Quality samples</p>
+            <h2 id="samples-title" data-i18n="samplesTitle">Before image / after PowerPoint</h2>
+            <p data-i18n="samplesCopy">Download the source image and the PPTX rebuilt with High Quality mode. Use them to judge fit before purchasing.</p>
+            <div class="sample-grid">
+              <article class="sample-card">
+                <img class="sample-thumb" src="assets/samples/manga-translation-thumb.jpg" alt="" loading="lazy">
+                <h3 data-i18n="sampleMangaTitle">Manga translation proposal</h3>
+                <p data-i18n="sampleMangaCopy">A proposal-style flyer with manga panels, icons, and section cards.</p>
+                <div class="sample-actions">
+                  <a href="assets/samples/manga-translation-before.png" target="_blank" rel="noopener" data-i18n="sampleBefore">Before image</a>
+                  <a href="assets/samples/manga-translation-after.pptx" download data-i18n="sampleAfter">After PPTX</a>
+                </div>
+              </article>
+              <article class="sample-card">
+                <img class="sample-thumb" src="assets/samples/corporate-lp-thumb.jpg" alt="" loading="lazy">
+                <h3 data-i18n="sampleCorporateTitle">Corporate AI LP brochure</h3>
+                <p data-i18n="sampleCorporateCopy">A B2B landing-page brochure with photos, panels, and CTA sections.</p>
+                <div class="sample-actions">
+                  <a href="assets/samples/corporate-lp-before.png" target="_blank" rel="noopener" data-i18n="sampleBefore">Before image</a>
+                  <a href="assets/samples/corporate-lp-after.pptx" download data-i18n="sampleAfter">After PPTX</a>
+                </div>
+              </article>
+              <article class="sample-card">
+                <img class="sample-thumb" src="assets/samples/store-traffic-thumb.jpg" alt="" loading="lazy">
+                <h3 data-i18n="sampleStoreTitle">Store traffic proposal</h3>
+                <p data-i18n="sampleStoreCopy">A local marketing proposal with schedules, KPIs, icons, and comparison panels.</p>
+                <div class="sample-actions">
+                  <a href="assets/samples/store-traffic-before.png" target="_blank" rel="noopener" data-i18n="sampleBefore">Before image</a>
+                  <a href="assets/samples/store-traffic-after.pptx" download data-i18n="sampleAfter">After PPTX</a>
+                </div>
+              </article>
+            </div>
+            <p class="sample-note" data-i18n="samplesNote">High Quality improves reconstruction, but perfect reproduction and editability are not guaranteed. Photos, logos, screenshots, and very detailed visuals may remain as images.</p>
+          </section>
         </section>
 
         <aside class="app-promo" id="apps" aria-labelledby="apps-title">
@@ -449,6 +485,7 @@
       en: {
         navConvert: "Convert",
         navPricing: "Pricing",
+        navSamples: "Samples",
         navApps: "Apps",
         navTools: "Tools",
         answerEyebrow: "Direct answer",
@@ -520,6 +557,18 @@
         comparisonPreserve: "Image preservation",
         comparisonStandardPreserve: "Keeps only necessary photos, logos, QR codes, product images, and detailed screenshots as images",
         comparisonHighPreserve: "Selects image regions more carefully for photos, logos, charts, screenshots, textures, and complex visuals",
+        samplesEyebrow: "High Quality samples",
+        samplesTitle: "Before image / after PowerPoint",
+        samplesCopy: "Download the source image and the PPTX rebuilt with High Quality mode. Use them to judge fit before purchasing.",
+        sampleMangaTitle: "Manga translation proposal",
+        sampleMangaCopy: "A proposal-style flyer with manga panels, icons, and section cards.",
+        sampleCorporateTitle: "Corporate AI LP brochure",
+        sampleCorporateCopy: "A B2B landing-page brochure with photos, panels, and CTA sections.",
+        sampleStoreTitle: "Store traffic proposal",
+        sampleStoreCopy: "A local marketing proposal with schedules, KPIs, icons, and comparison panels.",
+        sampleBefore: "Before image",
+        sampleAfter: "After PPTX",
+        samplesNote: "High Quality improves reconstruction, but perfect reproduction and editability are not guaranteed. Photos, logos, screenshots, and very detailed visuals may remain as images.",
         chooseImage: "Choose image",
         viewExample: "View example flow",
         appsEyebrow: "Android app",
@@ -810,6 +859,22 @@
       progressScanning: "ウイルススキャン中",
       progressAnalyzing: "画像を解析中",
       progressRebuilding: "PowerPointを再構築中"
+    });
+
+    Object.assign(messages.ja, {
+      navSamples: "サンプル",
+      samplesEyebrow: "高品質サンプル",
+      samplesTitle: "変換前画像 / 変換後PowerPoint",
+      samplesCopy: "高品質モードで再構築したサンプルです。購入前の判断材料として、元画像とPPTXを確認できます。",
+      sampleMangaTitle: "マンガ翻訳サービス提案",
+      sampleMangaCopy: "マンガコマ、アイコン、カード構成を含む提案資料タイプです。",
+      sampleCorporateTitle: "法人向けAI対応LPパンフレット",
+      sampleCorporateCopy: "写真、パネル、CTAを含むBtoB向けLPパンフレットです。",
+      sampleStoreTitle: "店舗集客施策ご提案書",
+      sampleStoreCopy: "スケジュール、KPI、アイコン、比較パネルを含む店舗向け提案資料です。",
+      sampleBefore: "変換前画像",
+      sampleAfter: "変換後PPTX",
+      samplesNote: "高品質モードでも完全な再現やすべての要素の編集性は保証されません。写真、ロゴ、スクリーンショット、細密なビジュアルは画像として残る場合があります。"
     });
 
     const supportedLanguages = ["en", "ja"];

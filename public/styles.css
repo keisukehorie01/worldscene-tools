@@ -182,7 +182,8 @@ a {
     "drop download"
     "pricing pricing"
     "pricing-note pricing-note"
-    "comparison comparison";
+    "comparison comparison"
+    "samples samples";
   column-gap: 16px;
   row-gap: 6px;
   align-items: start;
@@ -766,6 +767,101 @@ body.is-authenticated .account-panel {
   width: 22%;
   color: var(--navy);
   font-weight: 900;
+}
+
+.samples-panel {
+  grid-area: samples;
+  order: 7;
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 16px;
+}
+
+.samples-panel h2 {
+  margin: 0 0 8px;
+  color: var(--navy);
+  font-size: 20px;
+}
+
+.samples-panel > p:not(.eyebrow) {
+  margin: 0 0 14px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.sample-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sample-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbfb;
+  padding: 10px;
+}
+
+.sample-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #eef4f7;
+}
+
+.sample-card h3 {
+  margin: 10px 0 4px;
+  color: var(--navy);
+  font-size: 15px;
+}
+
+.sample-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sample-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.sample-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.sample-actions a:last-child {
+  border-color: var(--teal);
+  background: var(--teal);
+  color: white;
+}
+
+.sample-note {
+  margin-top: 12px !important;
+  border-left: 3px solid var(--gold);
+  padding-left: 10px;
+  font-size: 12px;
 }
 
 .drop-zone:hover,
@@ -1573,7 +1669,8 @@ body.is-authenticated .account-panel {
       "actions"
       "pricing"
       "pricing-note"
-      "comparison";
+      "comparison"
+      "samples";
     padding: 28px;
   }
 
@@ -1592,6 +1689,10 @@ body.is-authenticated .account-panel {
 
   .quality-comparison table {
     min-width: 620px;
+  }
+
+  .sample-grid {
+    grid-template-columns: 1fr;
   }
 
   .auth-form-grid {

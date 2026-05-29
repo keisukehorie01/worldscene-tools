@@ -57,11 +57,11 @@
           </label>
           <label>
             <span data-i18n="passwordLabel">Password</span>
-            <input name="password" type="password" autocomplete="new-password" placeholder="Password, 8+ chars" minlength="8" required>
+            <input name="password" type="password" autocomplete="new-password" placeholder="Password, 8+ chars" data-i18n-placeholder="passwordPlaceholder" minlength="8" required>
           </label>
           <label>
             <span data-i18n="passwordConfirmLabel">Confirm password</span>
-            <input name="password_confirm" type="password" autocomplete="new-password" placeholder="Confirm password" minlength="8" required>
+            <input name="password_confirm" type="password" autocomplete="new-password" placeholder="Confirm password" data-i18n-placeholder="passwordConfirmPlaceholder" minlength="8" required>
           </label>
           <button type="submit" data-i18n="signupButton">Create account</button>
         </form>
@@ -81,11 +81,11 @@
         <h2 data-i18n="resetTitle">Set a new password</h2>
         <label>
           <span data-i18n="passwordLabel">Password</span>
-          <input name="password" type="password" autocomplete="new-password" placeholder="Password, 8+ chars" minlength="8" required>
+          <input name="password" type="password" autocomplete="new-password" placeholder="Password, 8+ chars" data-i18n-placeholder="passwordPlaceholder" minlength="8" required>
         </label>
         <label>
           <span data-i18n="passwordConfirmLabel">Confirm password</span>
-          <input name="password_confirm" type="password" autocomplete="new-password" placeholder="Confirm password" minlength="8" required>
+          <input name="password_confirm" type="password" autocomplete="new-password" placeholder="Confirm password" data-i18n-placeholder="passwordConfirmPlaceholder" minlength="8" required>
         </label>
         <button type="submit" data-i18n="resetButton">Update password</button>
       </form>
@@ -119,6 +119,8 @@
         emailLabel: "Email",
         passwordLabel: "Password",
         passwordConfirmLabel: "Confirm password",
+        passwordPlaceholder: "Password, 8+ chars",
+        passwordConfirmPlaceholder: "Confirm password",
         loginButton: "Login",
         signupButton: "Create account",
         forgotButton: "Send reset email",
@@ -166,6 +168,11 @@
       }
     };
 
+    Object.assign(messages.ja, {
+      passwordPlaceholder: "8文字以上のパスワード",
+      passwordConfirmPlaceholder: "パスワードを再入力"
+    });
+
     const supportedLanguages = ["en", "ja"];
     const savedLanguage = localStorage.getItem("worldscene-language");
     let currentLanguage = supportedLanguages.includes(savedLanguage)
@@ -190,6 +197,12 @@
         const key = node.getAttribute("data-i18n");
         if (messages[language][key]) {
           node.textContent = messages[language][key];
+        }
+      });
+      document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
+        const key = node.getAttribute("data-i18n-placeholder");
+        if (messages[language][key]) {
+          node.setAttribute("placeholder", messages[language][key]);
         }
       });
       languageToggle.textContent = language === "ja" ? "English" : "日本語";
