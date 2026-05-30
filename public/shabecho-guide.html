@@ -9,6 +9,58 @@
   <link rel="canonical" href="https://worldscene.net/shabecho-guide.html">
   <link rel="icon" href="worldscene-icon.png">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .guide-screens {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 24px 0 32px;
+    }
+
+    .guide-screen {
+      margin: 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 12px 28px rgba(16, 35, 63, 0.08);
+    }
+
+    .guide-screen img {
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      object-fit: cover;
+      border: 1px solid rgba(16, 35, 63, 0.12);
+      border-radius: 6px;
+      background: #071016;
+    }
+
+    .guide-screen figcaption {
+      display: grid;
+      gap: 4px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .guide-screen strong {
+      color: var(--navy);
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .guide-screens {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .guide-screens {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -30,6 +82,37 @@
         かるく帳は、一人社長・個人事業主が日々の売上と経費をスマホで記録し、月末に税理士へ渡しやすい形へまとめるための帳簿アプリです。
         データは端末内に保存され、必要なときだけメールや共有機能で外部へ送れます。
       </p>
+
+      <div class="guide-screens" aria-label="かるく帳の画面例">
+        <figure class="guide-screen">
+          <img src="assets/apps/Shabecho/screens/01_main_menu.png" alt="かるく帳のホーム画面">
+          <figcaption>
+            <strong>ホーム画面</strong>
+            売上、仕入れ、経費をすぐ選べる入力メニューです。
+          </figcaption>
+        </figure>
+        <figure class="guide-screen">
+          <img src="assets/apps/Shabecho/screens/02_voice_shortcut.png" alt="音声で呼び出し画面">
+          <figcaption>
+            <strong>音声で呼び出し</strong>
+            よく使う入力や支払待ち一覧を声で呼び出せます。
+          </figcaption>
+        </figure>
+        <figure class="guide-screen">
+          <img src="assets/apps/Shabecho/screens/03_ocr_expense.png" alt="経費入力とOCR画面">
+          <figcaption>
+            <strong>経費入力 + OCR</strong>
+            領収書を読み取り、必要な項目だけ確認して登録します。
+          </figcaption>
+        </figure>
+        <figure class="guide-screen">
+          <img src="assets/apps/Shabecho/screens/04_reports_pricing.png" alt="帳票と料金画面">
+          <figcaption>
+            <strong>帳票とCSV</strong>
+            試算表、申告補助資料、取引CSVを作成できます。
+          </figcaption>
+        </figure>
+      </div>
 
       <nav class="terms-toc" aria-label="ページ内メニュー">
         <a href="#setup">初期設定</a>
