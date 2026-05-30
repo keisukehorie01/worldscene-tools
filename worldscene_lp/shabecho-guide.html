@@ -49,6 +49,23 @@
       font-size: 14px;
     }
 
+    .manual-visual {
+      margin: 24px 0 32px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 16px 36px rgba(16, 35, 63, 0.1);
+    }
+
+    .manual-visual img {
+      width: min(760px, 100%);
+      margin: 0 auto;
+      border-radius: 6px;
+      border: 1px solid rgba(16, 35, 63, 0.12);
+      background: #ffffff;
+    }
+
     @media (max-width: 900px) {
       .guide-screens {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -82,6 +99,10 @@
         かるく帳は、一人社長・個人事業主が日々の売上と経費をスマホで記録し、月末に税理士へ渡しやすい形へまとめるための帳簿アプリです。
         データは端末内に保存され、必要なときだけメールや共有機能で外部へ送れます。
       </p>
+
+      <figure class="manual-visual">
+        <img src="assets/apps/Shabecho/manual-image2.png" alt="かるく帳の利用手順をまとめたマニュアル画像">
+      </figure>
 
       <div class="guide-screens" aria-label="かるく帳の画面例">
         <figure class="guide-screen">
