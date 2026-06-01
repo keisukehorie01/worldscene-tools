@@ -176,6 +176,7 @@ a {
     "eyebrow eyebrow"
     "title actions"
     "copy actions"
+    "difference actions"
     "drop account"
     "drop quality"
     "drop status"
@@ -243,6 +244,20 @@ body.is-authenticated .account-panel {
   color: var(--muted);
   font-size: clamp(14px, 1.25vw, 16px);
   line-height: 1.35;
+}
+
+.hero-difference {
+  grid-area: difference;
+  width: min(760px, 100%);
+  margin: 2px 0 0;
+  padding: 9px 12px;
+  border-left: 4px solid var(--teal);
+  border-radius: 8px;
+  background: rgba(15, 141, 128, 0.08);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
 }
 
 .drop-zone {
@@ -1661,6 +1676,7 @@ body.is-authenticated .account-panel {
       "eyebrow"
       "title"
       "copy"
+      "difference"
       "drop"
       "account"
       "quality"
