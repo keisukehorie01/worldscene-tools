@@ -536,6 +536,43 @@ select {
   color: var(--muted);
 }
 
+.proof-panel {
+  padding-top: 42px;
+}
+
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.proof-grid article {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.proof-grid span {
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.proof-grid h3 {
+  margin-top: 8px;
+  font-size: 18px;
+}
+
+.proof-grid p {
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.case-link {
+  margin-top: 22px;
+}
+
 footer {
   background: #101828;
   color: #ffffff;
@@ -556,7 +593,8 @@ footer {
   .hero,
   .diagnosis-layout,
   .offers-grid,
-  .knowledge-grid {
+  .knowledge-grid,
+  .proof-grid {
     grid-template-columns: 1fr;
   }
 
@@ -713,6 +751,7 @@ body::after {
 .section-copy p,
 .offer-card p,
 .knowledge-grid p,
+.proof-grid p,
 .summary,
 .roadmap p {
   color: var(--muted);
@@ -783,6 +822,7 @@ h1 {
 .progress-panel,
 .offer-card,
 .knowledge-grid article,
+.proof-grid article,
 .chart-card,
 .opportunity-card,
 .action-plan article {
