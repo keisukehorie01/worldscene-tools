@@ -3,12 +3,10 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AI検索適合診断 | AI検索.jp</title>
-    <meta
-      name="description"
-      content="公式サイトがAI検索、AI Overview、ChatGPTの回答で参照されやすい状態かを無料診断します。FAQ、構造化データ、信頼情報、導線の不足をレポート化します。"
-    >
+    <title>AI検索適合診断 100項目レポート | AI検索.jp</title>
+    <meta name="description" content="AI検索、AI Overview、ChatGPT表示に強いサイトかを100項目で診断し、グラフ付き詳細レポートと改善ロードマップを表示します。">
     <link rel="canonical" href="https://xn--ai-ru9di64e.jp/ai-search-check/">
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="./styles.css">
     <script defer src="/ai_kensaku_affiliate.js"></script>
     <script type="module" src="./app.js"></script>
@@ -16,34 +14,26 @@
       {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "AI検索.jp 診断",
+        "name": "AI検索適合診断",
         "url": "https://xn--ai-ru9di64e.jp/ai-search-check/",
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Web",
-        "description": "AI検索対応に必要な公式情報、FAQ、構造化データ、信頼情報を診断する無料ツールです。",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "JPY"
-        },
-        "publisher": {
-          "@type": "Organization",
-          "name": "AI検索.jp"
-        }
+        "description": "AI検索、AI Overview、ChatGPT表示に強いサイトかを100項目で診断するツールです。",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
+        "publisher": { "@type": "Organization", "name": "AI検索.jp" }
       }
     </script>
   </head>
   <body>
     <div class="site-shell">
       <header class="topbar" aria-label="サイトヘッダー">
-        <a class="brand" href="/ai-kensaku/" aria-label="AI検索.jp">
+        <a class="brand" href="./" aria-label="AI検索診断">
           <span class="brand-mark">AI</span>
           <span>AI検索.jp 適合診断</span>
         </a>
         <nav aria-label="ページ内ナビゲーション">
           <a href="#diagnosis">診断</a>
           <a href="#offers">推奨サービス</a>
-          <a href="#guide">改善ポイント</a>
           <a href="/ai-kensaku/">比較ガイド</a>
         </nav>
       </header>
@@ -57,156 +47,236 @@
           <div class="section hero">
             <div>
               <p class="eyebrow">AI Overview / ChatGPT / AI検索 対応チェック</p>
-              <h1>URLからAI検索適合度を可視化する診断。</h1>
+              <h1>URLからAI検索対応力を100項目で診断。</h1>
               <p class="lead">
-                公式サイト、FAQ、構造化データ、運営者情報、外部掲載情報をもとに、
-                AI検索に拾われやすい状態かをレーダーチャートと改善ロードマップで確認できます。
+                LPだけでなく、主要下層ページ、FAQ、構造化データ、信頼材料、CV導線、外部掲載との整合性まで診断対象にします。
+                結果はスクロールを抑えた要約レポートとして表示します。
               </p>
               <div class="hero-actions">
-                <a class="button" href="#diagnosis">AI検索適合診断を始める</a>
-                <a class="button secondary" href="/ai-kensaku/">業者比較を見る</a>
+                <a class="button" href="#diagnosis">無料で診断する</a>
               </div>
             </div>
             <div class="visual-panel" aria-label="AI検索診断のイメージ">
               <div class="ai-window">
-                <div class="query-bar">「近くで相談できる会社は？」</div>
+                <div class="query-bar">「この会社のサービスは何が強い？」</div>
                 <div class="answer-card">
-                  <strong>AI回答に必要なシグナル</strong>
+                  <strong>100項目のAI検索シグナル</strong>
                   <div class="meter" aria-hidden="true"><span></span></div>
                 </div>
-                <div class="orbital-map" aria-hidden="true">
-                  <i></i><i></i><i></i>
-                </div>
+                <div class="orbital-map" aria-hidden="true"><i></i><i></i><i></i></div>
                 <ul class="signal-list">
-                  <li>公式情報: 会社名・住所・電話・サービス内容</li>
-                  <li>FAQ: 検討前の質問に本文で回答</li>
-                  <li>構造化データ: AIが意味を読み取りやすいHTML</li>
+                  <li>一次情報: 公式サイト・サービス説明・会社情報</li>
+                  <li>回答性: FAQ・料金・比較軸・導入事例</li>
+                  <li>技術: JSON-LD・見出し・内部リンク・スマホ品質</li>
+                  <li>導線: 問い合わせ・資料請求・予約・相談</li>
                 </ul>
               </div>
             </div>
           </div>
         </section>
 
-        <section class="section diagnosis-panel" id="diagnosis">
-          <div class="panel-heading">
-            <p class="eyebrow">Free Diagnosis</p>
-            <h2>AI検索適合診断をしたいURLを入力してください</h2>
+        <section class="section diagnosis-layout" id="diagnosis">
+          <div class="section-copy">
+            <p class="eyebrow">AI Search Audit</p>
+            <h2>URLを入れて業種を選ぶだけ。</h2>
             <p>
-              公式HP、Googleビジネスプロフィール、SNS、掲載サイトなどを複数入力できます。
-              実サイトへのアクセス解析ではなく、入力情報と自己申告項目からAI検索対応の不足を整理します。
+              業種に合わせて、BtoBは導入検討、士業は相談前比較、クリニックは受診前不安、店舗系は来店前質問の軸で診断します。
             </p>
           </div>
 
-          <form class="diagnosis-form" data-diagnosis-form>
-            <label>
-              <span>URL</span>
-              <textarea name="urls" rows="5" placeholder="https://example.com&#10;https://maps.app.goo.gl/..."></textarea>
-            </label>
-            <label>
-              <span>業種・サービス</span>
-              <input name="businessType" type="text" placeholder="例: 歯科医院、工務店、士業、BtoBサービス">
-            </label>
-            <fieldset>
-              <legend>すでに対応済みの項目</legend>
-              <div class="check-list" data-check-list></div>
-            </fieldset>
-            <button class="button" type="submit">診断レポートを作成</button>
-            <p class="form-note" data-invalid-urls></p>
-          </form>
-        </section>
+          <div>
+            <form class="form-panel" data-diagnosis-form>
+              <div class="field">
+                <label for="urls">診断したいURL</label>
+                <textarea id="urls" name="urls" placeholder="https://example.com/&#10;https://example.com/service/&#10;https://www.instagram.com/example/"></textarea>
+                <span class="help">公式サイト、下層ページ、Googleマップ、SNS、掲載サイトなどを改行またはスペース区切りで入力できます。</span>
+              </div>
 
-        <section class="section progress-panel" data-progress hidden>
-          <div class="report-card">
-            <p class="eyebrow">Generating Report</p>
-            <h2>AI検索シグナルを解析中</h2>
-            <p data-progress-status>URL到達性とページ種別を解析中</p>
-            <div class="progress-track" aria-hidden="true"><span data-progress-bar></span></div>
+              <div class="field">
+                <label for="businessType">業種・サイト種別</label>
+                <select id="businessType" name="businessType">
+                  <option>BtoBサービス</option>
+                  <option>士業・専門サービス</option>
+                  <option>クリニック・医療サイト</option>
+                  <option>飲食店</option>
+                  <option>美容サロン</option>
+                  <option>小売・店舗</option>
+                  <option>その他Webサイト</option>
+                </select>
+              </div>
+
+              <fieldset class="check-group">
+                <legend>分かる場合のみ追加チェック</legend>
+                <div class="check-list" data-check-list></div>
+              </fieldset>
+
+              <button class="button" type="submit">100項目診断を生成する</button>
+            </form>
+
+            <section class="progress-panel" data-progress hidden aria-live="polite">
+              <div class="scanner"><span></span></div>
+              <div>
+                <p class="eyebrow">Generating Report</p>
+                <h2>AI検索シグナルを解析中</h2>
+                <p data-progress-status>URLとページ種別を解析中</p>
+                <div class="progress-track"><span data-progress-bar></span></div>
+                <small>本格版ではクロール対象が増えるため、段階表示で待ち時間を可視化します。</small>
+              </div>
+            </section>
+
+            <section class="result-panel compact-report" data-result hidden aria-live="polite">
+              <div class="report-head">
+                <div>
+                  <p class="report-meta" data-report-meta></p>
+                  <div class="score-row">
+                    <div class="score"><strong data-score>0</strong><span>/100</span></div>
+                    <span class="grade" data-grade data-tone="low">要整備</span>
+                    <span class="audit-count" data-audit-count>100項目</span>
+                  </div>
+                  <p class="summary" data-summary></p>
+                  <p class="warning" data-invalid-urls></p>
+                </div>
+                <div class="opportunity-card">
+                  <span>改善インパクト予測</span>
+                  <strong data-opportunity>改善余地 中</strong>
+                  <p>不足項目と入力URLから伸びしろを推定します。</p>
+                </div>
+              </div>
+
+              <div class="report-grid compact-charts">
+                <article class="chart-card">
+                  <h2>主要5軸</h2>
+                  <canvas data-radar-chart></canvas>
+                </article>
+                <article class="chart-card">
+                  <h2>カテゴリ上位</h2>
+                  <canvas data-bar-chart></canvas>
+                </article>
+              </div>
+
+              <section class="compact-block">
+                <div class="block-title">
+                  <p class="eyebrow">Priority Findings</p>
+                  <h2>重要指摘</h2>
+                </div>
+                <div class="finding-grid" data-risks></div>
+              </section>
+
+              <section class="compact-block">
+                <div class="block-title">
+                  <p class="eyebrow">100 Point Audit</p>
+                  <h2>100項目カテゴリ診断</h2>
+                </div>
+                <div class="audit-page-head">
+                  <h3 data-audit-page-title>1/10 エンティティ認識</h3>
+                  <div class="audit-pager" data-audit-pager></div>
+                </div>
+                <div class="audit-categories" data-audit-categories></div>
+              </section>
+
+              <details class="report-details">
+                <summary>解析対象範囲・URL監査・改善計画を開く</summary>
+                <div class="details-grid">
+                  <section>
+                    <h2>解析対象範囲</h2>
+                    <div class="analysis-scope" data-analysis-scope></div>
+                  </section>
+
+                  <section>
+                    <h2>想定AI質問</h2>
+                    <ul class="scenario-list" data-scenarios></ul>
+                  </section>
+
+                  <section>
+                    <h2>URL監査</h2>
+                    <div class="audit-table-wrap">
+                      <table class="audit-table">
+                        <thead><tr><th>種別</th><th>URL</th><th>AI検索上の役割</th></tr></thead>
+                        <tbody data-url-audit></tbody>
+                      </table>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h2>改善ロードマップ</h2>
+                    <ol class="roadmap" data-roadmap></ol>
+                  </section>
+
+                  <section>
+                    <h2>30/60/90日 実行計画</h2>
+                    <div class="action-plan" data-action-plan></div>
+                  </section>
+                </div>
+              </details>
+            </section>
           </div>
-        </section>
-
-        <section class="section report-panel" data-result hidden>
-          <div class="report-summary">
-            <div>
-              <p class="eyebrow">AI Search Score</p>
-              <h2><span data-score>0</span><small>/100</small></h2>
-              <strong data-grade></strong>
-            </div>
-            <div>
-              <p data-report-meta></p>
-              <p data-summary></p>
-              <p><strong>改善余地:</strong> <span data-opportunity></span></p>
-            </div>
-          </div>
-
-          <div class="report-grid">
-            <article class="chart-card">
-              <h2>AI検索レーダー</h2>
-              <canvas data-radar-chart></canvas>
-            </article>
-            <article class="chart-card">
-              <h2>カテゴリ別スコア</h2>
-              <canvas data-bar-chart></canvas>
-            </article>
-          </div>
-
-          <div class="analysis-grid" data-analysis-scope></div>
-
-          <section class="report-card">
-            <h2>URL別の役割</h2>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr><th>種別</th><th>URL</th><th>AI検索上の役割</th></tr>
-                </thead>
-                <tbody data-url-audit></tbody>
-              </table>
-            </div>
-          </section>
-
-          <section class="report-card">
-            <h2>主なリスク</h2>
-            <ul class="risk-list" data-risks></ul>
-          </section>
-
-          <section class="report-card">
-            <h2>改善ロードマップ</h2>
-            <ol class="roadmap" data-roadmap></ol>
-          </section>
-
-          <section class="report-card">
-            <h2>30/60/90日 実行計画</h2>
-            <div class="action-plan" data-action-plan></div>
-          </section>
         </section>
 
         <section class="offers-band" id="offers" data-offers-section hidden>
           <div class="section">
-            <p class="eyebrow">Recommended Service</p>
-            <h2>診断結果に合わせた改善先</h2>
-            <p class="lead">
-              広告・PR: このセクションには、広告主サービスであるAEO+LPへの送客リンクを含みます。
-              AI検索診断の不足項目に応じて、改善の次アクションを表示します。
-            </p>
+            <p class="eyebrow">Recommended Services / Advertisement</p>
+            <h2>診断後の次の打ち手</h2>
+            <p class="lead">広告: このセクションにはアフィリエイト広告を含みます。レポート確認後に、改善アクションとして表示します。</p>
             <div class="offers-grid" data-offers></div>
             <p class="disclosure" data-disclosure></p>
           </div>
         </section>
 
-        <section class="section" id="guide">
-          <p class="eyebrow">AEO Basics</p>
-          <h2>AI検索で見られやすいサイトの基本</h2>
-          <div class="knowledge-grid">
+        <section class="section articles-section" id="articles">
+          <p class="eyebrow">AI Search Blog</p>
+          <h2>AI検索まわりの調査メモ</h2>
+          <p class="lead">
+            AI OverviewやChatGPTでサイトがどう見られるのか、実際に調べながら気づいたことをブログ形式で残しています。
+          </p>
+          <p class="ad-disclosure">広告: 当サイトには、今後もしもアフィリエイト等のアフィリエイト広告を掲載する場合があります。</p>
+          <div class="article-grid">
             <article>
-              <h3>公式情報を一か所に集める</h3>
-              <p>会社名、住所、電話、営業時間、対応エリア、サービス内容をAIが迷わず読める形に整えます。</p>
+              <span>2026.06.10 / AI検索メモ</span>
+              <h3><a href="./articles/what-is-ai-search-optimization.html">AI検索最適化を調べ始めて、最初に分かったこと</a></h3>
+              <p>AI OverviewやChatGPTがどのページを見て回答しているのか気になり、まずはSEOとの違いから整理してみました。</p>
+              <a class="read-more" href="./articles/what-is-ai-search-optimization.html">続きを読む</a>
             </article>
             <article>
-              <h3>質問に本文で直接答える</h3>
-              <p>料金、対応範囲、予約方法、納期など、見込み客が聞く質問へFAQと本文で回答します。</p>
+              <span>2026.06.10 / FAQ改善メモ</span>
+              <h3><a href="./articles/faq-for-ai-overview.html">FAQを書き直すだけでもAI検索対策になりそうだと思った話</a></h3>
+              <p>FAQはおまけだと思っていましたが、AIが質問に答える材料として見るとかなり重要そうです。</p>
+              <a class="read-more" href="./articles/faq-for-ai-overview.html">続きを読む</a>
             </article>
             <article>
-              <h3>構造化データで意味を補強する</h3>
-              <p>FAQPage、LocalBusiness、ServiceなどのJSON-LDを使い、検索エンジンが内容を理解しやすくします。</p>
+              <span>2026.06.10 / 技術メモ</span>
+              <h3><a href="./articles/structured-data-json-ld.html">JSON-LDは難しそうだけど、AI検索では避けて通れなさそう</a></h3>
+              <p>構造化データは難しい印象がありますが、検索エンジンにページの意味を伝える補助線として見直しました。</p>
+              <a class="read-more" href="./articles/structured-data-json-ld.html">続きを読む</a>
+            </article>
+            <article>
+              <span>2026.06.10 / BtoBサイト観察メモ</span>
+              <h3><a href="./articles/b2b-ai-search-pages.html">BtoBサイトは「導入前の疑問」に答えるほどAIに強くなりそう</a></h3>
+              <p>導入検討者が知りたい料金、事例、比較軸、資料請求導線をページにどう置くかを考えました。</p>
+              <a class="read-more" href="./articles/b2b-ai-search-pages.html">続きを読む</a>
+            </article>
+            <article>
+              <span>2026.06.10 / ローカル検索メモ</span>
+              <h3><a href="./articles/local-business-ai-search.html">店舗サイトはGoogleマップと公式情報のズレをなくすのが大事そう</a></h3>
+              <p>営業時間や住所、予約方法が媒体ごとに違うと、ユーザーだけでなくAIも迷いそうだと感じました。</p>
+              <a class="read-more" href="./articles/local-business-ai-search.html">続きを読む</a>
+            </article>
+            <article>
+              <span>2026.06.10 / 信頼性メモ</span>
+              <h3><a href="./articles/trust-signals-eeat.html">AI検索で信頼されるには、実績や運営者情報を隠さない方がいい</a></h3>
+              <p>サービス説明だけでなく、誰が運営しているのか、どんな実績があるのかを見せる大切さを整理しました。</p>
+              <a class="read-more" href="./articles/trust-signals-eeat.html">続きを読む</a>
+            </article>
+            <article>
+              <span>2026.06.10 / サービスページ改善メモ</span>
+              <h3><a href="./articles/service-page-design.html">サービスページは「誰向けか」を先に書いた方が分かりやすい</a></h3>
+              <p>対象者、課題、料金、FAQを整理すると、人にもAIにも読みやすいページになりそうです。</p>
+              <a class="read-more" href="./articles/service-page-design.html">続きを読む</a>
+            </article>
+            <article>
+              <span>2026.06.10 / 診断項目メモ</span>
+              <h3><a href="./articles/ai-search-audit-checklist.html">AI検索診断で見る項目を100個に分けて考えてみた</a></h3>
+              <p>AI検索対策を感覚で終わらせないために、100項目を10カテゴリに分けて考えることにしました。</p>
+              <a class="read-more" href="./articles/ai-search-audit-checklist.html">続きを読む</a>
             </article>
           </div>
         </section>
