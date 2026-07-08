@@ -107,15 +107,18 @@ export function getChecks() {
 }
 
 export function normalizeUrls(rawText) {
-  return rawText
+  const normalized = rawText
     .split(/\s+/)
-    .map((url) => url.trim())
+    .map((url) => normalizeUrl(url))
     .filter(Boolean);
+
+  return [...new Set(normalized)].sort();
 }
 
 export function diagnoseSite({ urls, checkedIds, businessType }) {
-  const validUrls = urls.filter((url) => urlPattern.test(url));
-  const invalidUrls = urls.filter((url) => !urlPattern.test(url));
+  const normalizedUrls = normalizeUrls(Array.isArray(urls) ? urls.join("\n") : String(urls || ""));
+  const validUrls = normalizedUrls.filter((url) => urlPattern.test(url));
+  const invalidUrls = normalizedUrls.filter((url) => !urlPattern.test(url));
   const urlAudit = buildUrlAudit(validUrls);
   const checked = new Set([...checkedIds, ...inferChecksFromUrls(urlAudit)]);
   const baseScore = checks.reduce((score, check) => score + (checked.has(check.id) ? check.points : 0), 0);
@@ -124,25 +127,42 @@ export function diagnoseSite({ urls, checkedIds, businessType }) {
   const missingChecks = checks.filter((check) => !checked.has(check.id));
   const dimensionScores = buildDimensionScores(checked, validUrls.length);
   const riskRegister = buildRiskRegister(missingChecks, score);
-  const analysisScope = buildAnalysisScope(validUrls, businessType);
+  const cleanBusinessType = String(businessType || "店舗・サービス").trim() || "店舗・サービス";
 
   return {
     score,
     grade: getGrade(score),
-    businessType,
+    businessType: cleanBusinessType,
     validUrls,
     invalidUrls,
     completedChecks: checks.filter((check) => checked.has(check.id)),
     missingChecks,
     dimensionScores,
     urlAudit,
-    analysisScope,
+    analysisScope: buildAnalysisScope(validUrls, cleanBusinessType),
     riskRegister,
     actionPlan: buildActionPlan(missingChecks, score),
     opportunityScore: buildOpportunityScore(score, validUrls.length, missingChecks.length),
     roadMap: buildRoadMap(missingChecks, score),
     summary: buildSummary(score, validUrls.length),
   };
+}
+
+function normalizeUrl(rawUrl) {
+  const value = String(rawUrl || "").trim();
+  if (!value) return "";
+
+  try {
+    const url = new URL(value);
+    url.hash = "";
+    url.protocol = url.protocol.toLowerCase();
+    url.hostname = url.hostname.toLowerCase();
+    if (url.pathname.length > 1) url.pathname = url.pathname.replace(/\/+$/, "");
+    url.searchParams.sort();
+    return url.toString();
+  } catch {
+    return value;
+  }
 }
 
 function buildAnalysisScope(validUrls, businessType) {

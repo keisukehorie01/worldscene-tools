@@ -1,12 +1,11 @@
 import { affiliateConfig } from "./config.js";
 
 const serviceRules = {
-  "aeo-lp": ["faq", "schema", "servicePages", "conversion", "official", "authorTrust"],
+  "aeo-lp": ["faq", "schema", "servicePages", "official", "authorTrust"],
 };
 
 export function getRecommendedOffers(result) {
   const missing = new Set(result.missingChecks.map((check) => check.id));
-  const profileKind = result.profile?.kind || "general";
 
   return affiliateConfig.services
     .filter((service) => service.enabled)
@@ -14,7 +13,7 @@ export function getRecommendedOffers(result) {
       const relatedMissing = serviceRules[service.id]?.filter((id) => missing.has(id)) ?? [];
       const urgency = Math.max(1, relatedMissing.length);
       return {
-        ...adaptServiceCopy(service, profileKind),
+        ...adaptServiceCopy(service, result.businessType),
         urgency,
         relatedMissing,
       };
@@ -22,8 +21,11 @@ export function getRecommendedOffers(result) {
     .sort((a, b) => a.priority - b.priority);
 }
 
-function adaptServiceCopy(service, profileKind) {
-  if (profileKind === "local") {
+function adaptServiceCopy(service, businessType) {
+  const type = String(businessType || "");
+  const isLocal = /店舗|医院|歯科|美容|整体|飲食|工務店|不動産|地域/.test(type);
+
+  if (isLocal) {
     return service;
   }
 

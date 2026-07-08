@@ -36,7 +36,7 @@ checkList.innerHTML = checks
   .map(
     (check) => `
       <label class="check-item">
-        <input type="checkbox" name="checks" value="${check.id}">
+        <input type="checkbox" name="checks" value="${check.id}" autocomplete="off">
         <span>${check.label}</span>
       </label>
     `,
@@ -49,7 +49,7 @@ form.addEventListener("submit", (event) => {
   event.preventDefault();
   const formData = new FormData(form);
   const urls = normalizeUrls(String(formData.get("urls") || ""));
-  const checkedIds = formData.getAll("checks");
+  const checkedIds = [...new Set(formData.getAll("checks").map(String))].sort();
   const businessType = String(formData.get("businessType") || "店舗・サービス");
   const result = diagnoseSite({ urls, checkedIds, businessType });
 
@@ -65,7 +65,7 @@ function renderResult(result) {
   gradeValue.dataset.tone = result.grade.tone;
   summaryValue.textContent = result.summary;
   opportunityValue.textContent = `${result.opportunityScore.label} (${result.opportunityScore.value}/100)`;
-  reportMeta.textContent = `${result.businessType} / 有効URL ${result.validUrls.length}件 / 診断日 ${new Date().toLocaleDateString("ja-JP")}`;
+  reportMeta.textContent = `${result.businessType} / 有効URL ${result.validUrls.length}件`;
 
   invalidUrlNote.textContent =
     result.invalidUrls.length > 0

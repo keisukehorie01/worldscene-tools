@@ -280,6 +280,7 @@ h3 {
 
 .split,
 .media-model,
+.diagnosis-cta,
 .recommendation {
   display: grid;
   grid-template-columns: .84fr 1.16fr;
@@ -355,6 +356,26 @@ h3 {
 
 .actual-case .button {
   margin-top: 22px;
+}
+
+.diagnosis-cta {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  background: linear-gradient(135deg, #102a66, #1a75d2);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.diagnosis-cta h2,
+.diagnosis-cta p,
+.diagnosis-cta .section-label {
+  color: #fff;
+}
+
+.diagnosis-cta p {
+  margin-bottom: 0;
+  color: #dcecff;
+  font-weight: 760;
 }
 
 .section-head {
@@ -482,6 +503,7 @@ h3 {
   .hero,
   .split,
   .media-model,
+  .diagnosis-cta,
   .recommendation {
     grid-template-columns: 1fr;
   }
