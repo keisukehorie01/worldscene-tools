@@ -354,6 +354,38 @@ h3 {
   box-shadow: 0 14px 34px rgba(16, 39, 72, .07);
 }
 
+.case-evidence {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(280px, .92fr);
+  gap: 16px;
+  margin: 24px 0 8px;
+}
+
+.case-evidence figure {
+  margin: 0;
+  overflow: hidden;
+  background: rgba(255, 255, 255, .88);
+  border: 1px solid rgba(22, 92, 218, .16);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(16, 39, 72, .10);
+}
+
+.case-evidence img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  object-fit: contain;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.case-evidence figcaption {
+  padding: 12px 14px;
+  color: #44515f;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .actual-case .button {
   margin-top: 22px;
 }
@@ -513,7 +545,8 @@ h3 {
   }
 
   .risk-grid,
-  .case-grid {
+  .case-grid,
+  .case-evidence {
     grid-template-columns: 1fr;
   }
 }
