@@ -266,6 +266,7 @@ h1 {
 
 .form-panel {
   padding: 24px;
+  scroll-margin-top: 96px;
 }
 
 .field {
